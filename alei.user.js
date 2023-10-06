@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      0.6
+// @version      0.7
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -232,6 +232,6 @@ function optimize() {
         updateStyles()
         updateSkins()
         updateSounds()
-        optimize()
+        //optimize()
     }, 2000)
 })();
