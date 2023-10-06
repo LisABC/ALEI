@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      0.5
+// @version      0.6
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -203,6 +203,15 @@ function updateSkins() {
     aleilog("Added skins.")
 }
 
+function optimize() {
+    let _st = window.setTimeout
+    window.setTimeout = (f, ms) => {
+        if (f == ani) {window.requestAnimationFrame(ani)}
+        else _st(f, ms)
+    }
+    aleilog("Done optimizing some things.")
+}
+
 (function() {
     'use strict';
 
@@ -223,5 +232,6 @@ function updateSkins() {
         updateStyles()
         updateSkins()
         updateSounds()
+        optimize()
     }, 2000)
 })();
