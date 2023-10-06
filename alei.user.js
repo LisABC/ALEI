@@ -8,130 +8,127 @@
 // ==/UserScript==
 
 function updateSounds() {
-    // This adds sounds that exist in game but doesn't exist in ALE
-    // Currently the display name is just ID
     let SVTS = special_values_table["sound"];
-    SVTS['am_base'] = 'am_base';
-    SVTS['am_wind'] = 'am_wind';
-    SVTS['android2_die'] = 'android2_die';
-    SVTS['android2_hurt'] = 'android2_hurt';
-    SVTS['android2_welcome2'] = 'android2_welcome2';
-    SVTS['arrin_death1'] = 'arrin_death1';
-    SVTS['arrin_dying'] = 'arrin_dying';
-    SVTS['arrin_hurt1'] = 'arrin_hurt1';
-    SVTS['arrin_hurt2'] = 'arrin_hurt2';
-    SVTS['arrin_welcome1'] = 'arrin_welcome1';
-    SVTS['arrin_welcome2'] = 'arrin_welcome2';
-    SVTS['arrin_welcome3'] = 'arrin_welcome3';
-    SVTS['bounce_bullet'] = 'bounce_bullet';
-    SVTS['dart4'] = 'dart4';
-    SVTS['exp_event_stop'] = 'exp_event_stop';
-    SVTS['exp_level'] = 'exp_level';
-    SVTS['exp_tick'] = 'exp_tick';
-    SVTS['gameplay_song'] = 'gameplay_song';
-    SVTS['gravitator2'] = 'gravitator2';
-    SVTS['helm_proxy_alert_over_hereB'] = 'helm_proxy_alert_over_hereB';
-    SVTS['helm_proxy_alert_take_coverB'] = 'helm_proxy_alert_take_coverB';
-    SVTS['helm_proxy_alert_up_thereA'] = 'helm_proxy_alert_up_thereA';
-    SVTS['helm_proxy_death3'] = 'helm_proxy_death3';
-    SVTS['helm_proxy_death4'] = 'helm_proxy_death4';
-    SVTS['helm_proxy_death5'] = 'helm_proxy_death5';
-    SVTS['helm_proxy_death6'] = 'helm_proxy_death6';
-    SVTS['helm_proxy_dyingC'] = 'helm_proxy_dyingC';
-    SVTS['helm_proxy_dyingF'] = 'helm_proxy_dyingF';
-    SVTS['helm_proxy_enemy_down_fantasticA'] = 'helm_proxy_enemy_down_fantasticA';
-    SVTS['helm_proxy_enemy_down_got_oneD'] = 'helm_proxy_enemy_down_got_oneD';
-    SVTS['helm_proxy_enemy_down_niceA'] = 'helm_proxy_enemy_down_niceA';
-    SVTS['helm_proxy_enemy_down_niceC'] = 'helm_proxy_enemy_down_niceC';
-    SVTS['helm_proxy_hurt11'] = 'helm_proxy_hurt11';
-    SVTS['helm_proxy_hurt12'] = 'helm_proxy_hurt12';
-    SVTS['helm_proxy_hurt13'] = 'helm_proxy_hurt13';
-    SVTS['helm_proxy_hurt14'] = 'helm_proxy_hurt14';
-    SVTS['helm_proxy_hurt15'] = 'helm_proxy_hurt15';
-    SVTS['helm_proxy_hurt17'] = 'helm_proxy_hurt17';
-    SVTS['helm_proxy_hurt4'] = 'helm_proxy_hurt4';
-    SVTS['helm_proxy_hurt5'] = 'helm_proxy_hurt5';
-    SVTS['helm_proxy_hurt8'] = 'helm_proxy_hurt8';
-    SVTS['helm_proxy_hurt9'] = 'helm_proxy_hurt9';
-    SVTS['hexagon_death1'] = 'hexagon_death1';
-    SVTS['hexagon_death2'] = 'hexagon_death2';
-    SVTS['hexagon_pain1'] = 'hexagon_pain1';
-    SVTS['hexagon_pain2'] = 'hexagon_pain2';
-    SVTS['hexagon_pain3'] = 'hexagon_pain3';
-    SVTS['hexagon_pain4'] = 'hexagon_pain4';
-    SVTS['hexagon_welcome1'] = 'hexagon_welcome1';
-    SVTS['hexagon_welcome2'] = 'hexagon_welcome2';
-    SVTS['hexagon_welcome3'] = 'hexagon_welcome3';
-    SVTS['main_song'] = 'main_song';
-    SVTS['orakin_death1'] = 'orakin_death1';
-    SVTS['orakin_death2'] = 'orakin_death2';
-    SVTS['orakin_hurt'] = 'orakin_hurt';
-    SVTS['orakin_welcome'] = 'orakin_welcome';
-    SVTS['proxy_alert_over_hereB'] = 'proxy_alert_over_hereB';
-    SVTS['proxy_alert_take_coverB'] = 'proxy_alert_take_coverB';
-    SVTS['proxy_alert_up_thereA'] = 'proxy_alert_up_thereA';
-    SVTS['proxy_death3'] = 'proxy_death3';
-    SVTS['proxy_death4'] = 'proxy_death4';
-    SVTS['proxy_death5'] = 'proxy_death5';
-    SVTS['proxy_death6'] = 'proxy_death6';
-    SVTS['proxy_dyingC'] = 'proxy_dyingC';
-    SVTS['proxy_dyingF'] = 'proxy_dyingF';
-    SVTS['proxy_enemy_down_fantasticA'] = 'proxy_enemy_down_fantasticA';
-    SVTS['proxy_enemy_down_got_oneD'] = 'proxy_enemy_down_got_oneD';
-    SVTS['proxy_enemy_down_niceA'] = 'proxy_enemy_down_niceA';
-    SVTS['proxy_enemy_down_niceC'] = 'proxy_enemy_down_niceC';
-    SVTS['proxy_hurt11'] = 'proxy_hurt11';
-    SVTS['proxy_hurt12'] = 'proxy_hurt12';
-    SVTS['proxy_hurt13'] = 'proxy_hurt13';
-    SVTS['proxy_hurt14'] = 'proxy_hurt14';
-    SVTS['proxy_hurt15'] = 'proxy_hurt15';
-    SVTS['proxy_hurt17'] = 'proxy_hurt17';
-    SVTS['proxy_hurt4'] = 'proxy_hurt4';
-    SVTS['proxy_hurt5'] = 'proxy_hurt5';
-    SVTS['proxy_hurt8'] = 'proxy_hurt8';
-    SVTS['proxy_hurt9'] = 'proxy_hurt9';
-    SVTS['silk_alert_contactA'] = 'silk_alert_contactA';
-    SVTS['silk_alert_i_see_oneA'] = 'silk_alert_i_see_oneA';
-    SVTS['silk_alert_there_is_oneA'] = 'silk_alert_there_is_oneA';
-    SVTS['silk_death1B'] = 'silk_death1B';
-    SVTS['silk_death2B'] = 'silk_death2B';
-    SVTS['silk_dyingB'] = 'silk_dyingB';
-    SVTS['silk_enemy_down_brilliantC'] = 'silk_enemy_down_brilliantC';
-    SVTS['silk_enemy_down_eliminatedB'] = 'silk_enemy_down_eliminatedB';
-    SVTS['silk_enemy_down_hell_yeahB'] = 'silk_enemy_down_hell_yeahB';
-    SVTS['silk_enemy_down_ive_got_oneB'] = 'silk_enemy_down_ive_got_oneB';
-    SVTS['silk_enemy_down_minus_oneB'] = 'silk_enemy_down_minus_oneB';
-    SVTS['silk_enemy_down_no_kicking_for_youB'] = 'silk_enemy_down_no_kicking_for_youB';
-    SVTS['silk_hurt1B'] = 'silk_hurt1B';
-    SVTS['silk_hurt2B'] = 'silk_hurt2B';
-    SVTS['silk_hurt5'] = 'silk_hurt5';
-    SVTS['silk_hurt6'] = 'silk_hurt6';
-    SVTS['silk_hurt9B'] = 'silk_hurt9B';
-    SVTS['wea_crossfire2'] = 'wea_crossfire2';
-    SVTS['wea_ditzy_cs_ik'] = 'wea_ditzy_cs_ik';
-    SVTS['wea_glhf'] = 'wea_glhf';
-    SVTS['wea_incompetence_archetype_27xx_fire'] = 'wea_incompetence_archetype_27xx_fire';
-    SVTS['wea_lazyrain_gravy_rl'] = 'wea_lazyrain_gravy_rl';
-    SVTS['wea_m202'] = 'wea_m202';
-    SVTS['wea_moonhawk_railgun'] = 'wea_moonhawk_railgun';
-    SVTS['wea_ph01'] = 'wea_ph01';
-    SVTS['wea_plasma_shotgun'] = 'wea_plasma_shotgun';
-    SVTS['wea_rail_alt2'] = 'wea_rail_alt2';
-    SVTS['wea_thetoppestkek_shotgun_nxs25'] = 'wea_thetoppestkek_shotgun_nxs25';
-    SVTS['xin_celebrate'] = 'xin_celebrate';
-    SVTS['xin_death'] = 'xin_death';
-    SVTS['xin_enemy_spotted'] = 'xin_enemy_spotted';
-    SVTS['xin_hit'] = 'xin_hit';
+    SVTS['am_base'] = 'Indoor Ambience';
+    SVTS['am_wind'] = 'Outdoor Ambience';
+    SVTS['android2_die'] = 'DT-148 - Death';
+    SVTS['android2_hurt'] = 'DT-148 - Hurt';
+    SVTS['android2_welcome2'] = 'DT-148 - Alerted';
+    SVTS['arrin_death1'] = 'Arrin - Death';
+    SVTS['arrin_dying'] = 'Arrin - Dying';
+    SVTS['arrin_hurt1'] = 'Arrin - Hurt 1';
+    SVTS['arrin_hurt2'] = 'Arrin - Hurt 2';
+    SVTS['arrin_welcome1'] = 'Arrin - Alerted 1';
+    SVTS['arrin_welcome2'] = 'Arrin - Alerted 2';
+    SVTS['arrin_welcome3'] = 'Arrin - Alerted 3';
+    SVTS['bounce_bullet'] = 'Falkonian PSI Cutter - Shot Bounce';
+    SVTS['dart4'] = 'Medic Pistol';
+    SVTS['exp_event_stop'] = 'EXP - Stop';
+    SVTS['exp_level'] = 'EXP - Level Up';
+    SVTS['exp_tick'] = 'EXP - Gain';
+    SVTS['gameplay_song'] = 'Katharsys - Erges';
+    SVTS['gravitator2'] = 'Floor gravitator noice';
+    SVTS['helm_proxy_alert_over_hereB'] = 'Proxy - Over here!';
+    SVTS['helm_proxy_alert_take_coverB'] = 'Proxy - Take cover!';
+    SVTS['helm_proxy_alert_up_thereA'] = 'Proxy - Up there!';
+    SVTS['helm_proxy_death3'] = 'Proxy - Death 1';
+    SVTS['helm_proxy_death4'] = 'Proxy - Death 2';
+    SVTS['helm_proxy_death5'] = 'Proxy - Death 3';
+    SVTS['helm_proxy_death6'] = 'Proxy - Death 4';
+    SVTS['helm_proxy_dyingC'] = 'Proxy - Help! 1';
+    SVTS['helm_proxy_dyingF'] = 'Proxy - Help! 2';
+    SVTS['helm_proxy_enemy_down_fantasticA'] = 'Proxy - Fantastic.';
+    SVTS['helm_proxy_enemy_down_got_oneD'] = 'Proxy - Got one.';
+    SVTS['helm_proxy_enemy_down_niceA'] = 'Proxy - Nice. 1';
+    SVTS['helm_proxy_enemy_down_niceC'] = 'Proxy - Nice. 2';
+    SVTS['helm_proxy_hurt11'] = 'Proxy - Hurt 1';
+    SVTS['helm_proxy_hurt12'] = 'Proxy - Hurt 2';
+    SVTS['helm_proxy_hurt13'] = 'Proxy - Hurt 3';
+    SVTS['helm_proxy_hurt14'] = 'Proxy - Hurt 4';
+    SVTS['helm_proxy_hurt15'] = 'Proxy - Hurt 5';
+    SVTS['helm_proxy_hurt17'] = 'Proxy - Hurt 6';
+    SVTS['helm_proxy_hurt4'] = 'Proxy - Hurt 7';
+    SVTS['helm_proxy_hurt5'] = 'Proxy - Hurt 8';
+    SVTS['helm_proxy_hurt8'] = 'Proxy - Hurt 9';
+    SVTS['helm_proxy_hurt9'] = 'Proxy - Hurt 10';
+    SVTS['hexagon_death1'] = 'Hexagon - Death 1';
+    SVTS['hexagon_death2'] = 'Hexagon - Death 2';
+    SVTS['hexagon_pain1'] = 'Hexagon - Hurt 1';
+    SVTS['hexagon_pain2'] = 'Hexagon - Hurt 2';
+    SVTS['hexagon_pain3'] = 'Hexagon - Hurt 3';
+    SVTS['hexagon_pain4'] = 'Hexagon - Hurt 4';
+    SVTS['hexagon_welcome1'] = 'Hexagon - Alerted 1';
+    SVTS['hexagon_welcome2'] = 'Hexagon - Alerted 2';
+    SVTS['hexagon_welcome3'] = 'Hexagon - Alerted 3';
+    SVTS['main_song'] = 'NPhonix - Antigravity';
+    SVTS['orakin_death1'] = 'Orakin - Death 1';
+    SVTS['orakin_death2'] = 'Orakin - Death 2';
+    SVTS['orakin_hurt'] = 'Orakin - Hurt';
+    SVTS['orakin_welcome'] = 'Orakin - Alerted';
+    SVTS['proxy_alert_over_hereB'] = 'No Helm Proxy - Over here!';
+    SVTS['proxy_alert_take_coverB'] = 'No Helm Proxy - Take cover!';
+    SVTS['proxy_alert_up_thereA'] = 'No Helm Proxy - Up there!';
+    SVTS['proxy_death3'] = 'No Helm Proxy - Death 1';
+    SVTS['proxy_death4'] = 'No Helm Proxy - Death 2';
+    SVTS['proxy_death5'] = 'No Helm Proxy - Death 3';
+    SVTS['proxy_death6'] = 'No Helm Proxy - Death 4';
+    SVTS['proxy_dyingC'] = 'No Helm Proxy - Help! 1';
+    SVTS['proxy_dyingF'] = 'No Helm Proxy - Help! 2 ';
+    SVTS['proxy_enemy_down_fantasticA'] = 'No Helm Proxy - Fantastic.';
+    SVTS['proxy_enemy_down_got_oneD'] = 'No Helm Proxy - Got one.';
+    SVTS['proxy_enemy_down_niceA'] = 'No Helm Proxy - Nice. 1';
+    SVTS['proxy_enemy_down_niceC'] = 'No Helm Proxy - Nice. 2';
+    SVTS['proxy_hurt11'] = 'No Helm Proxy - Hurt 1';
+    SVTS['proxy_hurt12'] = 'No Helm Proxy - Hurt 2';
+    SVTS['proxy_hurt13'] = 'No Helm Proxy - Hurt 3';
+    SVTS['proxy_hurt14'] = 'No Helm Proxy - Hurt 4';
+    SVTS['proxy_hurt15'] = 'No Helm Proxy - Hurt 5';
+    SVTS['proxy_hurt17'] = 'No Helm Proxy - Hurt 6';
+    SVTS['proxy_hurt4'] = 'No Helm Proxy - Hurt 7';
+    SVTS['proxy_hurt5'] = 'No Helm Proxy - Hurt 8';
+    SVTS['proxy_hurt8'] = 'No Helm Proxy - Hurt 9';
+    SVTS['proxy_hurt9'] = 'No Helm Proxy - Hurt 10';
+    SVTS['silk_alert_contactA'] = 'Silk - Contact!';
+    SVTS['silk_alert_i_see_oneA'] = 'Silk - I see one.';
+    SVTS['silk_alert_there_is_oneA'] = 'Silk - There is one...!';
+    SVTS['silk_death1B'] = 'Silk - Death 1';
+    SVTS['silk_death2B'] = 'Silk - Death 2';
+    SVTS['silk_dyingB'] = 'Silk - Dying';
+    SVTS['silk_enemy_down_brilliantC'] = 'Silk - Brilliant.';
+    SVTS['silk_enemy_down_eliminatedB'] = 'Silk - Eliminated.';
+    SVTS['silk_enemy_down_hell_yeahB'] = 'Silk - Hell yeah!';
+    SVTS['silk_enemy_down_ive_got_oneB'] = 'Silk - I got one!';
+    SVTS['silk_enemy_down_minus_oneB'] = 'Silk - -1.';
+    SVTS['silk_enemy_down_no_kicking_for_youB'] = 'Silk - No kicking for you.';
+    SVTS['silk_hurt1B'] = 'Silk - Hurt 1';
+    SVTS['silk_hurt2B'] = 'Silk - Hurt 2';
+    SVTS['silk_hurt5'] = 'Silk - Hurt 3';
+    SVTS['silk_hurt6'] = 'Silk - Hurt 4';
+    SVTS['silk_hurt9B'] = 'Silk - Hurt 5';
+    SVTS['wea_crossfire2'] = 'Crossfire CR-145 Vortex';
+    SVTS['wea_ditzy_cs_ik'] = 'Assault Rifle CS-IK';
+    SVTS['wea_glhf'] = 'Grenade Launcher CS-GLHF';
+    SVTS['wea_incompetence_archetype_27xx_fire'] = 'Archetype 27XX';
+    SVTS['wea_lazyrain_gravy_rl'] = 'Falkonian Anti-Grav Rocket Launcher';
+    SVTS['wea_m202'] = 'Rocket Launcher CS-Barrage';
+    SVTS['wea_moonhawk_railgun'] = 'Crossfire CR-34 Marauder';
+    SVTS['wea_ph01'] = 'Crossfire CR-54 Viper';
+    SVTS['wea_plasma_shotgun'] = 'Plasma Shotgun';
+    SVTS['wea_rail_alt2'] = 'Falkonian PSI Cutter';
+    SVTS['wea_thetoppestkek_shotgun_nxs25'] = 'Shotgun NXS-25';
+    SVTS['xin_celebrate'] = 'Xin - Celebrating';
+    SVTS['xin_death'] = 'Xin - Death';
+    SVTS['xin_enemy_spotted'] = 'Xin - Alerted';
+    SVTS['xin_hit'] = 'Xin - Hurt';
 }
 function updateStyles() {
-    // Updates right panel to make it bigger.
     var style = document.createElement("style");
     style.innerHTML = `
     .pa2 {
         width: 100%;
     }
     .rightui {
-        width: 60vh;
+        width: 40vh;
     }
     .opcode_field {
         font-size: 12px;
@@ -140,10 +137,9 @@ function updateStyles() {
     document.head.appendChild(style);
 }
 function updateSkins() {
-    // This adds skins that exist in-game but doesn't exist in ALE.
     let charlists = [
-        [38, "GoldenKnife Noir"],
-        [39, "RootZ Noir"],
+        [38, "GoldenKnife Noir Lime"],
+        [39, "RootZ Noir Lime"],
 
         [151, "Purple Xin"],
         [152, "Golden Xin"],
@@ -151,7 +147,7 @@ function updateSkins() {
         [154, "Red Xin"],
         [155, "Amber Xin"],
 
-        [156, "Nirvana Noir"],
+        [156, "Nirvana Noir Lime"],
 
         [157, "Purple Gallynew"],
         [158, "Golden Gallynew"],
@@ -161,13 +157,13 @@ function updateSkins() {
 
         [162, "Pinkine"],
         [163, "Oryx"],
-        [164, "Blue Heavy Battlesuit"],
-        [165, "Red Heavy Battlesuit"],
+        [164, "Blue Heavy Hero"],
+        [165, "Red Heavy Hero"],
         [166, "Orakin"],
         [167, "Husk"],
         [168, "Hex"],
         [169, "Arrin"],
-        [170, "Usurpation McDonald's Lover"]
+        [170, "Heavy Usurpation Soldier"]
 
     ]
     for(let li = 0; li < charlists.length; li++) {
