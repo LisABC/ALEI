@@ -204,10 +204,10 @@ function updateSkins() {
 }
 
 function optimize() {
-    let _st = window.setTimeout
+    let _st = window.setTimeout;
     window.setTimeout = (f, ms) => {
         if (f == ani) {window.requestAnimationFrame(ani)}
-        else _st(f, ms)
+        else return _st(f, ms);
     }
     aleilog("Done optimizing some things.")
 }
@@ -232,6 +232,6 @@ function optimize() {
         updateStyles()
         updateSkins()
         updateSounds()
-        //optimize()
+        optimize()
     }, 2000)
 })();
