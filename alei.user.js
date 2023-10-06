@@ -1,13 +1,24 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      0.4
+// @version      0.5
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
 // @grant        none
 // ==/UserScript==
 
+function aleilog(text) {
+    console.log(`[ALEI]: ${text}`)
+}
+
+var aleiSettings = {
+    rightPanelSize: "30vw",
+    inpValueWidth: "calc(30vw - 126px)",
+    triggerEditTextSize: "12px"
+}
+
 function updateSounds() {
+    // Adds sounds that exist in game but not in ALE
     let SVTS = special_values_table["sound"];
     SVTS['am_base'] = 'Indoor Ambience';
     SVTS['am_wind'] = 'Outdoor Ambience';
@@ -120,23 +131,37 @@ function updateSounds() {
     SVTS['xin_death'] = 'Xin - Death';
     SVTS['xin_enemy_spotted'] = 'Xin - Alerted';
     SVTS['xin_hit'] = 'Xin - Hurt';
+    aleilog("Added sounds.")
 }
 function updateStyles() {
-    var style = document.createElement("style");
-    style.innerHTML = `
-    .pa2 {
-        width: 100%;
+    // Updates right panel to make it bigger.
+    for(let i1 = 0; i1 < document.styleSheets.length; i1++) {
+        let styleSheet = document.styleSheets[i1];
+        for (let i2 = 0; i2 < styleSheet.rules.length; i2++) {
+            let rule = styleSheet.rules[i2];
+            switch(rule.selectorText) {
+                case ".rightui":
+                    rule.style.setProperty("width", aleiSettings.rightPanelSize);
+                    break;
+                case ".pa2":
+                    rule.style.setProperty("width", "100%");
+                    break;
+                case ".opcode_field":
+                    rule.style.setProperty("font-size", aleiSettings.triggerEditTextSize);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
-    .rightui {
-        width: 40vh;
-    }
-    .opcode_field {
-        font-size: 12px;
-    }
-    `
-    document.head.appendChild(style);
+    let _th = THEME;
+    ThemeSet(THEME_BLUE);
+    ThemeSet(_th);
+    aleilog("Patched styles.")
 }
+
 function updateSkins() {
+    // Adds skins that exist in game but not in ALE.
     let charlists = [
         [38, "GoldenKnife Noir Lime"],
         [39, "RootZ Noir Lime"],
@@ -175,6 +200,7 @@ function updateSkins() {
         img_chars_full[charID] = new Image();
         img_chars_full[charID].src = 'chars_full/char' + paddedCharID + '.png';
     }
+    aleilog("Added skins.")
 }
 
 (function() {
@@ -185,15 +211,15 @@ function updateSkins() {
         // In right panel
         let _letedit = letedit;
         window.letedit = function(obj, enablemode) {
-            obj.style.width = "calc(60vh - 126px)";
+            obj.style.width = aleiSettings.inpValueWidth;
             _letedit(obj, enablemode);
         }
         let _letover = letover;
         window.letover = function(obj, enablemode) {
-            obj.style.width = "calc(60vh - 126px)";
+            obj.style.width = aleiSettings.inpValueWidth;
             _letover(obj, enablemode);
         }
-        // Calling rest of things
+        // Handling rest of things
         updateStyles()
         updateSkins()
         updateSounds()
