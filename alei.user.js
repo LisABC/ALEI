@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      0.3
+// @version      0.4
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -8,6 +8,8 @@
 // ==/UserScript==
 
 function updateSounds() {
+    // This adds sounds that exist in game but doesn't exist in ALE
+    // Currently the display name is just ID
     let SVTS = special_values_table["sound"];
     SVTS['am_base'] = 'am_base';
     SVTS['am_wind'] = 'am_wind';
@@ -122,6 +124,7 @@ function updateSounds() {
     SVTS['xin_hit'] = 'xin_hit';
 }
 function updateStyles() {
+    // Updates right panel to make it bigger.
     var style = document.createElement("style");
     style.innerHTML = `
     .pa2 {
@@ -137,6 +140,7 @@ function updateStyles() {
     document.head.appendChild(style);
 }
 function updateSkins() {
+    // This adds skins that exist in-game but doesn't exist in ALE.
     let charlists = [
         [38, "GoldenKnife Noir"],
         [39, "RootZ Noir"],
@@ -181,6 +185,8 @@ function updateSkins() {
     'use strict';
 
     setTimeout(function() {
+        // Patches letedit and letover functions to make it work well while selecting things
+        // In right panel
         let _letedit = letedit;
         window.letedit = function(obj, enablemode) {
             obj.style.width = "calc(60vh - 126px)";
@@ -191,7 +197,7 @@ function updateSkins() {
             obj.style.width = "calc(60vh - 126px)";
             _letover(obj, enablemode);
         }
-
+        // Calling rest of things
         updateStyles()
         updateSkins()
         updateSounds()
