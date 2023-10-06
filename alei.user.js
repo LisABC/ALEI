@@ -5,7 +5,6 @@
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
 // @grant        none
-// @updateUrl    https://github.com/ZenoABC/ALEI/raw/main/alei.user.js
 // ==/UserScript==
 
 function updateSounds() {
