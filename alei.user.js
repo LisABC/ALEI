@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      0.8
+// @version      0.9
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
+// @run-at       document-end
 // @grant        none
 // ==/UserScript==
 
@@ -214,24 +215,21 @@ function optimize() {
 
 (function() {
     'use strict';
-
-    setTimeout(function() {
-        // Patches letedit and letover functions to make it work well while selecting things
-        // In right panel
-        let _letedit = letedit;
-        window.letedit = function(obj, enablemode) {
-            obj.style.width = aleiSettings.inpValueWidth;
-            _letedit(obj, enablemode);
-        }
-        let _letover = letover;
-        window.letover = function(obj, enablemode) {
-            obj.style.width = aleiSettings.inpValueWidth;
-            _letover(obj, enablemode);
-        }
-        // Handling rest of things
-        updateStyles()
-        updateSkins()
-        updateSounds()
-        optimize()
-    }, 2000)
+    // Patches letedit and letover functions to make it work well while selecting things
+    // In right panel
+    let _letedit = letedit;
+    window.letedit = function(obj, enablemode) {
+        obj.style.width = aleiSettings.inpValueWidth;
+        _letedit(obj, enablemode);
+    }
+    let _letover = letover;
+    window.letover = function(obj, enablemode) {
+        obj.style.width = aleiSettings.inpValueWidth;
+        _letover(obj, enablemode);
+    }
+    // Handling rest of things
+    updateStyles()
+    updateSkins()
+    updateSounds()
+    optimize()
 })();
