@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      0.9
+// @version      1.0
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -16,6 +16,17 @@ var aleiSettings = {
     rightPanelSize: "30vw",
     inpValueWidth: "calc(30vw - 126px)",
     triggerEditTextSize: "12px"
+}
+
+function updateParameters() {
+    // Adds parameters that game accepts but does not exist in ALE.
+    function add(key, type, name, objType) {
+        param_type[param_type.length] = [key, type, name, "", objType];
+    }
+    add("moving", "bool", "Is Moving?", "door");
+    add("tarx", "value", "Target X", "door");
+    add("tary", "value", "Target Y", "door");
+    aleilog("Added missing parameters.");
 }
 
 function updateSounds() {
@@ -213,8 +224,41 @@ function optimize() {
     aleilog("Done optimizing some things.")
 }
 
+function updateVehicles() {
+    let _SVTV = special_values_table["vehicle_model"];
+    let vehicles = [
+       ["veh_hh", "Hand Holder", "iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACLSURBVEhLYxhxgBFE2M3/r/vvH0MQWISGgImJYd2hRMbLIDbYYpu5/+t/MzEEf2diuALi0wJw/mPQYf3HsPZIMmMjiA+3+BMLg/olIYblID4tgN47hki+Pww3YRYzgUUHAIxaTDcwajHdwKjFdAOjFtMNjFpMNzBqMd3AqMV0AwPbrh6InsQAAQYGAA8CLDKAAcpOAAAAAElFTkSuQmCC"]
+    ]
+    let offsets = {
+        veh_hh: {x: -15, y: -15, w: 30, h: 30}
+    }
+    for(let i = 0; i < vehicles.length; i++) {
+        let vehicle = vehicles[i];
+        let model = vehicle[0];
+        let name = vehicle[1];
+        let image = vehicle[2];
+        _SVTV[model] = `<img src='data:image/png;base64,${image}' border=0 height=12 style=vertical-align:middle title='${name}' > ${name}`
+        img_vehicles[model] = new Image();
+        img_vehicles[model].src = `data:image/png;base64,${image}`;
+    }
+    let toosc = window.ThinkOfOffsetClass;
+    window.ThinkOfOffsetClass = function(tc, esi) {
+        if (tc == "vehicle" && offsets[esi.pm.model] != undefined) {
+            return "alei_" + esi.pm.model;
+        } else return toosc(tc, esi);
+    }
+    for (let key in offsets) {
+        let off = offsets[key];
+        lo_x["alei_" + key] = off.x;
+        lo_y["alei_" + key] = off.y;
+        lo_w["alei_" + key] = off.w;
+        lo_h["alei_" + key] = off.h;
+    }
+    aleilog("Updated vehicle list.");
+}
+
 (function() {
-    'use strict';
+   'use strict';
     // Patches letedit and letover functions to make it work well while selecting things
     // In right panel
     let _letedit = letedit;
@@ -228,8 +272,10 @@ function optimize() {
         _letover(obj, enablemode);
     }
     // Handling rest of things
-    updateStyles()
-    updateSkins()
-    updateSounds()
-    optimize()
+    updateStyles();
+    updateSkins();
+    updateSounds();
+    updateParameters();
+    updateVehicles();
+    optimize();
 })();
