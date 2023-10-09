@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      1.0
+// @version      1.1
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -145,6 +145,20 @@ function updateSounds() {
     SVTS['xin_hit'] = 'Xin - Hurt';
     aleilog("Added sounds.")
 }
+
+function updateVoicePresets() {
+    let VP = special_values_table['voice_preset'];
+    VP['proxy_helmetless'] = 'Proxy (helmetless)';
+    VP['silk'] = 'Silk';
+    VP['orakin'] = 'Orakin';
+    VP['arrin'] = 'Arrin';
+    VP['civilian_male'] = 'Civilian Male';
+    VP['vulture'] = 'Vulture';
+    VP['crossfire_sentinel'] = 'Crossfire Sentinel';
+    VP['xin'] = 'Xin';
+    aleilog("Added voice presets.");
+}
+
 function updateStyles() {
     // Updates right panel to make it bigger.
     for(let i1 = 0; i1 < document.styleSheets.length; i1++) {
@@ -275,6 +289,7 @@ function updateVehicles() {
     updateStyles();
     updateSkins();
     updateSounds();
+    updateVoicePresets();
     updateParameters();
     updateVehicles();
     optimize();
