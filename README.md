@@ -1,4 +1,5 @@
 # ALE Improvements
+ALEI Icon (cc: broforce1)
 ![ALEI Icon](/icon.png "ALEI Icon")
 
 Script that patches ALE for the better. The goal is to make ALE more usable to map makers.
