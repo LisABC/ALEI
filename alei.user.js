@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      1.3
+// @version      1.4
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -195,7 +195,7 @@ function updateSkins() {
         [50, "Heavy Hero with only head+arms"],
         [60, "Proxy with only head+arms"],
         [62, "Proxy without arms"],
-        
+
         [38, "GoldenKnife Noir Lime"],
         [39, "RootZ Noir Lime"],
 
@@ -249,7 +249,7 @@ function optimize() {
 function updateVehicles() {
     let _SVTV = special_values_table["vehicle_model"];
     let vehicles = [
-       ["veh_hh", "Hand Holder", "iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACLSURBVEhLYxhxgBFE2M3/r/vvH0MQWISGgImJYd2hRMbLIDbYYpu5/+t/MzEEf2diuALi0wJw/mPQYf3HsPZIMmMjiA+3+BMLg/olIYblID4tgN47hki+Pww3YRYzgUUHAIxaTDcwajHdwKjFdAOjFtMNjFpMNzBqMd3AqMV0AwPbrh6InsQAAQYGAA8CLDKAAcpOAAAAAElFTkSuQmCC"]
+       ["veh_hh", "Hand Holder", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACLSURBVEhLYxhxgBFE2M3/r/vvH0MQWISGgImJYd2hRMbLIDbYYpu5/+t/MzEEf2diuALi0wJw/mPQYf3HsPZIMmMjiA+3+BMLg/olIYblID4tgN47hki+Pww3YRYzgUUHAIxaTDcwajHdwKjFdAOjFtMNjFpMNzBqMd3AqMV0AwPbrh6InsQAAQYGAA8CLDKAAcpOAAAAAElFTkSuQmCC"]
     ]
     let offsets = {
         veh_hh: {x: -15, y: -15, w: 30, h: 30}
@@ -259,9 +259,9 @@ function updateVehicles() {
         let model = vehicle[0];
         let name = vehicle[1];
         let image = vehicle[2];
-        _SVTV[model] = `<img src='data:image/png;base64,${image}' border=0 height=12 style=vertical-align:middle title='${name}' > ${name}`
+        _SVTV[model] = `<img src='${image}' border=0 height=12 style=vertical-align:middle title='${name}' > ${name}`
         img_vehicles[model] = new Image();
-        img_vehicles[model].src = `data:image/png;base64,${image}`;
+        img_vehicles[model].src = image;
     }
     let toosc = window.ThinkOfOffsetClass;
     window.ThinkOfOffsetClass = function(tc, esi) {
@@ -277,6 +277,22 @@ function updateVehicles() {
         lo_h["alei_" + key] = off.h;
     }
     aleilog("Updated vehicle list.");
+}
+
+function updateGuns() {
+    let guns = [
+        ["gun_rl0", "NARL", "data:image/png;base64,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"]
+    ];
+    for(let i = 0; i < guns.length; i++) {
+        let gun = guns[i];
+        let gun_model = gun[0];
+        let gun_name = gun[1];
+        let gun_image = gun[2];
+        special_values_table["gun_model"][gun_model] = `<img src='${gun_image}' border=0 width=80 height=20 style=vertical-align:baseline title='${gun_name}'>`
+        img_guns[gun_model] = new Image();
+        img_guns[gun_model].src = gun_image;
+    }
+    aleilog("Added guns.");
 }
 
 (function() {
@@ -300,5 +316,6 @@ function updateVehicles() {
     updateVoicePresets();
     updateParameters();
     updateVehicles();
+    updateGuns();
     optimize();
 })();
