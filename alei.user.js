@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      1.2
+// @version      1.3
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -194,7 +194,7 @@ function updateSkins() {
         [30, "Leg Gib"],
         [50, "Heavy Hero with only head+arms"],
         [60, "Proxy with only head+arms"],
-        [62, "Proxy without arms"]
+        [62, "Proxy without arms"],
         
         [38, "GoldenKnife Noir Lime"],
         [39, "RootZ Noir Lime"],
