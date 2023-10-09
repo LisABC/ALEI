@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      1.1
+// @version      1.2
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -189,6 +189,13 @@ function updateStyles() {
 function updateSkins() {
     // Adds skins that exist in game but not in ALE.
     let charlists = [
+        [10, "Head Gib"],
+        [20, "Arm Gib"],
+        [30, "Leg Gib"],
+        [50, "Heavy Hero with only head+arms"],
+        [60, "Proxy with only head+arms"],
+        [62, "Proxy without arms"]
+        
         [38, "GoldenKnife Noir Lime"],
         [39, "RootZ Noir Lime"],
 
@@ -214,7 +221,8 @@ function updateSkins() {
         [167, "Husk"],
         [168, "Hex"],
         [169, "Arrin"],
-        [170, "Heavy Usurpation Soldier"]
+        [170, "Heavy Mc Donald's Lover"],
+        [171, "That one grub we don't know name of"]
 
     ]
     for(let li = 0; li < charlists.length; li++) {
