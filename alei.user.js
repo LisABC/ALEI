@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      1.5
+// @version      1.6
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
-// @run-at       document-start
+// @run-at       document-end
 // @grant        none
 // ==/UserScript==
 
@@ -344,14 +344,7 @@ function updateOffsets() {
     aleilog("Updated offsets.");
 }
 
-(() => {
-    let oldEval = eval;
-    window.eval = function(c) {
-        oldEval(c.replace("debugger", "0"));
-    };
-})();
-
-window.addEventListener("load", function() {
+(function() {
    'use strict';
     // Patches letedit and letover functions to make it work well while selecting things
     // In right panel
@@ -377,4 +370,4 @@ window.addEventListener("load", function() {
     updateOffsets();
     optimize();
     NewNote("ALEI: Welcome!", "#FF00FF");
-});
+})();
