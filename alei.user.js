@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      1.8
+// @version      1.9
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -16,7 +16,8 @@ function aleilog(text) {
 var aleiSettings = {
     rightPanelSize: "30vw",
     inpValueWidth: "calc(30vw - 126px)",
-    triggerEditTextSize: "12px"
+    triggerEditTextSize: "12px",
+    starsImage: "stars2.jpg"
 }
 
 function updateParameters() {
@@ -181,6 +182,7 @@ function updateStyles() {
             }
         }
     }
+    document.getElementById("stars").style.setProperty("background-image", `url(${aleiSettings.starsImage})`)
     let _th = THEME;
     ThemeSet(THEME_BLUE);
     ThemeSet(_th);
@@ -370,5 +372,5 @@ function updateOffsets() {
     updateDecors();
     updateOffsets();
     optimize();
-    NewNote("ALEI: Welcome!", "#FF00FF");
+    NewNote("ALEI: Welcome!", "#7777FF");
 })();
