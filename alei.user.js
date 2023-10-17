@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      1.9
+// @version      2.0
 // @description  Changes to make ALE better.
 // @author       mici1234
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -263,7 +263,6 @@ function updateVehicles() {
         img_vehicles[model] = new Image();
         img_vehicles[model].src = image;
     }
-    aleilog("Updated vehicle list.");
 }
 
 function updateGuns() {
@@ -279,7 +278,6 @@ function updateGuns() {
         img_guns[gun_model] = new Image();
         img_guns[gun_model].src = gun_image;
     }
-    aleilog("Added guns.");
 }
 
 function updateDecors() {
@@ -321,7 +319,6 @@ function updateDecors() {
             aleilog("Updated decor list.");
         }
     }
-    aleilog("Added decors.");
 }
 
 function updateOffsets() {
@@ -347,6 +344,18 @@ function updateOffsets() {
     aleilog("Updated offsets.");
 }
 
+function updateTriggers() {
+    addTrigger(378, "Gun &#8250; Add hex color 'B' to gun 'A'", "gun", "string");
+}
+
+function updateObjects() {
+    updateGuns();
+    updateVehicles();
+    updateDecors();
+    updateTriggers();
+    aleilog("Updated objects.")
+}
+
 (function() {
    'use strict';
     // Patches letedit and letover functions to make it work well while selecting things
@@ -367,10 +376,8 @@ function updateOffsets() {
     updateSounds();
     updateVoicePresets();
     updateParameters();
-    updateVehicles();
-    updateGuns();
-    updateDecors();
     updateOffsets();
+    updateObjects();
     optimize();
     NewNote("ALEI: Welcome!", "#7777FF");
 })();
