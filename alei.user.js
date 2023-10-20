@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      2.1
+// @version      2.2
 // @description  Changes to make ALE better.
-// @author       mici1234
+// @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
 // @run-at       document-end
 // @icon         https://github.com/ZenoABC/ALEI/blob/main/icon.png?raw=true
