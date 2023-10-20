@@ -16,7 +16,7 @@ Script that patches ALE for the better. The goal is to make ALE more usable to m
 - Added missing voice presets. (v1.1), cc: wanted2001
 - Added NARL and Hakase decor (v1.5)
 - Allows permamently changing stars image instead of constantly pasting script in console (v1.9)
-- Renames action 378 to something that makes more sense. (v2.0), thanks nightmar
+- Couple of trigger renames. (v2.0), thanks nightmar for reporting some.
 
 ## How to install ?
 It's recommended to use [tampermonkey](https://www.tampermonkey.net/) as that gives you benefit of auto updating. Once you download tampermonkey, you can click [here](https://github.com/ZenoABC/ALEI/raw/main/alei.user.js), then tampermonkey will ask you whether to install or not, just click "install".
