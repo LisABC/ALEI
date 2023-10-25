@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      2.3
+// @version      2.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -360,8 +360,51 @@ function updateButtons() {
     let topPanel = document.getElementById("top_panel");
     let childs = topPanel.children;
 
+    // We redirect the manual page to EaglePB2's.
     childs[16].value = "Eagle's Manual";
     childs[16].setAttribute("onclick", "window.open('https://eaglepb2.gitbook.io/pb2-editor-manual/', '_blank');")
+
+    // We add new button that downloads XML of map.
+    let bigPad = document.createElement("div");
+    bigPad.setAttribute("class", "q3");
+
+    let pad = document.createElement("div");
+    pad.setAttribute("class", "q");
+
+    let appendBack = (topPanel.removeChild(childs[childs.length - 1])).outerHTML;
+    appendBack = (topPanel.removeChild(childs[childs.length - 1])).outerHTML + appendBack;
+
+    // Remove pad (we will add our own later).
+    topPanel.removeChild(childs[childs.length - 1])
+
+    window.aleiButtonClicks = {};
+
+    function createButton(text, internalName, onClick) {
+        let button = document.createElement("input");
+        button.setAttribute("class", "field_btn");
+        button.setAttribute("type", "button");
+        button.setAttribute("value", text);
+        button.setAttribute("onclick", `aleiButtonClicks['${internalName}']()`);
+        window.aleiButtonClicks[internalName] = onClick;
+        topPanel.appendChild(button);
+        topPanel.appendChild(pad);
+    }
+    topPanel.appendChild(bigPad);
+    createButton("Download XML", "downloadXMLButton", () => {
+      let s = '';
+      for (const o in es) {
+          if (!es[o].exists) continue;
+          s += compi_obj(o);
+      }
+      const blob = new Blob([s], {type: 'application/xml'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = mapid + '.xml';
+      a.click();
+      a.remove()
+    });
+    topPanel.innerHTML += appendBack;
 
     aleilog("Updated buttons.")
 }
