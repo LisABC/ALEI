@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      2.2
+// @version      2.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -356,6 +356,16 @@ function updateObjects() {
     aleilog("Updated objects.")
 }
 
+function updateButtons() {
+    let topPanel = document.getElementById("top_panel");
+    let childs = topPanel.children;
+
+    childs[16].value = "Eagle's Manual";
+    childs[16].setAttribute("onclick", "window.open('https://eaglepb2.gitbook.io/pb2-editor-manual/', '_blank');")
+
+    aleilog("Updated buttons.")
+}
+
 (function() {
    'use strict';
     // Patches letedit and letover functions to make it work well while selecting things
@@ -378,6 +388,7 @@ function updateObjects() {
     updateParameters();
     updateOffsets();
     updateObjects();
+    updateButtons();
     optimize();
     NewNote("ALEI: Welcome!", "#7777FF");
 })();
