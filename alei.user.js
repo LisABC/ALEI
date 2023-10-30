@@ -434,7 +434,6 @@ function updateButtons() {
     let _letedit = letedit;
     window.letedit = function(obj, enablemode) {
         obj.style.width = aleiSettings.inpValueWidth;
-        let ff_drop_html = ""
         _letedit(obj, enablemode);
     }
     let _letover = letover;
