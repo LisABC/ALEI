@@ -17,8 +17,9 @@ Script that patches ALE for the better. The goal is to make ALE more usable to m
 - Added NARL and Hakase decor (v1.5)
 - Allows permamently changing stars image instead of constantly pasting script in console (v1.9)
 - Couple of trigger renames. (v2.0), thanks nightmar for reporting some.
-- Redirects old manual to [EaglePB2's Manual](https://eaglepb2.gitbook.io/pb2-editor-manual/)
-- Adds "Download XML" button.
+- Redirects old manual to [EaglePB2's Manual](https://eaglepb2.gitbook.io/pb2-editor-manual/) (v2.3)
+- Adds "Download XML" button. (v2.4)
+- Caches image lists, this should allow for faster decor/bg picking. (v2.5)
 
 ## How to install ?
 It's recommended to use [tampermonkey](https://www.tampermonkey.net/) as that gives you benefit of auto updating. Once you download tampermonkey, you can click [here](https://github.com/ZenoABC/ALEI/raw/main/alei.user.js), then tampermonkey will ask you whether to install or not, just click "install".
