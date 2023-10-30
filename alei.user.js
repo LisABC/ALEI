@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      2.4
+// @version      2.5
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -246,6 +246,24 @@ function optimize() {
         if (f == ani) {window.requestAnimationFrame(ani)}
         else return _st(f, ms);
     }
+    let _browseImages = window.BrowseImages;
+    let ogImageLists = {};
+    window.BrowseImages = function(for_class = 'bg_model', current_value = '', callback = null) {
+        if (ogImageLists[for_class] == undefined) {
+            ogImageLists[for_class] = "[ALEI] Loading...";
+            aleilog(`Will cache response of ${for_class}`);
+        }
+        let ost = window.setTimeout;
+        window.setTimeout = (f, ms) => {
+            window.setTimeout = ost;
+            setTimeout(() => {
+                f();
+                ogImageLists[for_class] = image_list.innerHTML;
+            }, ms);
+        }
+        _browseImages(for_class, current_value, callback);
+        image_list.innerHTML = ogImageLists[for_class];
+    }
     aleilog("Done optimizing some things.")
 }
 
@@ -416,6 +434,7 @@ function updateButtons() {
     let _letedit = letedit;
     window.letedit = function(obj, enablemode) {
         obj.style.width = aleiSettings.inpValueWidth;
+        let ff_drop_html = ""
         _letedit(obj, enablemode);
     }
     let _letover = letover;
