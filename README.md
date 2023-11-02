@@ -4,6 +4,7 @@ ALEI Icon (cc: broforce1)
 ![ALEI Icon](/icon.png "ALEI Icon")
 
 Script that patches ALE for the better. The goal is to make ALE more usable to map makers.
+Discord server: https://discord.gg/K5jcNEvZ85
 
 ## Change History
 - Makes right panel, inputs bit wider and also adds in skins that exist in-game but not in ALE. (v0.1)
