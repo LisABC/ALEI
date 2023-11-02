@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      2.5
+// @version      2.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -145,6 +145,19 @@ function updateSounds() {
     SVTS['xin_death'] = 'Xin - Death';
     SVTS['xin_enemy_spotted'] = 'Xin - Alerted';
     SVTS['xin_hit'] = 'Xin - Hurt';
+    let groskVoices = [
+        ["death", "Death", 2],
+        ["dying", "Dying", 2],
+        ["edown", "Celebrate", 3],
+        ["welcome", "Enemy detect", 5],
+        ["hurt", "Hurt", 3]
+    ];
+    for (let i = 0; i < groskVoices.length; i++) {
+        let voice = groskVoices[i];
+        for (let j = 1; j <= voice[2]; j++) {
+            SVTS["grosk_" + voice[0] + j] = "Grosk - " + voice[1] + " " + j;
+        }
+    }
     aleilog("Added sounds.")
 }
 
@@ -158,6 +171,7 @@ function updateVoicePresets() {
     VP['vulture'] = 'Vulture';
     VP['crossfire_sentinel'] = 'Crossfire Sentinel';
     VP['xin'] = 'Xin';
+    VP["grosk"] = "Grosk";
     aleilog("Added voice presets.");
 }
 
@@ -225,7 +239,14 @@ function updateSkins() {
         [168, "Hex"],
         [169, "Arrin"],
         [170, "Heavy Mc Donald's Lover"],
-        [171, "That one grub we don't know name of"]
+
+        [171, "Cybergrub s1lk"],
+        [172, "Grosk"],
+        [173, "Futuristic Knight"],
+        [174, "Uncivil Proxy"],
+        [175, "Nexon Splinter"],
+        [176, "Elite Usurpation Soldier"],
+        [177, "Slayer"]
 
     ]
     for(let li = 0; li < charlists.length; li++) {
