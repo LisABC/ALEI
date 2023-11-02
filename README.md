@@ -20,6 +20,7 @@ Script that patches ALE for the better. The goal is to make ALE more usable to m
 - Redirects old manual to [EaglePB2's Manual](https://eaglepb2.gitbook.io/pb2-editor-manual/) (v2.3)
 - Adds "Download XML" button. (v2.4)
 - Caches image lists, this should allow for faster decor/bg picking. (v2.5)
+- Adds new skins, voices and voice presets that appeared in 2/11/23(DD/MM/YY). (v2.6)
 
 ## How to install ?
 It's recommended to use [tampermonkey](https://www.tampermonkey.net/) as that gives you benefit of auto updating. Once you download tampermonkey, you can click [here](https://github.com/ZenoABC/ALEI/raw/main/alei.user.js), then tampermonkey will ask you whether to install or not, just click "install".
