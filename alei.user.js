@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      2.6
+// @version      2.7
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -14,7 +14,7 @@ function aleilog(text) {
 }
 
 var aleiSettings = {
-    rightPanelSize: "22vw",
+    rightPanelSize: "30vw",
     inpValueWidth: "calc(30vw - 126px)",
     triggerEditTextSize: "12px",
     starsImage: "stars2.jpg"
