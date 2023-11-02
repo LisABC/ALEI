@@ -472,5 +472,6 @@ function updateButtons() {
     updateObjects();
     updateButtons();
     optimize();
+    document.getElementById("mapid_field").setAttribute("value", mapid);
     NewNote("ALEI: Welcome!", "#7777FF");
 })();
