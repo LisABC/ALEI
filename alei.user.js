@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      2.7
+// @version      2.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -444,6 +444,8 @@ function updateButtons() {
       a.remove()
     });
     topPanel.innerHTML += appendBack;
+    window.mapid_field = document.getElementById("mapid_field"); // lookup the new mapid_field after topPanel was rebuilt
+    mapid_field.value = mapid;
 
     aleilog("Updated buttons.")
 }
@@ -472,6 +474,5 @@ function updateButtons() {
     updateObjects();
     updateButtons();
     optimize();
-    document.getElementById("mapid_field").setAttribute("value", mapid);
     NewNote("ALEI: Welcome!", "#7777FF");
 })();
