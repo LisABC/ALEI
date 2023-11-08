@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      2.8
+// @version      2.9
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -450,6 +450,24 @@ function updateButtons() {
     aleilog("Updated buttons.")
 }
 
+function addClipboardSync() {
+    // Receiving
+    window.onstorage = (storage) => {
+        let key = storage.key;
+        if (!key.startsWith("setlocal_")) return;
+        key = key.slice(key.indexOf("_") + 1);
+        sessionStorage[key] = storage.newValue;
+    }
+
+    // Sending
+    let Old_CopyToClipBoard = window.CopyToClipBoard;
+    window.CopyToClipBoard = (clipName) => {
+        Old_CopyToClipBoard(clipName);
+        let data = sessionStorage[clipName];
+        localStorage["setlocal_" + clipName] = data;
+    }
+}
+
 (function() {
    'use strict';
     // Patches letedit and letover functions to make it work well while selecting things
@@ -473,6 +491,7 @@ function updateButtons() {
     updateOffsets();
     updateObjects();
     updateButtons();
+    addClipboardSync();
     optimize();
     NewNote("ALEI: Welcome!", "#7777FF");
 })();
