@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      2.9
+// @version      3.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -9,16 +9,31 @@
 // @grant        none
 // ==/UserScript==
 
-function aleilog(text) {
-    console.log(`[ALEI]: ${text}`)
+function aleiLog(text) {
+    if (aleiSettings.logging)
+        console.log(`[ALEI]: ${text}`)
+}
+
+function aleiDebugLog(text) {
+    if (aleiSettings.debug)
+        console.log(`{ALEI}: ${text}`);
 }
 
 var aleiSettings = {
     rightPanelSize: "30vw",
     inpValueWidth: "calc(30vw - 126px)",
     triggerEditTextSize: "12px",
-    starsImage: "stars2.jpg"
+    starsImage: "stars2.jpg",
+    logging: true,
+    debug: false
 }
+
+// Original functions, globally saved here if needed
+// JS_ prefix for JavaScript ones, ALE_ for ALE ones
+let JS_setTimeout = window.setTimeout;
+
+let aleiSessionID = null; // ID of this session
+let aleiSessionList = []; // Set of known session IDs
 
 function updateParameters() {
     // Adds parameters that game accepts but does not exist in ALE.
@@ -28,7 +43,7 @@ function updateParameters() {
     add("moving", "bool", "Is Moving?", "door");
     add("tarx", "value", "Target X", "door");
     add("tary", "value", "Target Y", "door");
-    aleilog("Added missing parameters.");
+    aleiLog("Added missing parameters.");
 }
 
 function updateSounds() {
@@ -158,7 +173,7 @@ function updateSounds() {
             SVTS["grosk_" + voice[0] + j] = "Grosk - " + voice[1] + " " + j;
         }
     }
-    aleilog("Added sounds.")
+    aleiLog("Added sounds.")
 }
 
 function updateVoicePresets() {
@@ -172,7 +187,7 @@ function updateVoicePresets() {
     VP['crossfire_sentinel'] = 'Crossfire Sentinel';
     VP['xin'] = 'Xin';
     VP["grosk"] = "Grosk";
-    aleilog("Added voice presets.");
+    aleiLog("Added voice presets.");
 }
 
 function updateStyles() {
@@ -200,7 +215,7 @@ function updateStyles() {
     let _th = THEME;
     ThemeSet(THEME_BLUE);
     ThemeSet(_th);
-    aleilog("Patched styles.")
+    aleiLog("Patched styles.")
 }
 
 function updateSkins() {
@@ -258,21 +273,20 @@ function updateSkins() {
         img_chars_full[charID] = new Image();
         img_chars_full[charID].src = 'chars_full/char' + paddedCharID + '.png';
     }
-    aleilog("Added skins.")
+    aleiLog("Added skins.")
 }
 
 function optimize() {
-    let _st = window.setTimeout;
     window.setTimeout = (f, ms) => {
         if (f == ani) {window.requestAnimationFrame(ani)}
-        else return _st(f, ms);
+        else return JS_setTimeout(f, ms);
     }
     let _browseImages = window.BrowseImages;
     let ogImageLists = {};
     window.BrowseImages = function(for_class = 'bg_model', current_value = '', callback = null) {
         if (ogImageLists[for_class] == undefined) {
             ogImageLists[for_class] = "[ALEI] Loading...";
-            aleilog(`Will cache response of ${for_class}`);
+            aleiLog(`Will cache response of ${for_class}`);
         }
         let ost = window.setTimeout;
         window.setTimeout = (f, ms) => {
@@ -285,7 +299,7 @@ function optimize() {
         _browseImages(for_class, current_value, callback);
         image_list.innerHTML = ogImageLists[for_class];
     }
-    aleilog("Done optimizing some things.")
+    aleiLog("Done optimizing some things.")
 }
 
 function updateVehicles() {
@@ -355,7 +369,7 @@ function updateDecors() {
                 </div>
                 `} catch(e) {} // We assume we are not in decor list yet.
             }
-            aleilog("Updated decor list.");
+            aleiLog("Updated decor list.");
         }
     }
 }
@@ -380,7 +394,7 @@ function updateOffsets() {
         lo_w["alei_" + key] = off.w;
         lo_h["alei_" + key] = off.h;
     }
-    aleilog("Updated offsets.");
+    aleiLog("Updated offsets.");
 }
 
 function updateTriggers() {
@@ -392,7 +406,7 @@ function updateObjects() {
     updateVehicles();
     updateDecors();
     updateTriggers();
-    aleilog("Updated objects.")
+    aleiLog("Updated objects.")
 }
 
 function updateButtons() {
@@ -447,28 +461,107 @@ function updateButtons() {
     window.mapid_field = document.getElementById("mapid_field"); // lookup the new mapid_field after topPanel was rebuilt
     mapid_field.value = mapid;
 
-    aleilog("Updated buttons.")
+    aleiLog("Updated buttons.")
 }
 
 function addClipboardSync() {
-    // Receiving
-    window.onstorage = (storage) => {
-        let key = storage.key;
-        if (!key.startsWith("setlocal_")) return;
-        key = key.slice(key.indexOf("_") + 1);
-        sessionStorage[key] = storage.newValue;
+    let clipboard_channel = new BroadcastChannel("ale_clipboard");
+
+    ///////////////
+    // Receiving //
+    ///////////////
+    clipboard_channel.onmessage = (msg) => {
+        let data = msg.data;
+        let kind = data.kind;
+        if (kind == "send") {
+            let recipient = data.recipient;
+            let clip_name  = data.clip_name;
+            let clip_data  = data.clip_data;
+
+            if (recipient == undefined || recipient == aleiSessionID) {
+                aleiDebugLog('/ale_clipboard/ got data for ' + clip_name);
+                sessionStorage[clip_name] = clip_data;
+            }
+        }
+        if (kind == "get") {
+            if (aleiSessionID > Math.min(...aleiSessionList)) return;
+
+            let session_id = data.session_id;
+            aleiDebugLog('/ale_clipboard/ syncing to ' + session_id);
+            for (let i = 0; i <= 10; i++) {
+                let clip_name = "clipboard" + (i == 0 ? "" : ("_slot" + (i-1)));
+                let clip_data = sessionStorage[clip_name];
+                if (clip_data == undefined) continue;
+                clipboard_channel.postMessage({kind: "send", recipient: session_id, clip_name, clip_data});
+            }
+        }
     }
 
-    // Sending
-    let Old_CopyToClipBoard = window.CopyToClipBoard;
-    window.CopyToClipBoard = (clipName) => {
-        Old_CopyToClipBoard(clipName);
-        let data = sessionStorage[clipName];
-        localStorage["setlocal_" + clipName] = data;
+    // Initial Sync
+    aleiDebugLog('/ale_clipboard/ requesting');
+    clipboard_channel.postMessage({kind: "get", session_id: aleiSessionID});
+
+    /////////////
+    // Sending //
+    /////////////
+    let ALE_CopyToClipBoard = window.CopyToClipBoard;
+    window.CopyToClipBoard = (clip_name) => {
+        ALE_CopyToClipBoard(clip_name);
+        let clip_data = sessionStorage[clip_name];
+        clipboard_channel.postMessage({kind: "send", clip_name, clip_data});
     }
 }
 
-(function() {
+async function addSessionSync() {
+    const PROBE_TIMEOUT_MS = 200;
+    let session_channel = new BroadcastChannel("ale_session");
+
+    // Receive data
+    session_channel.onmessage = (msg) => {
+        let data = msg.data;
+        let kind = data.kind;
+        if (kind == "start") {
+            if (aleiSessionID == null) return;
+            session_channel.postMessage({kind: "greet", id: aleiSessionID});
+            aleiDebugLog("/ale_session/ recieved start");
+        }
+        if (kind == "greet") {
+            let session_id = data.id;
+            if (!aleiSessionList.includes(session_id))
+                aleiSessionList.push(session_id);
+            aleiDebugLog("/ale_session/ received greet by " + session_id);
+        }
+        if (kind == "close") {
+            let session_id = data.id;
+            aleiSessionList.splice(aleiSessionList.indexOf(session_id), 1);
+            aleiDebugLog("/ale_session/ received close by " + session_id);
+        }
+    }
+
+    // Probe for other sessions
+    session_channel.postMessage({kind: "start"});
+    aleiDebugLog("/ale_session/ probing");
+    await new Promise(resolve => {
+        JS_setTimeout(resolve, PROBE_TIMEOUT_MS);
+    });
+
+    // Assign own session ID
+    if (aleiSessionList.length == 0)
+        aleiSessionID = 0;
+    else
+        aleiSessionID = Math.max(...aleiSessionList) + 1;
+
+    aleiDebugLog("/ale_session/ session ID " + aleiSessionID);
+
+    // Tell other sessions that this one is done
+    window.addEventListener('beforeunload', (event) => {
+        session_channel.postMessage({kind: "close", id: aleiSessionID});
+    });
+
+    addClipboardSync();
+}
+
+(async function() {
    'use strict';
     // Patches letedit and letover functions to make it work well while selecting things
     // In right panel
@@ -491,7 +584,7 @@ function addClipboardSync() {
     updateOffsets();
     updateObjects();
     updateButtons();
-    addClipboardSync();
+    await addSessionSync();
     optimize();
     NewNote("ALEI: Welcome!", "#7777FF");
 })();
