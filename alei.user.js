@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.0
+// @version      3.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -261,7 +261,11 @@ function updateSkins() {
         [174, "Uncivil Proxy"],
         [175, "Nexxon Contractor"],
         [176, "Assimilated Reakhohsha Operative"],
-        [177, "Slayer"]
+        [177, "Slayer"],
+
+        [178, "Nexxon Captain"],
+        [179, "Savage Falkok"],
+        [180, "Savage Phoenix"]
 
     ]
     for(let li = 0; li < charlists.length; li++) {
