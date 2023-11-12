@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.2
+// @version      3.2.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -576,7 +576,7 @@ function addPropertyPanelResize() {
     splitter.style.width = "5px";
     splitter.style.top = "50px";
     splitter.style.height = "100%";
-    splitter.style.cursor = "col-resize";
+    splitter.style.cursor = "e-resize";
     // splitter.style["background-color"] = "black";
     document.getElementById('floattag').appendChild(splitter);
 
