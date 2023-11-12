@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.1
+// @version      3.2
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -21,7 +21,7 @@ function aleiDebugLog(text) {
 
 var aleiSettings = {
     rightPanelSize: "30vw",
-    inpValueWidth: "calc(30vw - 126px)",
+    inpValueWidth: "100%",
     triggerEditTextSize: "12px",
     starsImage: "stars2.jpg",
     logging: true,
@@ -197,6 +197,9 @@ function updateStyles() {
         for (let i2 = 0; i2 < styleSheet.rules.length; i2++) {
             let rule = styleSheet.rules[i2];
             switch(rule.selectorText) {
+                case ".p_i":
+                    rule.style.setProperty("display", "flex");
+                    break;
                 case ".rightui":
                     rule.style.setProperty("width", aleiSettings.rightPanelSize);
                     break;
@@ -565,21 +568,48 @@ async function addSessionSync() {
     addClipboardSync();
 }
 
+function addPropertyPanelResize() {
+    let splitter_is_down = false;
+    const splitter = document.createElement("div");
+    const root = document.documentElement;
+    splitter.style.position = "absolute";
+    splitter.style.width = "5px";
+    splitter.style.top = "50px";
+    splitter.style.height = "100%";
+    splitter.style.cursor = "col-resize";
+    // splitter.style["background-color"] = "black";
+    document.getElementById('floattag').appendChild(splitter);
+
+    function splitter_resize(e) {
+        let new_width = Math.min(root.clientWidth - 100, Math.max(100, root.clientWidth - e.clientX));
+        right_panel.style.width = new_width + 'px';
+        splitter.style.right = new_width + 'px';
+    }
+
+    splitter.addEventListener('mousedown', (e) => {
+        splitter_is_down = true;
+    });
+
+    root.addEventListener('mouseup', (e) => {
+        splitter_is_down = false;
+        localStorage['RIGHT_PANEL_WIDTH'] = right_panel.clientWidth + 'px';
+    });
+
+    root.addEventListener('mousemove', (e) => {
+        if (splitter_is_down) splitter_resize(e);
+    });
+
+    if (localStorage['RIGHT_PANEL_WIDTH'] != undefined)
+        aleiSettings.rightPanelSize = localStorage['RIGHT_PANEL_WIDTH'];
+
+    splitter.style.right = aleiSettings.rightPanelSize;
+    window.splitter = splitter;
+}
+
 (async function() {
    'use strict';
-    // Patches letedit and letover functions to make it work well while selecting things
-    // In right panel
-    let _letedit = letedit;
-    window.letedit = function(obj, enablemode) {
-        obj.style.width = aleiSettings.inpValueWidth;
-        _letedit(obj, enablemode);
-    }
-    let _letover = letover;
-    window.letover = function(obj, enablemode) {
-        obj.style.width = aleiSettings.inpValueWidth;
-        _letover(obj, enablemode);
-    }
     // Handling rest of things
+    addPropertyPanelResize();
     updateStyles();
     updateSkins();
     updateSounds();
