@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.2.1
+// @version      3.2.2
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -202,6 +202,10 @@ function updateStyles() {
                     break;
                 case ".rightui":
                     rule.style.setProperty("width", aleiSettings.rightPanelSize);
+                    break;
+                case ".pa1":
+                    rule.style.setProperty("flex-grow", 0);
+                    rule.style.setProperty("flex-shrink", 0);
                     break;
                 case ".pa2":
                     rule.style.setProperty("width", "100%");
