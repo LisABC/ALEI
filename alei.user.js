@@ -22,7 +22,7 @@ let aleiSettings = {
     inpValueWidth: "100%",
     triggerEditTextSize: "12px",
     starsImage: "stars2.jpg",
-    logLevel: 1,
+    logLevel: 0,
 }
 let levelToNameMap = {
     0: "INFO",
