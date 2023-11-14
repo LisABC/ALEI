@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.2.2
+// @version      3.2.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -23,6 +23,7 @@ let aleiSettings = {
     triggerEditTextSize: "12px",
     starsImage: "stars2.jpg",
     logLevel: 0,
+    showTriggerIDs: false
 }
 let levelToNameMap = {
     0: "INFO",
@@ -614,7 +615,7 @@ function addPropertyPanelResize() {
     splitter.style.width = "5px";
     splitter.style.top = "50px";
     splitter.style.height = "100%";
-    splitter.style.cursor = "e-resize";
+    splitter.style.cursor = "w-resize";
     // splitter.style["background-color"] = "black";
     $id('floattag').appendChild(splitter);
 
@@ -644,6 +645,15 @@ function addPropertyPanelResize() {
     window.splitter = splitter;
 }
 
+function addTriggerIDs() {
+    if (!aleiSettings.showTriggerIDs) return;
+
+    let SVTTP = special_values_table['trigger_type'];
+    for (let i in SVTTP) {
+        SVTTP[i] = i + " " + SVTTP[i];
+    }
+}
+
 (async function() {
    'use strict';
     // Handling rest of things
@@ -657,6 +667,7 @@ function addPropertyPanelResize() {
     updateObjects();
     updateButtons();
     await addSessionSync();
+    addTriggerIDs();
     optimize();
     NewNote("ALEI: Welcome!", "#7777FF");
 })();
