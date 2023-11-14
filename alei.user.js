@@ -9,24 +9,31 @@
 // @grant        none
 // ==/UserScript==
 
-function aleiLog(text) {
-    if (aleiSettings.logging)
-        console.log(`[ALEI]: ${text}`)
+// Shorthand things
+function $id(id) {
+    return document.getElementById(id);
 }
+const stylesheets = document.styleSheets;
+const INFO = 0
+const DEBUG = 1
 
-function aleiDebugLog(text) {
-    if (aleiSettings.debug)
-        console.log(`{ALEI}: ${text}`);
-}
-
-var aleiSettings = {
+let aleiSettings = {
     rightPanelSize: "30vw",
     inpValueWidth: "100%",
     triggerEditTextSize: "12px",
     starsImage: "stars2.jpg",
-    logging: true,
-    debug: false
+    logLevel: 1,
 }
+let levelToNameMap = {
+    0: "INFO",
+    1: "DEBUG"
+}
+
+function aleiLog(level, text) {
+    if (level <= aleiSettings.logLevel)
+        console.log(`[ALEI:${levelToNameMap[level]}]: ${text}`)
+}
+
 
 // Original functions, globally saved here if needed
 // JS_ prefix for JavaScript ones, ALE_ for ALE ones
@@ -43,7 +50,7 @@ function updateParameters() {
     add("moving", "bool", "Is Moving?", "door");
     add("tarx", "value", "Target X", "door");
     add("tary", "value", "Target Y", "door");
-    aleiLog("Added missing parameters.");
+    aleiLog(INFO, "Added missing parameters.");
 }
 
 function updateSounds() {
@@ -173,10 +180,11 @@ function updateSounds() {
             SVTS["grosk_" + voice[0] + j] = "Grosk - " + voice[1] + " " + j;
         }
     }
-    aleiLog("Added sounds.")
+    aleiLog(INFO, "Added sounds.")
 }
 
 function updateVoicePresets() {
+    // Adds voice presets that exist in game but not in ALE
     let VP = special_values_table['voice_preset'];
     VP['proxy_helmetless'] = 'Proxy (helmetless)';
     VP['silk'] = 'Silk';
@@ -187,13 +195,13 @@ function updateVoicePresets() {
     VP['crossfire_sentinel'] = 'Crossfire Sentinel';
     VP['xin'] = 'Xin';
     VP["grosk"] = "Grosk";
-    aleiLog("Added voice presets.");
+    aleiLog(INFO, "Added voice presets.");
 }
 
 function updateStyles() {
-    // Updates right panel to make it bigger.
-    for(let i1 = 0; i1 < document.styleSheets.length; i1++) {
-        let styleSheet = document.styleSheets[i1];
+    // Changes some stylesheets to open up to things like resizable right panel.
+    for(let i1 = 0; i1 < stylesheets.length; i1++) {
+        let styleSheet = stylesheets[i1];
         for (let i2 = 0; i2 < styleSheet.rules.length; i2++) {
             let rule = styleSheet.rules[i2];
             switch(rule.selectorText) {
@@ -218,11 +226,11 @@ function updateStyles() {
             }
         }
     }
-    document.getElementById("stars").style.setProperty("background-image", `url(${aleiSettings.starsImage})`)
+    $id("stars").style.setProperty("background-image", `url(${aleiSettings.starsImage})`)
     let _th = THEME;
     ThemeSet(THEME_BLUE);
     ThemeSet(_th);
-    aleiLog("Patched styles.")
+    aleiLog(INFO, "Patched styles.")
 }
 
 function updateSkins() {
@@ -284,39 +292,44 @@ function updateSkins() {
         img_chars_full[charID] = new Image();
         img_chars_full[charID].src = 'chars_full/char' + paddedCharID + '.png';
     }
-    aleiLog("Added skins.")
+    aleiLog(INFO, "Added skins.")
 }
 
 function optimize() {
+    // VSync.
     window.setTimeout = (f, ms) => {
         if (f == ani) {window.requestAnimationFrame(ani)}
         else return JS_setTimeout(f, ms);
     }
     let _browseImages = window.BrowseImages;
     let ogImageLists = {};
+    // Image caching.
     window.BrowseImages = function(for_class = 'bg_model', current_value = '', callback = null) {
+        // If cache doesn't have the class we are looking for, we will just set default value.
         if (ogImageLists[for_class] == undefined) {
             ogImageLists[for_class] = "[ALEI] Loading...";
-            aleiLog(`Will cache response of ${for_class}`);
+            aleiLog(INFO, `Will cache response of ${for_class}`);
         }
+        // Overwrite setTimeout temporarily, as BrowseImages calls setTimeout for ServerRequest which sets the innerHTML of image_list
         let ost = window.setTimeout;
         window.setTimeout = (f, ms) => {
-            window.setTimeout = ost;
-            setTimeout(() => {
+            window.setTimeout = ost; // Assign original setTimeout
+            setTimeout(() => { // Make function that calls original function and sets cache.
                 f();
                 ogImageLists[for_class] = image_list.innerHTML;
             }, ms);
         }
         _browseImages(for_class, current_value, callback);
-        image_list.innerHTML = ogImageLists[for_class];
+        image_list.innerHTML = ogImageLists[for_class]; // Show what is in cache. (If cache didn't have the class, it will just show the previously set default value)
     }
-    aleiLog("Done optimizing some things.")
+    aleiLog(INFO, "Done optimizing some things.")
 }
 
 function updateVehicles() {
+    // Adding vehicles that exist in game but not in ALE. Currently only veh_hh, which is grabbable ledge.
     let _SVTV = special_values_table["vehicle_model"];
     let vehicles = [
-       ["veh_hh", "Grabbable Ledge", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACLSURBVEhLYxhxgBFE2M3/r/vvH0MQWISGgImJYd2hRMbLIDbYYpu5/+t/MzEEf2diuALi0wJw/mPQYf3HsPZIMmMjiA+3+BMLg/olIYblID4tgN47hki+Pww3YRYzgUUHAIxaTDcwajHdwKjFdAOjFtMNjFpMNzBqMd3AqMV0AwPbrh6InsQAAQYGAA8CLDKAAcpOAAAAAElFTkSuQmCC"]
+        ["veh_hh", "Grabbable Ledge", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACLSURBVEhLYxhxgBFE2M3/r/vvH0MQWISGgImJYd2hRMbLIDbYYpu5/+t/MzEEf2diuALi0wJw/mPQYf3HsPZIMmMjiA+3+BMLg/olIYblID4tgN47hki+Pww3YRYzgUUHAIxaTDcwajHdwKjFdAOjFtMNjFpMNzBqMd3AqMV0AwPbrh6InsQAAQYGAA8CLDKAAcpOAAAAAElFTkSuQmCC"]
     ]
     for(let i = 0; i < vehicles.length; i++) {
         let vehicle = vehicles[i];
@@ -330,6 +343,7 @@ function updateVehicles() {
 }
 
 function updateGuns() {
+    // Adds guns that exist in game but not in ALE. Currently only one isn't visible in ALE, and that is joke weapon: NARL
     let guns = [
         ["gun_rl0", "BETA Rocket Launcher", "data:image/png;base64,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"]
     ];
@@ -345,6 +359,7 @@ function updateGuns() {
 }
 
 function updateDecors() {
+    // Adds decors that exist in game, but not in ALE. Currently only hakase easter egg is known.
     let decors = [
         ["hakase", "Hakase", "data:image/png;base64,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"]
     ];
@@ -353,19 +368,19 @@ function updateDecors() {
         let decor_model = decor[0];
         let decor_name = decor[1];
         let decor_image = decor[2];
-        special_values_table["decor_model"][decor_model] = decor_name;
+        special_values_table["decor_model"][decor_model] = decor_name; // Add to known decors.
         img_decors[decor_model] = new Image();
         img_decors[decor_model].src = decor_image;
         CACHED_DECORS[decor_model] = img_decors[decor_model];
-        CUSTOM_IMAGES_APPROVED[decor_model] = true;
+        CUSTOM_IMAGES_APPROVED[decor_model] = true; // Since it's obviously vanilla, and other vanilla decors are approved, it's only natural if we approve added decors too
     }
     let _serverRequest = ServerRequest;
     window.ServerRequest = function(req, op, callback) {
         let addDecors = false;
-        if (req.indexOf("a=get_images") != -1 && req.indexOf("for_class=decor_model") != -1) addDecors = true;
+        if (req.indexOf("a=get_images") != -1 && req.indexOf("for_class=decor_model") != -1) addDecors = true; // We don't want to mess with background business, only decors
         _serverRequest(req, op, callback);
         if (addDecors) {
-            let list_native = document.getElementById("list_native");
+            let list_native = $id("list_native");
             for(let i = 0; i < decors.length; i++) {
                 let decor = decors[i];
                 let decor_model = decor[0];
@@ -380,12 +395,14 @@ function updateDecors() {
                 </div>
                 `} catch(e) {} // We assume we are not in decor list yet.
             }
-            aleiLog("Updated decor list.");
+            aleiLog(INFO, "Updated decor list.");
         }
     }
 }
 
 function updateOffsets() {
+    // Because hakase decor and grabbable ledge image is made with hand manually and doesn't come from website, and that there is no
+    // inbuilt offset, we have to offset those to make sure they show up in ALE correctly.
     let toosc = window.ThinkOfOffsetClass;
     window.ThinkOfOffsetClass = function(tc, esi) {
         if (tc == "vehicle" && offsets[esi.pm.model] != undefined) {
@@ -405,36 +422,40 @@ function updateOffsets() {
         lo_w["alei_" + key] = off.w;
         lo_h["alei_" + key] = off.h;
     }
-    aleiLog("Updated offsets.");
+    aleiLog(INFO, "Updated offsets.");
 }
 
 function updateTriggers() {
+    // This is where we will rename some triggers.
+    // For now it's only 378, but we got more triggers like renaming 328
     addTrigger(378, "Gun &#8250; Add hex color 'B' to gun 'A'", "gun", "string");
 }
 
 function updateObjects() {
+    // Shorthand for object-related functions as to not clutter console.
     updateGuns();
     updateVehicles();
     updateDecors();
     updateTriggers();
-    aleiLog("Updated objects.")
+    aleiLog(INFO, "Updated objects.")
 }
 
 function updateButtons() {
-    let topPanel = document.getElementById("top_panel");
+    let topPanel = $id("top_panel");
     let childs = topPanel.children;
 
     // We redirect the manual page to EaglePB2's.
     childs[16].value = "Eagle's Manual";
     childs[16].setAttribute("onclick", "window.open('https://eaglepb2.gitbook.io/pb2-editor-manual/', '_blank');")
 
-    // We add new button that downloads XML of map.
+    // We will pad buttons, so we'll make our own pad and keep them here for now
     let bigPad = document.createElement("div");
     bigPad.setAttribute("class", "q3");
 
     let pad = document.createElement("div");
     pad.setAttribute("class", "q");
 
+    // We dont want our new buttons to appear after "rights", so we will store "rights" beforehand and remove them, we'll add them back once we are done
     let appendBack = (topPanel.removeChild(childs[childs.length - 1])).outerHTML;
     appendBack = (topPanel.removeChild(childs[childs.length - 1])).outerHTML + appendBack;
 
@@ -443,6 +464,7 @@ function updateButtons() {
 
     window.aleiButtonClicks = {};
 
+    // Convenience function for doing easy top panel buttons
     function createButton(text, internalName, onClick) {
         let button = document.createElement("input");
         button.setAttribute("class", "field_btn");
@@ -454,25 +476,29 @@ function updateButtons() {
         topPanel.appendChild(pad);
     }
     topPanel.appendChild(bigPad);
-    createButton("Download XML", "downloadXMLButton", () => {
-      let s = '';
-      for (const o in es) {
-          if (!es[o].exists) continue;
-          s += compi_obj(o);
-      }
-      const blob = new Blob([s], {type: 'application/xml'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = mapid + '.xml';
-      a.click();
-      a.remove()
-    });
-    topPanel.innerHTML += appendBack;
-    window.mapid_field = document.getElementById("mapid_field"); // lookup the new mapid_field after topPanel was rebuilt
-    mapid_field.value = mapid;
 
-    aleiLog("Updated buttons.")
+    // "Download XML" button.
+    createButton("Download XML", "downloadXMLButton", () => {
+        let s = '';
+        for (const o in es) {
+            if (!es[o].exists) continue;
+            s += compi_obj(o);
+        }
+        const blob = new Blob([s], {type: 'application/xml'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = mapid + '.xml';
+        a.click();
+        a.remove()
+    });
+    // Readd 'rights' back.
+    topPanel.innerHTML += appendBack;
+    // Update original reference
+    window.mapid_field = $id("mapid_field");
+    mapid_field.value = mapid; // And update map id field value manually.
+
+    aleiLog(INFO, "Updated buttons.")
 }
 
 function addClipboardSync() {
@@ -490,7 +516,7 @@ function addClipboardSync() {
             let clip_data  = data.clip_data;
 
             if (recipient == undefined || recipient == aleiSessionID) {
-                aleiDebugLog('/ale_clipboard/ got data for ' + clip_name);
+                aleiLog(DEBUG, '/ale_clipboard/ got data for ' + clip_name);
                 sessionStorage[clip_name] = clip_data;
             }
         }
@@ -498,7 +524,7 @@ function addClipboardSync() {
             if (aleiSessionID > Math.min(...aleiSessionList)) return;
 
             let session_id = data.session_id;
-            aleiDebugLog('/ale_clipboard/ syncing to ' + session_id);
+            aleiLog(DEBUG, '/ale_clipboard/ syncing to ' + session_id);
             for (let i = 0; i <= 10; i++) {
                 let clip_name = "clipboard" + (i == 0 ? "" : ("_slot" + (i-1)));
                 let clip_data = sessionStorage[clip_name];
@@ -509,7 +535,7 @@ function addClipboardSync() {
     }
 
     // Initial Sync
-    aleiDebugLog('/ale_clipboard/ requesting');
+    aleiLog(DEBUG, '/ale_clipboard/ requesting');
     clipboard_channel.postMessage({kind: "get", session_id: aleiSessionID});
 
     /////////////
@@ -524,6 +550,8 @@ function addClipboardSync() {
 }
 
 async function addSessionSync() {
+    // This function registers some events, as to talk with other tabs
+    // For now, this is useful for clipboard sync, but we probably can have more.
     const PROBE_TIMEOUT_MS = 200;
     let session_channel = new BroadcastChannel("ale_session");
 
@@ -531,27 +559,30 @@ async function addSessionSync() {
     session_channel.onmessage = (msg) => {
         let data = msg.data;
         let kind = data.kind;
+        // New ALEI instance started up.
         if (kind == "start") {
             if (aleiSessionID == null) return;
             session_channel.postMessage({kind: "greet", id: aleiSessionID});
-            aleiDebugLog("/ale_session/ recieved start");
+            aleiLog(DEBUG, "/ale_session/ recieved start");
         }
+        // An ALEI instance responded to new ALEI instance, registering the ALEI instance
         if (kind == "greet") {
             let session_id = data.id;
             if (!aleiSessionList.includes(session_id))
                 aleiSessionList.push(session_id);
-            aleiDebugLog("/ale_session/ received greet by " + session_id);
+            aleiLog(DEBUG, "/ale_session/ received greet by " + session_id);
         }
+        // An ALEI instance is closing
         if (kind == "close") {
             let session_id = data.id;
             aleiSessionList.splice(aleiSessionList.indexOf(session_id), 1);
-            aleiDebugLog("/ale_session/ received close by " + session_id);
+            aleiLog(DEBUG, "/ale_session/ received close by " + session_id);
         }
     }
 
     // Probe for other sessions
     session_channel.postMessage({kind: "start"});
-    aleiDebugLog("/ale_session/ probing");
+    aleiLog(DEBUG, "/ale_session/ probing");
     await new Promise(resolve => {
         JS_setTimeout(resolve, PROBE_TIMEOUT_MS);
     });
@@ -562,7 +593,7 @@ async function addSessionSync() {
     else
         aleiSessionID = Math.max(...aleiSessionList) + 1;
 
-    aleiDebugLog("/ale_session/ session ID " + aleiSessionID);
+    aleiLog(DEBUG, "/ale_session/ session ID " + aleiSessionID);
 
     // Tell other sessions that this one is done
     window.addEventListener('beforeunload', (event) => {
@@ -573,16 +604,19 @@ async function addSessionSync() {
 }
 
 function addPropertyPanelResize() {
+    // Gives right panel ability to be resized.
+
     let splitter_is_down = false;
     const splitter = document.createElement("div");
     const root = document.documentElement;
+
     splitter.style.position = "absolute";
     splitter.style.width = "5px";
     splitter.style.top = "50px";
     splitter.style.height = "100%";
     splitter.style.cursor = "e-resize";
     // splitter.style["background-color"] = "black";
-    document.getElementById('floattag').appendChild(splitter);
+    $id('floattag').appendChild(splitter);
 
     function splitter_resize(e) {
         let new_width = Math.min(root.clientWidth - 100, Math.max(100, root.clientWidth - e.clientX));
