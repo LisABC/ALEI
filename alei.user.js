@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.2.3
+// @version      3.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -221,6 +221,9 @@ function updateStyles() {
                     break;
                 case ".opcode_field":
                     rule.style.setProperty("font-size", aleiSettings.triggerEditTextSize);
+                    break;
+                case "#rparams":
+                    rule.style.setProperty("height", "var(--ALEI_RPARAMS_HEIGHT)");
                     break;
                 default:
                     break;
@@ -654,6 +657,22 @@ function addTriggerIDs() {
     }
 }
 
+function patchShowHideButton() {
+    let og = window.ShowHideObjectBox;
+    window.ShowHideObjectBox = function() {
+        let height = "";
+        if(ObjectBox_visible) { // This will be not visible.
+            height = "calc(100vh - 155px)";
+        } else { // This will be visible.
+            height = "calc(100vh - 270px)";
+        }
+        // We then set variable and call original function.
+        document.documentElement.style.setProperty("--ALEI_RPARAMS_HEIGHT", height);
+        og();
+    }
+    aleiLog(INFO, "Patched show/hide box.")
+}
+
 (async function() {
    'use strict';
     // Handling rest of things
@@ -668,6 +687,7 @@ function addTriggerIDs() {
     updateButtons();
     await addSessionSync();
     addTriggerIDs();
+    patchShowHideButton();
     optimize();
     NewNote("ALEI: Welcome!", "#7777FF");
 })();
