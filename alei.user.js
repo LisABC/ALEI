@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.3.1
+// @version      3.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -34,7 +34,7 @@ function aleiLog(level, text) {
     if (level <= aleiSettings.logLevel)
         console.log(`[ALEI:${levelToNameMap[level]}]: ${text}`)
 }
-
+aleiLog(INFO, "Starting up...");
 
 // Original functions, globally saved here if needed
 // JS_ prefix for JavaScript ones, ALE_ for ALE ones
@@ -51,7 +51,6 @@ function updateParameters() {
     add("moving", "bool", "Is Moving?", "door");
     add("tarx", "value", "Target X", "door");
     add("tary", "value", "Target Y", "door");
-    aleiLog(INFO, "Added missing parameters.");
 }
 
 function updateSounds() {
@@ -181,7 +180,6 @@ function updateSounds() {
             SVTS["grosk_" + voice[0] + j] = "Grosk - " + voice[1] + " " + j;
         }
     }
-    aleiLog(INFO, "Added sounds.")
 }
 
 function updateVoicePresets() {
@@ -196,7 +194,6 @@ function updateVoicePresets() {
     VP['crossfire_sentinel'] = 'Crossfire Sentinel';
     VP['xin'] = 'Xin';
     VP["grosk"] = "Grosk";
-    aleiLog(INFO, "Added voice presets.");
 }
 
 function updateStyles() {
@@ -234,7 +231,6 @@ function updateStyles() {
     let _th = THEME;
     ThemeSet(THEME_BLUE);
     ThemeSet(_th);
-    aleiLog(INFO, "Patched styles.")
 }
 
 function updateSkins() {
@@ -296,7 +292,6 @@ function updateSkins() {
         img_chars_full[charID] = new Image();
         img_chars_full[charID].src = 'chars_full/char' + paddedCharID + '.png';
     }
-    aleiLog(INFO, "Added skins.")
 }
 
 function optimize() {
@@ -326,7 +321,6 @@ function optimize() {
         _browseImages(for_class, current_value, callback);
         image_list.innerHTML = ogImageLists[for_class]; // Show what is in cache. (If cache didn't have the class, it will just show the previously set default value)
     }
-    aleiLog(INFO, "Done optimizing some things.")
 }
 
 function updateVehicles() {
@@ -399,7 +393,7 @@ function updateDecors() {
                 </div>
                 `} catch(e) {} // We assume we are not in decor list yet.
             }
-            aleiLog(INFO, "Updated decor list.");
+            aleiLog(DEBUG, "Updated decor list.");
         }
     }
 }
@@ -426,7 +420,6 @@ function updateOffsets() {
         lo_w["alei_" + key] = off.w;
         lo_h["alei_" + key] = off.h;
     }
-    aleiLog(INFO, "Updated offsets.");
 }
 
 function updateTriggers() {
@@ -441,7 +434,6 @@ function updateObjects() {
     updateVehicles();
     updateDecors();
     updateTriggers();
-    aleiLog(INFO, "Updated objects.")
 }
 
 function updateButtons() {
@@ -501,8 +493,6 @@ function updateButtons() {
     // Update original reference
     window.mapid_field = $id("mapid_field");
     mapid_field.value = mapid; // And update map id field value manually.
-
-    aleiLog(INFO, "Updated buttons.")
 }
 
 function addClipboardSync() {
@@ -672,7 +662,6 @@ function patchShowHideButton() {
     }
     ShowHideObjectBox();
     ShowHideObjectBox(); // Hacky way to fix bug
-    aleiLog(INFO, "Patched show/hide box.");
 }
 
 (async function() {
@@ -692,4 +681,5 @@ function patchShowHideButton() {
     patchShowHideButton();
     optimize();
     NewNote("ALEI: Welcome!", "#7777FF");
+    aleiLog(INFO, "Welcome!")
 })();
