@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.3
+// @version      3.3.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -670,7 +670,9 @@ function patchShowHideButton() {
         document.documentElement.style.setProperty("--ALEI_RPARAMS_HEIGHT", height);
         og();
     }
-    aleiLog(INFO, "Patched show/hide box.")
+    ShowHideObjectBox();
+    ShowHideObjectBox(); // Hacky way to fix bug
+    aleiLog(INFO, "Patched show/hide box.");
 }
 
 (async function() {
