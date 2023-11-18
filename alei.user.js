@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.4
+// @version      3.5
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -13,6 +13,10 @@
 function $id(id) {
     return document.getElementById(id);
 }
+function $query(selector) {
+    return document.querySelector(selector);
+}
+
 const stylesheets = document.styleSheets;
 const INFO = 0
 const DEBUG = 1
@@ -664,6 +668,57 @@ function patchShowHideButton() {
     ShowHideObjectBox(); // Hacky way to fix bug
 }
 
+function addSnappingOptions_helper() {
+    // Remove default snapping options except for "1", we will replace it them later
+    $query(`a[onmousedown="GridSnappingSet(50);"]`).remove();
+    $query(`a[onmousedown="GridSnappingSet(100);"]`).remove();
+
+    let newHTML = ""
+    let snappingOptions = [
+        1,  5, 10,
+        40, 50, 100
+    ];
+
+    for (let snappingIndex in snappingOptions) {
+        let snapping = snappingOptions[snappingIndex];
+
+        if ((snappingIndex % 3 == 0) && (snappingIndex != 0)) {
+            // We have to break into new row.
+            newHTML += "<br>";
+        }
+
+        let element = document.createElement("a");
+        // Set relevant attributes.
+        element.innerHTML = snapping / 10;
+        let toolClass = "tool_btn";
+        if (GRID_SNAPPING == snapping) {
+           toolClass = "tool_btn2";
+        }
+        element.setAttribute("class", `${toolClass} tool_wid`);
+        element.setAttribute("style", "width: 21px;");
+        element.setAttribute("onmousedown", `GridSnappingSet(${snapping})`);
+        newHTML += element.outerHTML;
+        // Add to main HTML.
+    }
+    // Replace original `1` snapping with new HTML.
+    $query(`a[onmousedown="GridSnappingSet(10);"]`).outerHTML = newHTML;
+}
+
+function onToolUpdate() {
+    // Thanks eric.
+    addSnappingOptions_helper();
+}
+
+function patchUpdateTools() {
+    let ut = UpdateTools;
+    window.UpdateTools = function() {
+        ut();
+        onToolUpdate();
+    }
+    UpdateTools();
+    aleiLog(DEBUG, "Patched updateTools.");
+}
+
 (async function() {
    'use strict';
     // Handling rest of things
@@ -680,6 +735,7 @@ function patchShowHideButton() {
     addTriggerIDs();
     patchShowHideButton();
     optimize();
+    patchUpdateTools();
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
 })();
