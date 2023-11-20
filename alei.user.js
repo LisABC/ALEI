@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.5
+// @version      3.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -718,6 +718,40 @@ function patchUpdateTools() {
     UpdateTools();
     aleiLog(DEBUG, "Patched updateTools.");
 }
+///////////////////////////////
+function UpdatePhysicalParam(paramname, chvalue) {
+    lcz();
+    var layer_mismatch = false;
+    var list_changes = '';
+    for (var elems = 0; elems < es.length; elems++)
+        if (es[elems].exists)
+            if (es[elems].selected) {
+                if (es[elems].pm.hasOwnProperty(paramname)) {
+                    if (MatchLayer(es[elems])) {
+                        var lup = (typeof(paramname) == 'string') ? '"' + paramname + '"' : paramname;
+                        if (typeof(chvalue) == 'number' || ((chvalue == 0) && (chvalue != " "))) {
+                            lnd('es[' + elems + '].pm[' + lup + '] = ' + es[elems].pm[paramname] + ';');
+                            ldn('es[' + elems + '].pm[' + lup + '] = ' + chvalue + ';');
+                            es[elems].pm[paramname] = Number(chvalue);
+                        } else if (typeof(chvalue) == 'string') {
+                            lnd('es[' + elems + '].pm[' + lup + '] = "' + es[elems].pm[paramname] + '";');
+                            ldn('es[' + elems + '].pm[' + lup + '] = "' + chvalue + '";');
+                            es[elems].pm[paramname] = chvalue;
+                        } else {
+                            alert('Unknown value type: ' + typeof(chvalue));
+                        }
+                        list_changes += 'Parameter "' + paramname + '" of object "' + (es[elems].pm.uid != null ? es[elems].pm.uid : es[elems]._class) + '" was set to "' + chvalue + '"<br>';
+                    } else layer_mismatch = true;
+                }
+            } need_redraw = true;
+    NewNote('Operation complete:<br><br>' + list_changes, note_passive);
+    if (layer_mismatch) NewNote('Note: Some changes weren\'t made due to missmatch of active layer and class of selected objects', note_neutral);
+    lfz(false);
+}
+
+///////////////////////////////
+
+
 
 (async function() {
    'use strict';
@@ -736,6 +770,7 @@ function patchUpdateTools() {
     patchShowHideButton();
     optimize();
     patchUpdateTools();
+    window.UpdatePhysicalParam = UpdatePhysicalParam;
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
 })();
