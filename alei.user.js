@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.7
+// @version      3.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -822,6 +822,74 @@ function UpdatePhysicalParam(paramname, chvalue) {
     lfz(false);
 }
 
+let imageContextMap = {};
+window.aleiContextRenameImage = function(id) {
+    var v = prompt('New name:', imageContextMap[id]);
+    CloseImageContext();
+    if ( v !== null ) {
+        setTimeout( function() {
+            ServerRequest(`a=get_images&for_class=${last_for_class}&set_title_for=${id}&value=${v}`, "rename_image");
+        },
+        1
+      );
+    }
+}
+
+function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approval=false, login='?', approver='?') {
+    imageContextMap[id] = old_name;
+    last_element = element;
+    last_login = login;
+    e.preventDefault();
+
+    var image_context = document.getElementById('image_context');
+
+    var str = '';
+
+    if (moderator_menu) {
+        str += `<div onclick="CloseImageContext(); setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&approve_for=${id}', 'approve_image' ); }, 1 );">Approve <img src="../images/ap.png" width="11" height="11"></div>`;
+        str += `<div onclick="CloseImageContext(); setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&reset_status_for=${id}', 'reset_approval_image' ); }, 1 );">Reset approval status</div>`;
+        str += `<div onclick="CloseImageContext(); setTimeout( function() { open_approved_decor_model = true; SaveFiltering(); search_phrase = '*by_login*'+last_login; UpdateImageList(); }, 1 );">Search for other approved images from &quot;${login}&quot;</div>`;
+        str += `<div onclick="" style="color:rgba(0,0,0,0.3)">Last status change by ${approver}</div>`;
+        str += `<div onclick="CloseImageContext(); setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&disapprove_for_all='+last_login, 'disapprove_image' ); }, 1 );">Disapprove all unreviewed from &quot;${login}&quot; <img src="../images/noap.png" width="11" height="11"><img src="../images/noap.png" width="11" height="11"><img src="../images/noap.png" width="11" height="11"></div>`;
+        str += `<div onclick="CloseImageContext(); setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&disapprove_for=${id}', 'disapprove_image' ); }, 1 );">Disapprove <img src="../images/noap.png" width="11" height="11"></div>`;
+
+    } else {
+        //console.log( login, curlogin );
+
+        if (login == curlogin && approver != '!') {
+            str += `<div onclick="aleiContextRenameImage(${id})">Rename</div>`; // We overwrite rename action to our own.
+
+            if (awaiting_approval) {
+                str += `<div onclick="" style="color:rgba(0,0,0,0.3)">Request Approval (already done)</div>`;
+                str += `<div onclick="CloseImageContext();  setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&deawait_approval_for=${id}', 'await_approval_status' ); }, 1 ); ">Exclude from approval review queue</div>`;
+            } else {
+                if (old_name == 'Untitled') {
+                    str += `<div onclick="alert('Proper name required for custom image - you will not be available to change name once image is approved.');" style="color:rgba(0,0,0,0.3)">Request Approval (proper name required)</div>`;
+                } else {
+                    str += `<div onclick="CloseImageContext();  setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&await_approval_for=${id}', 'await_approval_status' ); }, 1 ); ">Request Approval <img src="../images/ap.png" width="11" height="11"></div>`;
+                }
+                str += `<div onclick="" style="color:rgba(0,0,0,0.3)">Exclude from approval review queue (not in queue)</div>`;
+            }
+
+            str += `<div onclick="var v = confirm('Are you sure you want to delete \\'\\'${old_name}\\'\\'' ); CloseImageContext(); if ( v ) { last_element.style.opacity = '0.5'; setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&delete=${id}', 'delete_image' ); }, 1 ); } ">Delete <img src="../images/noap.png" width="11" height="11"></div>`;
+        } else {
+            str += `<div onclick="" style="color:rgba(0,0,0,0.3)">Add to favorites? Not ready yet...</div>`;
+            str += `<div onclick="CloseImageContext(); setTimeout( function() { open_approved_decor_model = true; SaveFiltering(); search_phrase = '*by_login*'+last_login; UpdateImageList(); }, 1 );">Search for other approved images from &quot;${login}&quot;</div>`;
+
+        }
+    }
+
+    image_context.innerHTML = str;
+
+    image_context.style.left = e.clientX;
+    image_context.style.top = e.clientY;
+    image_context.style.display = 'block';
+
+    image_context_cancel_pad.style.display = 'block';
+
+    return false;
+}
+
 ///////////////////////////////
 
 (async function() {
@@ -842,6 +910,11 @@ function UpdatePhysicalParam(paramname, chvalue) {
     optimize();
     patchUpdateTools();
     window.UpdatePhysicalParam = UpdatePhysicalParam;
+    function overwriteImageContext() {
+        window.ImageContext = ImageContext;
+        setTimeout(overwriteImageContext, 1000); // Function comes from evaling ServerRequest, and for some reason it gets overwritten, so we have to constantly overwrite.
+    }
+    overwriteImageContext();
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
 })();
