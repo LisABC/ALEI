@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.6
+// @version      3.7
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -448,13 +448,6 @@ function updateButtons() {
     childs[16].value = "Eagle's Manual";
     childs[16].setAttribute("onclick", "window.open('https://eaglepb2.gitbook.io/pb2-editor-manual/', '_blank');")
 
-    // We will pad buttons, so we'll make our own pad and keep them here for now
-    let bigPad = document.createElement("div");
-    bigPad.setAttribute("class", "q3");
-
-    let pad = document.createElement("div");
-    pad.setAttribute("class", "q");
-
     // We dont want our new buttons to appear after "rights", so we will store "rights" beforehand and remove them, we'll add them back once we are done
     let appendBack = (topPanel.removeChild(childs[childs.length - 1])).outerHTML;
     appendBack = (topPanel.removeChild(childs[childs.length - 1])).outerHTML + appendBack;
@@ -472,9 +465,15 @@ function updateButtons() {
         button.setAttribute("value", text);
         button.setAttribute("onclick", `aleiButtonClicks['${internalName}']()`);
         window.aleiButtonClicks[internalName] = onClick;
+
+        let pad = document.createElement("div");
+        pad.setAttribute("class", "q");
+
         topPanel.appendChild(button);
         topPanel.appendChild(pad);
     }
+    let bigPad = document.createElement("div");
+    bigPad.setAttribute("class", "q3");
     topPanel.appendChild(bigPad);
 
     // "Download XML" button.
@@ -491,6 +490,14 @@ function updateButtons() {
         a.download = mapid + '.xml';
         a.click();
         a.remove()
+    });
+    // "Insert XML" button.
+    createButton("Insert XML", "insertXMLButton", () => {
+        let xml = prompt("Enter XML:", "");
+
+        if (xml !== null) {
+            insertXML(xml);
+        }
     });
     // Readd 'rights' back.
     topPanel.innerHTML += appendBack;
@@ -718,6 +725,72 @@ function patchUpdateTools() {
     UpdateTools();
     aleiLog(DEBUG, "Patched updateTools.");
 }
+
+// Helpers for "Import XML"
+function decompileObject(xml) {
+	function toNumber(x) {
+	    if (!isNaN(Number(x))) {
+                  return Number(x);
+	    } else {
+                  return x;
+	    }
+        }
+	xml = xml.slice(1, xml.length - 3);
+	xml = xml.split(" ");
+
+	for (let i = 1; i < xml.length; i++) {
+		xml[i] = xml[i].split("=");
+		xml[i][1] = xml[i][1].replaceAll('"', "");
+		xml[i][1] = toNumber(xml[i][1]);
+	}
+
+	let obj = new E(xml[0]);
+
+	for (let i = 1; i < xml.length; i++) {
+		obj.pm[xml[i][0]] = xml[i][1];
+	}
+
+	return obj;
+}
+
+function splitXML(xml) {
+	let xmlParts = [];
+	let start = 0;
+
+	for (let i = 1; i < xml.length; i++) {
+		if (xml[i - 1] == ">") {
+			xmlParts.push(xml.slice(start, i));
+			start = i;
+		}
+
+		if (i == xml.length - 1) {
+			xmlParts.push(xml.slice(start, i + 1));
+		}
+	}
+
+	return xmlParts;
+}
+
+function decompileXML(xml) {
+	xml = splitXML(xml);
+
+	for (let i = 0; i < xml.length; i++) {
+		xml[i] = decompileObject(xml[i]);
+	}
+
+	return xml;
+}
+
+function insertXML(xml) {
+	xml = decompileXML(xml);
+
+	for (let i = 0; i < xml.length; i++) {
+		es.push(xml[i]);
+	}
+
+	need_redraw = 1;
+    need_GUIParams_update = 1;
+}
 ///////////////////////////////
 function UpdatePhysicalParam(paramname, chvalue) {
     lcz();
@@ -750,8 +823,6 @@ function UpdatePhysicalParam(paramname, chvalue) {
 }
 
 ///////////////////////////////
-
-
 
 (async function() {
    'use strict';
