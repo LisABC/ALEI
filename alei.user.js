@@ -492,6 +492,17 @@ function updateButtons() {
         a.click();
         a.remove()
     });
+
+    topPanel.appendChild(bigPad);
+
+    // "Insert XML" button.
+    createButton("Insert XML", "insertXMLButton", () => {
+        let xml = prompt("Enter XML:", "");
+
+        if (xml !== null) {
+            insertXML(xml);
+        }
+    });
     // Readd 'rights' back.
     topPanel.innerHTML += appendBack;
     // Update original reference
@@ -717,6 +728,72 @@ function patchUpdateTools() {
     }
     UpdateTools();
     aleiLog(DEBUG, "Patched updateTools.");
+}
+
+function toNumber(x) {
+	if (!isNaN(Number(x))) {
+		return Number(x);
+	} else {
+		return x;
+	}
+}
+
+function decompileObject(xml) {
+	xml = xml.slice(1, xml.length - 3);
+	xml = xml.split(" ");
+	
+	for (let i = 1; i < xml.length; i++) {
+		xml[i] = xml[i].split("=");
+		xml[i][1] = xml[i][1].replaceAll('"', "");
+		xml[i][1] = toNumber(xml[i][1]);
+	}
+	
+	let obj = new E(xml[0]);
+	
+	for (let i = 1; i < xml.length; i++) {
+		obj.pm[xml[i][0]] = xml[i][1];
+	}
+	
+	return obj;
+}
+
+function splitXML(xml) {
+	let xmlParts = [];
+	let start = 0;
+	
+	for (let i = 1; i < xml.length; i++) {
+		if (xml[i - 1] == ">") {
+			xmlParts.push(xml.slice(start, i));
+			start = i;
+		}
+		
+		if (i == xml.length - 1) {
+			xmlParts.push(xml.slice(start, i + 1));
+		}
+	}
+	
+	return xmlParts;
+}
+
+function decompileXML(xml) {
+	xml = splitXML(xml);
+	
+	for (let i = 0; i < xml.length; i++) {
+		xml[i] = decompileObject(xml[i]);
+	}
+	
+	return xml;
+}
+
+function insertXML(xml) {
+	xml = decompileXML(xml);
+	
+	for (let i = 0; i < xml.length; i++) {
+		es.push(xml[i]);
+	}
+	
+	need_redraw = 1;
+    need_GUIParams_update = 1;
 }
 ///////////////////////////////
 function UpdatePhysicalParam(paramname, chvalue) {
