@@ -736,7 +736,8 @@ function decompileObject(xml) {
 	    }
         }
 	xml = xml.slice(1, xml.length - 3);
-	xml = xml.split(" ");
+	xml = xml.replace(" ", '" ');
+	xml = xml.split('" ');
 
 	for (let i = 1; i < xml.length; i++) {
 		xml[i] = xml[i].split("=");
