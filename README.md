@@ -30,6 +30,7 @@ Discord server: https://discord.gg/K5jcNEvZ85
 - Allows putting spaces in action parameters. (v3.6)
 - Allows pasting XML directly. (v3.7)
 - Fixes issue where you are unable to rename decor if it had " in the name. (v3.8)
+- Ctrl + F(Find object) and Ctrl + S(Save) keybinds. (v4.0)
 
 ## How to install ?
 It's recommended to use [tampermonkey](https://www.tampermonkey.net/) as that gives you benefit of auto updating. Once you download tampermonkey, you can click [here](https://github.com/ZenoABC/ALEI/raw/main/alei.user.js), then tampermonkey will ask you whether to install or not, just click "install".
