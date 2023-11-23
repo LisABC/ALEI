@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      3.9
+// @version      4.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -890,6 +890,49 @@ function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approva
 
     return false;
 }
+
+function findObjects(name) {
+	name = name.toLowerCase();
+	
+	let notFound = 1;
+	
+	for (let i = 0; i < es.length; i++) {
+		es[i].selected = 0;
+		
+		if (es[i].pm.uid) {
+			if (es[i].pm.uid.toLowerCase().includes(name) && MatchLayer(es[i])) {
+				es[i].selected = 1;
+				notFound = 0;
+			}
+		}
+	}
+	
+	need_GUIParams_update = 1;
+	need_redraw = 1;
+	
+	return notFound;
+}
+
+document.addEventListener("keydown", e => {
+	if (e.ctrlKey && e.code == "KeyS") {
+		e.preventDefault();
+		document.getElementsByClassName("field_btn")[0].click();
+	}
+	
+	if (e.ctrlKey && e.code == "KeyF") {
+		e.preventDefault();
+		
+		let name = prompt("Find objects:", "");
+		
+		if (name !== null && name !== "") {
+			let notFound = findObjects(name);
+			
+			if (notFound) {
+				alert("Nothing found.");
+			}
+		}
+	}
+});
 
 ///////////////////////////////
 
