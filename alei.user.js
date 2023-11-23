@@ -493,11 +493,17 @@ function updateButtons() {
     });
     // "Insert XML" button.
     createButton("Insert XML", "insertXMLButton", () => {
-        let xml = prompt("Enter XML:", "");
-
-        if (xml !== null) {
-            insertXML(xml);
-        }
+        let file = confirm("File (OK) or text (Cancel) ?");
+		
+	if (file) {
+		fileInput.click();
+	} else {
+		let xml = prompt("Enter XML:", "");
+		
+		if (xml !== null) {
+			insertXML(xml);
+		}
+	}
     });
     // Readd 'rights' back.
     topPanel.innerHTML += appendBack;
@@ -791,6 +797,26 @@ function insertXML(xml) {
 
 	need_redraw = 1;
     need_GUIParams_update = 1;
+}
+
+let fileInput = document.createElement("input");
+
+fileInput.type = "file";
+
+fileInput.onchange = function() {
+	if (fileInput.files[0]) {
+		if (fileInput.files[0].name.split(".")[1] == "xml") {
+			let reader = new FileReader();
+			
+			reader.onload = function() {
+				insertXML(reader.result);
+			}
+			
+			reader.readAsText(fileInput.files[0]);
+		} else {
+			alert("Invalid file extension.");
+		}
+	}
 }
 ///////////////////////////////
 function UpdatePhysicalParam(paramname, chvalue) {
