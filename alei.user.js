@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      4.1
+// @version      4.2
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -861,6 +861,19 @@ window.aleiContextRenameImage = function(id) {
       );
     }
 }
+window.aleiContextDeleteImage = function(id) {
+    let v = confirm(`Are you sure you want to delete ${imageContextMap[id]} ?`);
+    CloseImageContext();
+    if ( v ) {
+        last_element.style.opacity = '0.5';
+        setTimeout(
+            function() {
+                ServerRequest(`a=get_images&for_class=${last_for_class}&delete=${id}`, 'delete_image' );
+            },
+            1
+        );
+    }
+}
 
 function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approval=false, login='?', approver='?') {
     imageContextMap[id] = old_name;
@@ -898,7 +911,7 @@ function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approva
                 str += `<div onclick="" style="color:rgba(0,0,0,0.3)">Exclude from approval review queue (not in queue)</div>`;
             }
 
-            str += `<div onclick="var v = confirm('Are you sure you want to delete \\'\\'${old_name}\\'\\'' ); CloseImageContext(); if ( v ) { last_element.style.opacity = '0.5'; setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&delete=${id}', 'delete_image' ); }, 1 ); } ">Delete <img src="../images/noap.png" width="11" height="11"></div>`;
+            str += `<div onclick="aleiContextDeleteImage(${id})">Delete <img src="../images/noap.png" width="11" height="11"></div>`;
         } else {
             str += `<div onclick="" style="color:rgba(0,0,0,0.3)">Add to favorites? Not ready yet...</div>`;
             str += `<div onclick="CloseImageContext(); setTimeout( function() { open_approved_decor_model = true; SaveFiltering(); search_phrase = '*by_login*'+last_login; UpdateImageList(); }, 1 );">Search for other approved images from &quot;${login}&quot;</div>`;
