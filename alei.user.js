@@ -825,17 +825,28 @@ function exportXML() {
                 newstr += compi_obj(i);
             }
         }
+		
+		if (mapid) {
+			download.download = mapid + " (selection).xml";
+		} else {
+			download.download = "newmap (selection).xml";
+		}
     } else {
         for (let i = 0; i < es.length; i++) {
             if (es[i].exists) {
 				newstr += compi_obj(i);
 			}
         }
+		
+		if (mapid) {
+			download.download = mapid + ".xml";
+		} else {
+			download.download = "newmap.xml";
+		}
     }
-    
-    download.download = mapid + ".xml";
+	
     download.href = "data:text," + escape(newstr);
-    
+	
 	if (newstr) {
 		download.click();
 	} else {
