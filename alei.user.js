@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      4.2
+// @version      4.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -27,7 +27,8 @@ let aleiSettings = {
     triggerEditTextSize: "12px",
     starsImage: "stars2.jpg",
     logLevel: 0,
-    showTriggerIDs: false
+    showTriggerIDs: false,
+    enableTooltips: false
 }
 let levelToNameMap = {
     0: "INFO",
@@ -478,28 +479,17 @@ function updateButtons() {
 
     // "Download XML" button.
     createButton("Download XML", "downloadXMLButton", () => {
-        let s = '';
-        for (const o in es) {
-            if (!es[o].exists) continue;
-            s += compi_obj(o);
-        }
-        const blob = new Blob([s], {type: 'application/xml'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = mapid + '.xml';
-        a.click();
-        a.remove()
+        exportXML();
     });
     // "Insert XML" button.
     createButton("Insert XML", "insertXMLButton", () => {
         let file = confirm("File (OK) or text (Cancel) ?");
-		
+
 	if (file) {
 		fileInput.click();
 	} else {
 		let xml = prompt("Enter XML:", "");
-		
+
 		if (xml !== null) {
 			insertXML(xml);
 		}
@@ -807,16 +797,64 @@ fileInput.onchange = function() {
 	if (fileInput.files[0]) {
 		if (fileInput.files[0].name.split(".")[1] == "xml") {
 			let reader = new FileReader();
-			
+
 			reader.onload = function() {
 				insertXML(reader.result);
 			}
-			
+
 			reader.readAsText(fileInput.files[0]);
 		} else {
 			alert("Invalid file extension.");
 		}
 	}
+}
+
+function exportXML() {
+    let exportSelection = 0;
+    let newstr = "";
+    let download = document.createElement("a");
+
+    for (let i = 0; i < es.length; i++) {
+        if (es[i].selected) {
+            exportSelection = 1;
+        }
+    }
+
+    if (exportSelection) {
+        for (let i = 0; i < es.length; i++) {
+            if (es[i].selected) {
+                newstr += compi_obj(i);
+            }
+        }
+
+		if (mapid) {
+			download.download = mapid + " (selection).xml";
+		} else {
+			download.download = "newmap (selection).xml";
+		}
+    } else {
+        for (let i = 0; i < es.length; i++) {
+            if (es[i].exists) {
+				newstr += compi_obj(i);
+			}
+        }
+
+		if (mapid) {
+			download.download = mapid + ".xml";
+		} else {
+			download.download = "newmap.xml";
+		}
+    }
+
+    download.href = "data:text," + escape(newstr);
+
+	if (newstr) {
+		download.click();
+	} else {
+		alert("Map is empty.");
+	}
+
+    download.remove();
 }
 ///////////////////////////////
 function UpdatePhysicalParam(paramname, chvalue) {
@@ -932,12 +970,12 @@ function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approva
 
 function findObjects(name) {
 	name = name.toLowerCase();
-	
+
 	let notFound = 1;
-	
+
 	for (let i = 0; i < es.length; i++) {
 		es[i].selected = 0;
-		
+
 		if (es[i].pm.uid) {
 			if (es[i].pm.uid.toLowerCase().includes(name) && MatchLayer(es[i])) {
 				es[i].selected = 1;
@@ -945,10 +983,10 @@ function findObjects(name) {
 			}
 		}
 	}
-	
+
 	need_GUIParams_update = 1;
 	need_redraw = 1;
-	
+
 	return notFound;
 }
 
@@ -957,21 +995,75 @@ document.addEventListener("keydown", e => {
 		e.preventDefault();
 		document.getElementsByClassName("field_btn")[0].click();
 	}
-	
+
 	if (e.ctrlKey && e.code == "KeyF") {
 		e.preventDefault();
-		
+
 		let name = prompt("Find objects:", "");
-		
+
 		if (name !== null && name !== "") {
 			let notFound = findObjects(name);
-			
+
 			if (notFound) {
 				alert("Nothing found.");
 			}
 		}
 	}
 });
+
+function doTooltip() {
+    let tooltip = document.createElement("p");
+
+    tooltip.style.fontSize = "16px";
+    tooltip.style.fontFamily = "monospace";
+    tooltip.style.color = "#eee";
+    tooltip.style.backgroundColor = "#000";
+    tooltip.style.padding = "10px";
+    tooltip.style.width = "fit-content";
+    tooltip.style.borderRadius = "4px";
+    tooltip.style.wordBreak = "break-all";
+    tooltip.style.position = "absolute";
+    tooltip.style.left = "100px";
+    tooltip.style.top = "-100px";
+
+    document.body.append(tooltip);
+
+    document.addEventListener("mousemove", e => {
+    	if (e.target.title) {
+    		e.target.dataset.title = e.target.title;
+    		e.target.title = "";
+    	}
+
+    	if (e.target.parentElement.title) {
+    		e.target.parentElement.dataset.title = e.target.parentElement.title;
+    		e.target.parentElement.title = "";
+    	}
+        let leftOffset = 150
+
+    	if (e.target.dataset.title) {
+            let to = e.target.dataset.title.length
+    		tooltip.style.left = to + leftOffset + e.clientX + 20 + "px";
+    		tooltip.innerHTML = e.target.dataset.title;
+
+    		if (tooltip.getBoundingClientRect().height != 31) {
+    			tooltip.style.left = to + leftOffset + e.clientX - 20 - tooltip.getBoundingClientRect().width + "px";
+    		}
+    	} else if (e.target.parentElement.dataset.title) {
+            let to = e.target.parentElement.dataset.title.length
+    		tooltip.style.left = to + leftOffset + e.clientX + 20 + "px";
+    		tooltip.style.top = e.clientY + "px";
+    		tooltip.innerHTML = e.target.parentElement.dataset.title;
+
+    		if (tooltip.getBoundingClientRect().height != 31) {
+    			tooltip.style.left = to + leftOffset + e.clientX - 20 - tooltip.getBoundingClientRect().width + "px";
+    		}
+    	} else {
+    		tooltip.style.left = -100 + leftOffset + "px";
+    		tooltip.style.top = "-100px";
+    	}
+    });
+    aleiLog(DEBUG, "Added tooltip.")
+}
 
 ///////////////////////////////
 
@@ -998,6 +1090,9 @@ document.addEventListener("keydown", e => {
         setTimeout(overwriteImageContext, 1000); // Function comes from evaling ServerRequest, and for some reason it gets overwritten, so we have to constantly overwrite.
     }
     overwriteImageContext();
+    if(aleiSettings.enableTooltips) {
+        doTooltip();
+    }
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
 })();
