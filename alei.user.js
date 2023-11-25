@@ -478,18 +478,7 @@ function updateButtons() {
 
     // "Download XML" button.
     createButton("Download XML", "downloadXMLButton", () => {
-        let s = '';
-        for (const o in es) {
-            if (!es[o].exists) continue;
-            s += compi_obj(o);
-        }
-        const blob = new Blob([s], {type: 'application/xml'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = mapid + '.xml';
-        a.click();
-        a.remove()
+        exportXML();
     });
     // "Insert XML" button.
     createButton("Insert XML", "insertXMLButton", () => {
@@ -818,6 +807,43 @@ fileInput.onchange = function() {
 		}
 	}
 }
+
+function exportXML() {
+    let exportSelection = 0;
+    let newstr = "";
+    let download = document.createElement("a");
+    
+    for (let i = 0; i < es.length; i++) {
+        if (es[i].selected) {
+            exportSelection = 1;
+        }
+    }
+    
+    if (exportSelection) {
+        for (let i = 0; i < es.length; i++) {
+            if (es[i].selected) {
+                newstr += compi_obj(i);
+            }
+        }
+    } else {
+        for (let i = 0; i < es.length; i++) {
+            if (es[i].exists) {
+				newstr += compi_obj(i);
+			}
+        }
+    }
+    
+    download.download = mapid + ".xml";
+    download.href = "data:text," + escape(newstr);
+    
+	if (newstr) {
+		download.click();
+	} else {
+		alert("Map is empty.");
+	}
+	
+    download.remove();
+}
 ///////////////////////////////
 function UpdatePhysicalParam(paramname, chvalue) {
     lcz();
@@ -970,6 +996,57 @@ document.addEventListener("keydown", e => {
 				alert("Nothing found.");
 			}
 		}
+	}
+});
+
+let tooltip = document.createElement("p");
+
+tooltip.style.fontSize = "16px";
+tooltip.style.fontFamily = "monospace";
+tooltip.style.color = "#eee";
+tooltip.style.backgroundColor = "#000";
+tooltip.style.padding = "6px";
+tooltip.style.width = "fit-content";
+tooltip.style.borderRadius = "4px";
+tooltip.style.wordBreak = "break-all";
+tooltip.style.position = "absolute";
+tooltip.style.left = "-100px";
+tooltip.style.top = "-100px";
+
+document.body.append(tooltip);
+
+document.addEventListener("mousemove", e => {
+	if (e.target.title) {
+		e.target.dataset.title = e.target.title;
+		e.target.title = "";
+	}
+	
+	if (e.target.parentElement.title) {
+		e.target.parentElement.dataset.title = e.target.parentElement.title;
+		e.target.parentElement.title = "";
+	}
+	
+	if (e.target.dataset.title) {
+		tooltip.style.left = e.clientX + 20 + "px";
+		tooltip.style.top = e.clientY + "px";
+		tooltip.innerHTML = e.target.dataset.title;
+		
+		if (tooltip.getBoundingClientRect().height != 31) {
+			tooltip.style.left = "0px";
+			tooltip.style.left = e.clientX - 20 - tooltip.getBoundingClientRect().width + "px";
+		}
+	} else if (e.target.parentElement.dataset.title) {
+		tooltip.style.left = e.clientX + 20 + "px";
+		tooltip.style.top = e.clientY + "px";
+		tooltip.innerHTML = e.target.parentElement.dataset.title;
+		
+		if (tooltip.getBoundingClientRect().height != 31) {
+			tooltip.style.left = "0px";
+			tooltip.style.left = e.clientX - 20 - tooltip.getBoundingClientRect().width + "px";
+		}
+	} else {
+		tooltip.style.left = "-100px";
+		tooltip.style.top = "-100px";
 	}
 });
 
