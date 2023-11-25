@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      4.3
+// @version      4.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -382,24 +382,27 @@ function updateDecors() {
         let addDecors = false;
         if (req.indexOf("a=get_images") != -1 && req.indexOf("for_class=decor_model") != -1) addDecors = true; // We don't want to mess with background business, only decors
         _serverRequest(req, op, callback);
-        if (addDecors) {
-            let list_native = $id("list_native");
-            for(let i = 0; i < decors.length; i++) {
-                let decor = decors[i];
-                let decor_model = decor[0];
-                let decor_name = decor[1];
-                let decor_image = decor[2];
-                try {list_native.innerHTML += `
-                <div class="img_option img_option_selected" onClick="CustomImageSelected('${decor_model}', '${decor_name}' )">
-                     <div class="imgdiv" style="background:url(${decor_image})"></div>
-                     <div>
+        try {
+            if (addDecors) {
+                let list_native = $id("list_native");
+                for(let i = 0; i < decors.length; i++) {
+                    let decor = decors[i];
+                    let decor_model = decor[0];
+                    let decor_name = decor[1];
+                    let decor_image = decor[2];
+                    list_native.innerHTML += `
+                    <div class="img_option" onClick="CustomImageSelected('${decor_model}', '${decor_name}' )">
+                       <div class="imgdiv" style="background:url(${decor_image})"></div>
+                       <div>
                          ${decor_name}
-                     </div>
-                </div>
-                `} catch(e) {} // We assume we are not in decor list yet.
+                       </div>
+                    </div>
+                    `
+                }
+                aleiLog(DEBUG, "Updated decor list.");
             }
-            aleiLog(DEBUG, "Updated decor list.");
         }
+        catch(e) {} // We assume we are not in decor list yet.
     }
 }
 
@@ -1065,6 +1068,23 @@ function doTooltip() {
     aleiLog(DEBUG, "Added tooltip.")
 }
 
+function patchDecorUpload() {
+    // Allows for multiple uploads.
+    let imageLoader = $id("imageLoader");
+    // First we make it allow multiple files and remove original event listener.
+    imageLoader.setAttribute("multiple", true);
+    imageLoader.removeEventListener("change", handleImage);
+    // Then we register our own.
+    imageLoader.addEventListener("change", function(e) {
+        let files = e.target.files;
+        NewNote(`ALEI: Will upload ${files.length} bg/decor(s).`, "#2595FF");
+        for (let file of files) {
+            let arg = {target: {files: [file]}};
+            handleImage(arg); // Call original function
+        }
+    }, false)
+}
+
 ///////////////////////////////
 
 (async function() {
@@ -1084,12 +1104,16 @@ function doTooltip() {
     patchShowHideButton();
     optimize();
     patchUpdateTools();
+    patchDecorUpload();
+    // Allowing for spaces in parameters.
     window.UpdatePhysicalParam = UpdatePhysicalParam;
+    // Patching delete and rename in decor list.
     function overwriteImageContext() {
         window.ImageContext = ImageContext;
         setTimeout(overwriteImageContext, 1000); // Function comes from evaling ServerRequest, and for some reason it gets overwritten, so we have to constantly overwrite.
     }
     overwriteImageContext();
+    // Tooltip.
     if(aleiSettings.enableTooltips) {
         doTooltip();
     }
