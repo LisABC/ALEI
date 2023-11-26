@@ -972,17 +972,31 @@ function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approva
 }
 
 function findObjects(name) {
-	name = name.toLowerCase();
-
+	let exact = confirm("Exact name?");
 	let notFound = 1;
+	
+	if (!exact) {
+		name = name.toLowerCase();
+		
+		for (let i = 0; i < es.length; i++) {
+			es[i].selected = 0;
 
-	for (let i = 0; i < es.length; i++) {
-		es[i].selected = 0;
-
-		if (es[i].pm.uid) {
-			if (es[i].pm.uid.toLowerCase().includes(name) && MatchLayer(es[i])) {
-				es[i].selected = 1;
-				notFound = 0;
+			if (es[i].pm.uid) {
+				if (es[i].pm.uid.toLowerCase().includes(name) && MatchLayer(es[i])) {
+					es[i].selected = 1;
+					notFound = 0;
+				}
+			}
+		}
+	} else {
+		for (let i = 0; i < es.length; i++) {
+			es[i].selected = 0;
+			
+			if (es[i].pm.uid) {
+				if (es[i].pm.uid == name && MatchLayer(es[i])) {
+					es[i].selected = 1;
+					notFound = 0;
+				}
 			}
 		}
 	}
