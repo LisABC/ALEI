@@ -500,7 +500,7 @@ function updateButtons() {
 
 						reader.onload = function() {
 							insertXML(reader.result);
-							
+
 							fileInput.remove();
 						}
 
@@ -510,7 +510,7 @@ function updateButtons() {
 					}
 				}
 			}
-			
+
 			fileInput.click();
 		} else {
 			let xml = prompt("Enter XML:", "");
@@ -747,7 +747,7 @@ function patchUpdateTools() {
     aleiLog(DEBUG, "Patched updateTools.");
 }
 
-function toNumber(x) {
+function tryToNumber(x) {
 	if (!isNaN(Number(x))) {
 		return Number(x);
 	} else {
@@ -757,24 +757,28 @@ function toNumber(x) {
 
 function insertXML(xml) {
 	xml = "<map>" + xml.replaceAll("&", "&amp;") + "</map>";
-	
+
 	let parser = new DOMParser();
 	let map = parser.parseFromString(xml, "application/xml");
 	let objects = map.querySelectorAll("*");
-	
+
 	for (let i = 1; i < objects.length; i++) {
-		let object = new E(objects[i].tagName);
-		
-		for (let j = 0; j < objects[i].attributes.length; j++) {
-			let name = objects[i].attributes[j].name;
-			let value = objects[i].attributes[j].value;
-			
-			object.pm[name] = toNumber(value);
+        let object = objects[i];
+        if (object.tagName == "map") continue;
+
+        let eo = new E(object.tagName);
+        eo.pm = {};
+
+		for (let j = 0; j < object.attributes.length; j++) {
+			let name = object.attributes[j].name;
+			let value = object.attributes[j].value;
+
+			eo.pm[name] = tryToNumber(value);
 		}
-		
-		es.push(object);
+
+		es.push(eo);
 	}
-	
+
 	need_redraw = 1;
 	need_GUIParams_update = 1;
 }
