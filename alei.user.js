@@ -488,15 +488,37 @@ function updateButtons() {
     createButton("Insert XML", "insertXMLButton", () => {
         let file = confirm("File (OK) or text (Cancel) ?");
 
-	if (file) {
-		fileInput.click();
-	} else {
-		let xml = prompt("Enter XML:", "");
+		if (file) {
+			let fileInput = document.createElement("input");
 
-		if (xml !== null) {
-			insertXML(xml);
+			fileInput.type = "file";
+
+			fileInput.onchange = function() {
+				if (fileInput.files[0]) {
+					if (fileInput.files[0].name.split(".")[1] == "xml") {
+						let reader = new FileReader();
+
+						reader.onload = function() {
+							insertXML(reader.result);
+							
+							fileInput.remove();
+						}
+
+						reader.readAsText(fileInput.files[0]);
+					} else {
+						alert("Invalid file extension.");
+					}
+				}
+			}
+			
+			fileInput.click();
+		} else {
+			let xml = prompt("Enter XML:", "");
+
+			if (xml !== null) {
+				insertXML(xml);
+			}
 		}
-	}
     });
     // Readd 'rights' back.
     topPanel.innerHTML += appendBack;
@@ -725,91 +747,36 @@ function patchUpdateTools() {
     aleiLog(DEBUG, "Patched updateTools.");
 }
 
-// Helpers for "Import XML"
-function decompileObject(xml) {
-	function toNumber(x) {
-	    if (!isNaN(Number(x))) {
-                  return Number(x);
-	    } else {
-                  return x;
-	    }
-        }
-	xml = xml.slice(1, xml.length - 3);
-	xml = xml.replace(" ", '" ');
-	xml = xml.split('" ');
-
-	for (let i = 1; i < xml.length; i++) {
-		xml[i] = xml[i].split("=");
-		xml[i][1] = xml[i][1].replaceAll('"', "");
-		xml[i][1] = toNumber(xml[i][1]);
+function toNumber(x) {
+	if (!isNaN(Number(x))) {
+		return Number(x);
+	} else {
+		return x;
 	}
-
-	let obj = new E(xml[0]);
-
-	for (let i = 1; i < xml.length; i++) {
-		obj.pm[xml[i][0]] = xml[i][1];
-	}
-
-	return obj;
-}
-
-function splitXML(xml) {
-	let xmlParts = [];
-	let start = 0;
-
-	for (let i = 1; i < xml.length; i++) {
-		if (xml[i - 1] == ">") {
-			xmlParts.push(xml.slice(start, i));
-			start = i;
-		}
-
-		if (i == xml.length - 1) {
-			xmlParts.push(xml.slice(start, i + 1));
-		}
-	}
-
-	return xmlParts;
-}
-
-function decompileXML(xml) {
-	xml = splitXML(xml);
-
-	for (let i = 0; i < xml.length; i++) {
-		xml[i] = decompileObject(xml[i]);
-	}
-
-	return xml;
 }
 
 function insertXML(xml) {
-	xml = decompileXML(xml);
-
-	for (let i = 0; i < xml.length; i++) {
-		es.push(xml[i]);
-	}
-
-	need_redraw = 1;
-    need_GUIParams_update = 1;
-}
-
-let fileInput = document.createElement("input");
-
-fileInput.type = "file";
-
-fileInput.onchange = function() {
-	if (fileInput.files[0]) {
-		if (fileInput.files[0].name.split(".")[1] == "xml") {
-			let reader = new FileReader();
-
-			reader.onload = function() {
-				insertXML(reader.result);
-			}
-
-			reader.readAsText(fileInput.files[0]);
-		} else {
-			alert("Invalid file extension.");
+	xml = "<map>" + xml.replaceAll("&", "&amp;") + "</map>";
+	
+	let parser = new DOMParser();
+	let map = parser.parseFromString(xml, "application/xml");
+	let objects = map.querySelectorAll("*");
+	
+	for (let i = 1; i < objects.length; i++) {
+		let object = new E(objects[i].tagName);
+		
+		for (let j = 0; j < objects[i].attributes.length; j++) {
+			let name = objects[i].attributes[j].name;
+			let value = objects[i].attributes[j].value;
+			
+			object.pm[name] = toNumber(value);
 		}
+		
+		es.push(object);
 	}
+	
+	need_redraw = 1;
+	need_GUIParams_update = 1;
 }
 
 function exportXML() {
