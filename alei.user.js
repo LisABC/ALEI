@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      4.6
+// @version      4.7
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -841,7 +841,7 @@ function UpdatePhysicalParam(paramname, chvalue) {
                 if (es[elems].pm.hasOwnProperty(paramname)) {
                     if (MatchLayer(es[elems])) {
                         var lup = (typeof(paramname) == 'string') ? '"' + paramname + '"' : paramname;
-                        if (typeof(chvalue) == 'number' || ((chvalue == 0) && (chvalue != " "))) {
+                        if (typeof(chvalue) == 'number' || ((chvalue === 0))) {
                             lnd('es[' + elems + '].pm[' + lup + '] = ' + es[elems].pm[paramname] + ';');
                             ldn('es[' + elems + '].pm[' + lup + '] = ' + chvalue + ';');
                             es[elems].pm[paramname] = Number(chvalue);
