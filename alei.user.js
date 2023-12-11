@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      4.7
+// @version      4.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -887,7 +887,7 @@ window.aleiContextDeleteImage = function(id) {
     }
 }
 
-function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approval=false, login='?', approver='?') {
+function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approval=false, login='?', approver='?', is_fav_menu = false) {
     imageContextMap[id] = old_name;
     last_element = element;
     last_login = login;
@@ -925,10 +925,16 @@ function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approva
 
             str += `<div onclick="aleiContextDeleteImage(${id})">Delete <img src="../images/noap.png" width="11" height="11"></div>`;
         } else {
-            str += `<div onclick="" style="color:rgba(0,0,0,0.3)">Add to favorites? Not ready yet...</div>`;
             str += `<div onclick="CloseImageContext(); setTimeout( function() { open_approved_decor_model = true; SaveFiltering(); search_phrase = '*by_login*'+last_login; UpdateImageList(); }, 1 );">Search for other approved images from &quot;${login}&quot;</div>`;
-
         }
+
+       str += `<span style="display:block;">&nbsp;</span>`;
+       if (is_fav_menu) {
+          str += `<div onclick="CloseImageContext();  setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&favorite_del=${id}', 'favorite_status' ); }, 1 ); ">Remove from favorites</div>`;
+       } else {
+        str += `<div onclick="CloseImageContext();  setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&favorite_add=${id}', 'favorite_status' ); }, 1 ); ">Add to favorites</div>`;
+       }
+
     }
 
     image_context.innerHTML = str;
