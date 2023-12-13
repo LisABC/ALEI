@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      4.9
+// @version      5.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -684,15 +684,15 @@ function addTriggerIDs() {
 function patchShowHideButton() {
     let og = window.ShowHideObjectBox;
     window.ShowHideObjectBox = function() {
-        let height = "";
-        if(ObjectBox_visible) { // This will be not visible.
-            height = "calc(100vh - 155px)";
-        } else { // This will be visible.
-            height = "calc(100vh - 270px)";
+        og();
+        let rparams = $id("rparams");
+        let heightOffset = {true: 270, false: 155}[ObjectBox_visible];
+        if (rparams != null) {
+            heightOffset = Math.round(rparams.getBoundingClientRect().top + 13);
         }
         // We then set variable and call original function.
-        document.documentElement.style.setProperty("--ALEI_RPARAMS_HEIGHT", height);
-        og();
+        document.documentElement.style.setProperty("--ALEI_RPARAMS_HEIGHT", `calc(100vh - ${heightOffset}px)`);
+        //og();
     }
     ShowHideObjectBox();
     ShowHideObjectBox(); // Hacky way to fix bug
@@ -1101,6 +1101,8 @@ function addObjBoxResize() {
         let new_height = e.clientY - 90;
         obj.style.height = new_height;
         updateBoxSplitterSize();
+        ShowHideObjectBox();
+        ShowHideObjectBox();
     });
 
 }
