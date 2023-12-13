@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      4.8
+// @version      4.9
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -17,6 +17,7 @@ function $query(selector) {
     return document.querySelector(selector);
 }
 
+const ROOT_ELEMENT = document.documentElement;
 const stylesheets = document.styleSheets;
 const INFO = 0
 const DEBUG = 1
@@ -648,6 +649,7 @@ function addPropertyPanelResize() {
         let new_width = Math.min(root.clientWidth - 100, Math.max(100, root.clientWidth - e.clientX));
         right_panel.style.width = new_width + 'px';
         splitter.style.right = new_width + 'px';
+        updateBoxSplitterSize();
     }
 
     splitter.addEventListener('mousedown', (e) => {
@@ -1068,10 +1070,47 @@ function patchDecorUpload() {
 
 ///////////////////////////////
 
+function updateBoxSplitterSize() {
+    let obj = $id("gui_objbox");
+    let rect = obj.getBoundingClientRect();
+    let style = splitter2.style;
+    style.setProperty("width", rect.width);
+    style.setProperty("left", rect.x);
+    style.setProperty("top", rect.bottom);
+}
+
+function addObjBoxResize() {
+    let obj = $id("gui_objbox");
+    let splitter = document.createElement("div");
+    window.splitter2 = splitter;
+    let style = splitter.style;
+    $id("floattag").appendChild(splitter);
+
+    style.setProperty("position", "absolute");
+    style.setProperty("height", "5px");
+    style.setProperty("cursor", "s-resize");
+
+    updateBoxSplitterSize();
+
+    let splitterClicking = false;
+    splitter.onmousedown = ((e) => {splitterClicking = true});
+    ROOT_ELEMENT.addEventListener("mouseup", (e) => {splitterClicking = false});
+    ROOT_ELEMENT.addEventListener("mousemove", (e) => {
+        if (!splitterClicking) return;
+
+        let new_height = e.clientY - 90;
+        obj.style.height = new_height;
+        updateBoxSplitterSize();
+    });
+
+}
+
 (async function() {
    'use strict';
     // Handling rest of things
+    addObjBoxResize();
     addPropertyPanelResize();
+
     updateStyles();
     updateSkins();
     updateSounds();
