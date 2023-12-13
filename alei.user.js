@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      5.1
+// @version      5.2
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1161,17 +1161,32 @@ function fixIndex(index, objectType) {
 }
 
 const parameterMap = {
-    "m": "box_model",
-    "moving": "bool",
-    "vis": "bool",
-    "use_on": "region_activation",
-    "f": "draw_in_front",
-    "s": "bool",
-    "friction": "bool",
-    "command": "team+any",
-    "upg": "gun_upgrade",
-    "flare": "bool",
-    "enabled": "bool",
+    "box": {"m": "box_model"},
+    "door": {
+        "moving": "bool",
+        "vis": "bool"
+    },
+    "region": {"use_on": "region_activation"},
+    "decor": {
+        "f": "draw_in_front",
+        "model": "decor_model"
+    },
+    "bg": {
+        "s": "bool",
+        "f": "draw_in_front",
+        "m": "bg_model"
+    },
+    "water": {"friction": "bool"},
+    "trigger": {"enabled": "bool"},
+    "timer": {"enabled": "bool"},
+    "gun": {
+        "command": "team+any",
+        "upg": "gun_upgrade",
+        "model": "gun_model"
+    },
+    "barrel": {"model": "barrel_model"},
+    "lamp": {"flare": "bool"},
+    "vehicle": {"model": "vehicle_model"}
 }
 
 function fixParameterValue(name, value, objectType) {
@@ -1180,19 +1195,11 @@ function fixParameterValue(name, value, objectType) {
 	if (special_values_table[name]) {
 		fixedValue = special_values_table[name][value];
 	} else {
-        if (parameterMap[name]) {
-            let paramType = parameterMap[name];
-            if (paramType == "bool") value = toBoolean(value);
-            fixedValue = special_values_table[parameterMap[name]][value];
-        }
-        else if (name.slice(0, 8) == "actions_" && name.slice(-5) == "_type") fixedValue = special_values_table["trigger_type"][value];
-        else if (name == "model") {
-            if (objectType == "vehicle") fixedValue = special_values_table["vehicle_model"][value];
-			else if (objectType == "decor") fixedValue = special_values_table["decor_model"][value];
-			else if (objectType == "gun") fixedValue = special_values_table["gun_model"][value];
-			else if (objectType == "barrel") fixedValue = special_values_table["barrel_model"][value];
-        }
-		else {
+        if (parameterMap[objectType] && parameterMap[objectType][name]) {
+            fixedValue = special_values_table[ parameterMap[objectType][name] ][value];
+        }else if (name.slice(0, 8) == "actions_" && name.slice(-5) == "_type") {
+            fixedValue = special_values_table["trigger_type"][value];
+        }else {
             fixedValue = value;
         }
 	}
@@ -1220,8 +1227,11 @@ function setSameParameters() {
 function showSameTypeParameters() {
     let oldAni = window.ani;
     window.ani = function() {
+        let ngpu = need_GUIParams_update;
         oldAni();
-        setSameParameters();
+        if (ngpu) {
+            setSameParameters();
+        }
     }
 }
 
