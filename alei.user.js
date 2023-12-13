@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      5.0
+// @version      5.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -29,7 +29,8 @@ let aleiSettings = {
     starsImage: "stars2.jpg",
     logLevel: 0,
     showTriggerIDs: false,
-    enableTooltips: false
+    enableTooltips: false,
+    showSameParameters: true
 }
 let levelToNameMap = {
     0: "INFO",
@@ -758,7 +759,7 @@ function tryToNumber(x) {
 }
 
 function insertXML(xml) {
-	xml = "<map>" + xml.replaceAll("&", "&amp;") + "</map>";
+	xml = "<map>" + xml.replaceAll("&", "[__Amp]") + "</map>";
 
 	let parser = new DOMParser();
 	let map = parser.parseFromString(xml, "application/xml");
@@ -775,7 +776,7 @@ function insertXML(xml) {
 			let name = object.attributes[j].name;
 			let value = object.attributes[j].value;
 
-			eo.pm[name] = tryToNumber(value);
+			eo.pm[name] = tryToNumber(value.replaceAll("[__Amp]", "&"));
 		}
 
 		es.push(eo);
@@ -1068,6 +1069,174 @@ function patchDecorUpload() {
     }, false)
 }
 
+function setParameter(index, value) {
+	let rightParams = document.getElementById("rparams");
+
+	rightParams.childNodes[index].childNodes[1].innerHTML = value;
+}
+
+function getSelection() {
+	let objects = [];
+
+	for (let i = 0; i < es.length; i++) {
+		if (es[i].selected) {
+			objects.push(es[i]);
+		}
+	}
+
+	return objects;
+}
+
+function areObjectsOfSameType(objects) {
+	let same = 1;
+
+	for (let i = 0; i < objects.length; i++) {
+		if (objects[i]._class != objects[0]._class) {
+			same = 0;
+		}
+	}
+
+	return same;
+}
+
+function removeSameItems(array) {
+	return Array.from(new Set(array));
+}
+
+function removeItems(array, items) {
+	let copy = JSON.parse(JSON.stringify(array));
+
+	for (let i = 0; i < items.length; i++) {
+		copy.splice(copy.indexOf(items[i]), 1);
+	}
+
+	return copy;
+}
+
+function parameterNamesToIndexes(parameters, objectParameters) {
+	let indexes = [];
+
+	for (let i = 0; i < parameters.length; i++) {
+		indexes.push(objectParameters.indexOf(parameters[i]));
+	}
+
+	return indexes;
+}
+
+function getSameParameters(objects) {
+	let differentParameters = [];
+	let parameters = Object.keys(objects[0].pm);
+
+	for (let i = 0; i < objects.length; i++) {
+		for (let j = 0; j < parameters.length; j++) {
+			if (objects[i].pm[parameters[j]] != objects[0].pm[parameters[j]]) {
+				differentParameters.push(parameters[j]);
+			}
+		}
+	}
+
+	differentParameters = removeSameItems(differentParameters);
+	differentParameters = removeItems(parameters, differentParameters);
+
+	return parameterNamesToIndexes(differentParameters, parameters);
+}
+
+function toBoolean(str) {
+	if (isNaN(Number(str))) {
+		return str == "true";
+	} else {
+		return Boolean(str);
+	}
+}
+
+function fixIndex(index, objectType) {
+	let fixedIndex = index;
+
+	if (objectType == "trigger") {
+		if (index > 4) {
+			fixedIndex = index + Math.floor((index - 2) / 3);
+		}
+	}
+
+	return fixedIndex;
+}
+
+const parameterMap = {
+    "box": {"m": "box_model"},
+    "door": {
+        "moving": "bool",
+        "vis": "bool"
+    },
+    "region": {"use_on": "region_activation"},
+    "decor": {
+        "f": "draw_in_front",
+        "model": "decor_model"
+    },
+    "bg": {
+        "s": "bool",
+        "f": "draw_in_front",
+        "m": "bg_model"
+    },
+    "water": {"friction": "bool"},
+    "trigger": {"enabled": "bool"},
+    "timer": {"enabled": "bool"},
+    "gun": {
+        "command": "team+any",
+        "upg": "gun_upgrade",
+        "model": "gun_model"
+    },
+    "barrel": {"model": "barrel_model"},
+    "lamp": {"flare": "bool"},
+    "vehicle": {"model": "vehicle_model"}
+}
+
+function fixParameterValue(name, value, objectType) {
+	let fixedValue;
+
+	if (special_values_table[name]) {
+		fixedValue = special_values_table[name][value];
+	} else {
+        if (parameterMap[objectType] && parameterMap[objectType][name]) {
+            fixedValue = special_values_table[ parameterMap[objectType][name] ][value];
+        }else if (name.slice(0, 8) == "actions_" && name.slice(-5) == "_type") {
+            fixedValue = special_values_table["trigger_type"][value];
+        }else {
+            fixedValue = value;
+        }
+	}
+
+	return fixedValue;
+}
+
+function setSameParameters() {
+	let objects = getSelection();
+
+	if (areObjectsOfSameType(objects) && objects.length >= 2) {
+		let indexes = getSameParameters(objects);
+		let parameters = Object.keys(objects[0].pm);
+
+		for (let i = 0; i < indexes.length; i++) {
+			let name = parameters[indexes[i]];
+			let value = objects[0].pm[parameters[indexes[i]]];
+			let objectType = objects[0]._class;
+
+			setParameter(fixIndex(indexes[i], objectType), fixParameterValue(name, value, objectType));
+		}
+	}
+}
+
+function showSameTypeParameters() {
+    if (!aleiSettings.showSameParameters) return;
+    let oldAni = window.ani;
+    window.ani = function() {
+        let ngpu = need_GUIParams_update;
+        oldAni();
+        if (ngpu) {
+            setSameParameters();
+        }
+    }
+}
+
 ///////////////////////////////
 
 function updateBoxSplitterSize() {
@@ -1129,6 +1298,7 @@ function addObjBoxResize() {
     patchDecorUpload();
     // Allowing for spaces in parameters.
     window.UpdatePhysicalParam = UpdatePhysicalParam;
+    showSameTypeParameters();
     // Patching delete and rename in decor list.
     function overwriteImageContext() {
         window.ImageContext = ImageContext;
