@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      4.6
+// @version      5.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -17,6 +17,7 @@ function $query(selector) {
     return document.querySelector(selector);
 }
 
+const ROOT_ELEMENT = document.documentElement;
 const stylesheets = document.styleSheets;
 const INFO = 0
 const DEBUG = 1
@@ -648,6 +649,7 @@ function addPropertyPanelResize() {
         let new_width = Math.min(root.clientWidth - 100, Math.max(100, root.clientWidth - e.clientX));
         right_panel.style.width = new_width + 'px';
         splitter.style.right = new_width + 'px';
+        updateBoxSplitterSize();
     }
 
     splitter.addEventListener('mousedown', (e) => {
@@ -682,15 +684,15 @@ function addTriggerIDs() {
 function patchShowHideButton() {
     let og = window.ShowHideObjectBox;
     window.ShowHideObjectBox = function() {
-        let height = "";
-        if(ObjectBox_visible) { // This will be not visible.
-            height = "calc(100vh - 155px)";
-        } else { // This will be visible.
-            height = "calc(100vh - 270px)";
+        og();
+        let rparams = $id("rparams");
+        let heightOffset = {true: 270, false: 155}[ObjectBox_visible];
+        if (rparams != null) {
+            heightOffset = Math.round(rparams.getBoundingClientRect().top + 13);
         }
         // We then set variable and call original function.
-        document.documentElement.style.setProperty("--ALEI_RPARAMS_HEIGHT", height);
-        og();
+        document.documentElement.style.setProperty("--ALEI_RPARAMS_HEIGHT", `calc(100vh - ${heightOffset}px)`);
+        //og();
     }
     ShowHideObjectBox();
     ShowHideObjectBox(); // Hacky way to fix bug
@@ -841,7 +843,7 @@ function UpdatePhysicalParam(paramname, chvalue) {
                 if (es[elems].pm.hasOwnProperty(paramname)) {
                     if (MatchLayer(es[elems])) {
                         var lup = (typeof(paramname) == 'string') ? '"' + paramname + '"' : paramname;
-                        if (typeof(chvalue) == 'number' || ((chvalue == 0) && (chvalue != " "))) {
+                        if (typeof(chvalue) == 'number' || ((chvalue === 0))) {
                             lnd('es[' + elems + '].pm[' + lup + '] = ' + es[elems].pm[paramname] + ';');
                             ldn('es[' + elems + '].pm[' + lup + '] = ' + chvalue + ';');
                             es[elems].pm[paramname] = Number(chvalue);
@@ -887,7 +889,7 @@ window.aleiContextDeleteImage = function(id) {
     }
 }
 
-function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approval=false, login='?', approver='?') {
+function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approval=false, login='?', approver='?', is_fav_menu = false) {
     imageContextMap[id] = old_name;
     last_element = element;
     last_login = login;
@@ -925,10 +927,16 @@ function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approva
 
             str += `<div onclick="aleiContextDeleteImage(${id})">Delete <img src="../images/noap.png" width="11" height="11"></div>`;
         } else {
-            str += `<div onclick="" style="color:rgba(0,0,0,0.3)">Add to favorites? Not ready yet...</div>`;
             str += `<div onclick="CloseImageContext(); setTimeout( function() { open_approved_decor_model = true; SaveFiltering(); search_phrase = '*by_login*'+last_login; UpdateImageList(); }, 1 );">Search for other approved images from &quot;${login}&quot;</div>`;
-
         }
+
+       str += `<span style="display:block;">&nbsp;</span>`;
+       if (is_fav_menu) {
+          str += `<div onclick="CloseImageContext();  setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&favorite_del=${id}', 'favorite_status' ); }, 1 ); ">Remove from favorites</div>`;
+       } else {
+        str += `<div onclick="CloseImageContext();  setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&favorite_add=${id}', 'favorite_status' ); }, 1 ); ">Add to favorites</div>`;
+       }
+
     }
 
     image_context.innerHTML = str;
@@ -1340,10 +1348,49 @@ function ani() {
 
 ///////////////////////////////
 
+function updateBoxSplitterSize() {
+    let obj = $id("gui_objbox");
+    let rect = obj.getBoundingClientRect();
+    let style = splitter2.style;
+    style.setProperty("width", rect.width);
+    style.setProperty("left", rect.x);
+    style.setProperty("top", rect.bottom);
+}
+
+function addObjBoxResize() {
+    let obj = $id("gui_objbox");
+    let splitter = document.createElement("div");
+    window.splitter2 = splitter;
+    let style = splitter.style;
+    $id("floattag").appendChild(splitter);
+
+    style.setProperty("position", "absolute");
+    style.setProperty("height", "5px");
+    style.setProperty("cursor", "s-resize");
+
+    updateBoxSplitterSize();
+
+    let splitterClicking = false;
+    splitter.onmousedown = ((e) => {splitterClicking = true});
+    ROOT_ELEMENT.addEventListener("mouseup", (e) => {splitterClicking = false});
+    ROOT_ELEMENT.addEventListener("mousemove", (e) => {
+        if (!splitterClicking) return;
+
+        let new_height = e.clientY - 90;
+        obj.style.height = new_height;
+        updateBoxSplitterSize();
+        ShowHideObjectBox();
+        ShowHideObjectBox();
+    });
+
+}
+
 (async function() {
    'use strict';
     // Handling rest of things
+    addObjBoxResize();
     addPropertyPanelResize();
+
     updateStyles();
     updateSkins();
     updateSounds();
