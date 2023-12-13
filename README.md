@@ -28,12 +28,13 @@ Discord server: https://discord.gg/K5jcNEvZ85
 - Makes right panel take all the space when object list is hidden. (v3.3)
 - Adds more snapping options. (v3.5)
 - Allows putting spaces in action parameters. (v3.6)
-- Allows pasting XML directly. (v3.7)
+- Allows pasting XML directly. (v3.7), impl: noname
 - Fixes issue where you are unable to rename decor if it had " in the name. (v3.8)
-- Ctrl + F(Find object) and Ctrl + S(Save) keybinds. (v4.0)
+- Ctrl + F(Find object) and Ctrl + S(Save) keybinds. (v4.0), impl: noname
 - Can now download XML of selected objects only. (v4.3)
 - Allows for multiple decor/bg uploads. (v4.4)
 - Allows for resizing object list. (First implemented in v4.9, completed in v5.0), cc: Casey
+- Shows same parameters. (v5.3), cc: Xeden, impl: Noname, modified: mici1234
 
 ## How to install ?
 It's recommended to use [tampermonkey](https://www.tampermonkey.net/) as that gives you benefit of auto updating. Once you download tampermonkey, you can click [here](https://github.com/ZenoABC/ALEI/raw/main/alei.user.js), then tampermonkey will ask you whether to install or not, just click "install".
