@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      5.3
+// @version      5.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1235,6 +1235,7 @@ function showSameTypeParameters() {
             setSameParameters();
         }
     }
+    aleiLog(DEBUG, "Patched ANI");
 }
 
 ///////////////////////////////
@@ -1273,7 +1274,173 @@ function addObjBoxResize() {
         ShowHideObjectBox();
         ShowHideObjectBox();
     });
+    aleiLog(DEBUG, "Added splitter for object box.");
+}
 
+function patch_m_down() {
+    let og_mdown = window.m_down;
+    window.m_down = function(e) {
+        let previousEsLength = es.length;
+        og_mdown(e);
+        if (es.length > previousEsLength) { // New element is made.
+            let element = es[es.length - 1];
+            if (!("x" in element.pm)) return;
+            // We now have to do job of fixPos, we cannot set fixPos to have it argument-based directly because of scoping
+            // So we have to do it ourselves.
+            let pm = element.pm;
+            let round = function(num) {
+                return Math.round(num / GRID_SNAPPING) * GRID_SNAPPING
+            }
+            pm.x = round(pm.x);
+            pm.y = round(pm.y);
+            if (element._isresizable) {
+                pm.w = round(pm.w);
+                pm.h = round(pm.h);
+            }
+            // Now we just update.
+            window.need_GUIParams_update = true;
+            UpdateGUIObjectsList();
+        }
+    }
+}
+
+function patchEntityClass() {
+    let og_E = E;
+    window.E = function(_class) {
+        let result = new og_E(_class);
+        result.fixPos = function() {}; // For proper snapping.
+        return result;
+    }
+    aleiLog(DEBUG, "Patched entity.");
+}
+
+function PasteFromClipBoard(ClipName) {
+    var clipboard = new Object();
+    if (sessionStorage[ClipName] == undefined) {
+        return false;
+    }
+    clipboard = unserialize(sessionStorage[ClipName]);
+    lcz();
+    for (var i = 0; i < es.length; i++)
+        if (es[i].exists) {
+            if (es[i].selected) {
+                ldn('es[' + i + '].selected=false;');
+                lnd('es[' + i + '].selected=true;');
+                es[i].selected = false;
+            }
+        } var min_x = 0;
+    var max_x = 0;
+    var min_y = 0;
+    var max_y = 0;
+    i = 0;
+    var from_obj = es.length;
+    while (typeof(clipboard[i]) !== 'undefined') {
+        var newparam = es.length;
+        ldn('es[' + newparam + '].exists=true;');
+        lnd('es[' + newparam + '].exists=false;');
+        es[newparam] = new E(clipboard[i]._class);
+        for (param in clipboard[i]) {
+            es[newparam][param] = clipboard[i][param];
+        }
+        if (typeof(es[newparam].pm.x) !== 'undefined')
+            if (typeof(es[newparam].pm.y) !== 'undefined') {
+                if (i == 0) {
+                    min_x = es[newparam].pm.x;
+                    min_y = es[newparam].pm.y;
+                    max_x = es[newparam].pm.x;
+                    max_y = es[newparam].pm.y;
+                    if (typeof(es[newparam].pm.w) !== 'undefined')
+                        if (typeof(es[newparam].pm.h) !== 'undefined') {
+                            min_x += es[newparam].pm.w / 2;
+                            max_x += es[newparam].pm.w / 2;
+                            min_y += es[newparam].pm.h / 2;
+                            max_y += es[newparam].pm.h / 2;
+                        }
+                } else {
+                    min_x = Math.min(min_x, es[newparam].pm.x);
+                    min_y = Math.min(min_y, es[newparam].pm.y);
+                    max_x = Math.max(max_x, es[newparam].pm.x);
+                    max_y = Math.max(max_y, es[newparam].pm.y);
+                    if (typeof(es[newparam].pm.w) !== 'undefined')
+                        if (typeof(es[newparam].pm.h) !== 'undefined') {
+                            max_x = Math.max(max_x, es[newparam].pm.x + es[newparam].pm.w);
+                            max_y = Math.max(max_y, es[newparam].pm.y + es[newparam].pm.h);
+                        }
+                }
+            } i++;
+    }
+    ldn('m_drag_selected=true;');
+    ldn('paint_draw_mode=true;');
+    ldn('quick_pick_ignore_one_click=true;');
+    lnd('m_drag_selected=false;');
+    lnd('paint_draw_mode=false;');
+    lnd('quick_pick_ignore_one_click=false;');
+    ldis = true;
+    paint_draw_mode = true;
+    quick_pick_ignore_one_click = true;
+    lmdrwa = lmwa;
+    lmdrwb = lmwb;
+    // Original code by Prosu
+    let m_pos_x = lmwa;
+    let m_pos_y = lmwb;
+
+    m_drag_x = mouse_x;
+    m_drag_y = mouse_y;
+    m_down_x = m_pos_x;
+    m_down_y = m_pos_y;
+    var x1 = Math.round((m_pos_x) / GRID_SNAPPING) * GRID_SNAPPING;
+    var y1 = Math.round((m_pos_y) / GRID_SNAPPING) * GRID_SNAPPING;
+    var lo_x = Math.round((x1 - (min_x + max_x) / 2) / GRID_SNAPPING) * GRID_SNAPPING;
+    var lo_y = Math.round((y1 - (min_y + max_y) / 2) / GRID_SNAPPING) * GRID_SNAPPING;
+
+    for (var i2 = from_obj; i2 < es.length; i2++) {
+        if (typeof(es[i2].pm.uid) !== 'undefined') {
+            var old_uid = es[i2].pm.uid;
+            es[i2].exists = false;
+            es[i2].pm.uid = RandomizeName(es[i2].pm.uid);
+            es[i2].exists = true;
+            for (var i3 = from_obj; i3 < es.length; i3++) {
+                for (param in es[i3].pm) {
+                    if (typeof(es[i3].pm[param]) == 'string') {
+                        if (es[i3].pm[param] == old_uid) {
+                            es[i3].pm[param] = es[i2].pm.uid;
+                        }
+                    }
+                }
+            }
+        }
+        if (typeof(es[i2].pm.x) !== 'undefined')
+            if (typeof(es[i2].pm.y) !== 'undefined') {
+                lnd('es[' + i2 + '].pm.x=' + es[i2].pm.x + ';');
+                lnd('es[' + i2 + '].pm.y=' + es[i2].pm.y + ';');
+                es[i2].pm.x += lo_x;
+                es[i2].pm.y += lo_y;
+                es[i2].fixPos();
+                ldn('es[' + i2 + '].pm.x=' + es[i2].pm.x + ';');
+                ldn('es[' + i2 + '].pm.y=' + es[i2].pm.y + ';');
+            }
+    }
+    // Again by Prosu
+    if (true) {
+        x1 = Math.round((m_pos_x - m_down_x) / GRID_SNAPPING) * GRID_SNAPPING;
+        y1 = Math.round((m_pos_y - m_down_y) / GRID_SNAPPING) * GRID_SNAPPING;
+        for (var i = 0; i < es.length; i++) {
+            if (es[i].exists) {
+                if (MatchLayer(es[i]) || paint_draw_mode) {
+                    if (es[i].selected) {
+                        if (es[i]._isphysical) {
+                            es[i].pm.x += x1;
+                            es[i].pm.y += y1;
+                        }
+                    }
+                }
+            }
+        }
+        m_down_x += x1;
+        m_down_y += y1;
+    }
+    lfz(false);
+    return true;
 }
 
 (async function() {
@@ -1290,14 +1457,17 @@ function addObjBoxResize() {
     updateOffsets();
     updateObjects();
     updateButtons();
+    patch_m_down();
     await addSessionSync();
     addTriggerIDs();
     patchShowHideButton();
     optimize();
     patchUpdateTools();
     patchDecorUpload();
+    patchEntityClass();
     // Allowing for spaces in parameters.
     window.UpdatePhysicalParam = UpdatePhysicalParam;
+    window.PasteFromClipBoard = PasteFromClipBoard;
     showSameTypeParameters();
     // Patching delete and rename in decor list.
     function overwriteImageContext() {
