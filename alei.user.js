@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      5.5
+// @version      5.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -234,7 +234,6 @@ function updateStyles() {
             }
         }
     }
-    ROOT_ELEMENT.style.setProperty("--param_panel_size", "var(--ALEI_RPARAMS_HEIGHT)");
     $id("stars").style.setProperty("background-image", `url(${aleiSettings.starsImage})`)
     let _th = THEME;
     ThemeSet(THEME_BLUE);
@@ -651,6 +650,7 @@ function addPropertyPanelResize() {
         let new_width = Math.min(root.clientWidth - 100, Math.max(100, root.clientWidth - e.clientX));
         right_panel.style.width = new_width + 'px';
         splitter.style.right = new_width + 'px';
+        ROOT_ELEMENT.style.setProperty("--param_panel_size", splitter.style.right);
         updateBoxSplitterSize();
     }
 
@@ -671,6 +671,7 @@ function addPropertyPanelResize() {
         aleiSettings.rightPanelSize = localStorage['RIGHT_PANEL_WIDTH'];
 
     splitter.style.right = aleiSettings.rightPanelSize;
+    ROOT_ELEMENT.style.setProperty("--param_panel_size", splitter.style.right);
     window.splitter = splitter;
 }
 
