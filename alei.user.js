@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      5.4
+// @version      5.5
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -234,6 +234,7 @@ function updateStyles() {
             }
         }
     }
+    ROOT_ELEMENT.style.setProperty("--param_panel_size", "var(--ALEI_RPARAMS_HEIGHT)");
     $id("stars").style.setProperty("background-image", `url(${aleiSettings.starsImage})`)
     let _th = THEME;
     ThemeSet(THEME_BLUE);
