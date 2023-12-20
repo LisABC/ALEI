@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      5.8
+// @version      5.9
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1534,10 +1534,12 @@ function patchServerRequest() {
 }
 
 let ogEval = window.eval;
-window.eval = function(code) {
-    if(code.indexOf("var es = new Array();") != -1) {handleServerRequestResponse(null, null, code)}
-    else {ogEval(code)};
+function TemporaryEval(code) {
+    window.eval = ogEval;
+    handleServerRequestResponse(null, null, code);
+    window.eval = TemporaryEval;
 }
+window.eval = TemporaryEval;
 
 let ALE_start = (async function() {
    'use strict';
