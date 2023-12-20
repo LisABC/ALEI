@@ -1,10 +1,9 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      5.7
+// @version      5.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
-// @run-at       document-end
 // @icon         https://github.com/ZenoABC/ALEI/blob/main/icon.png?raw=true
 // @grant        none
 // ==/UserScript==
@@ -1480,11 +1479,9 @@ function ServerRequest_handleMapData(mapCode) {
             continue;
         }
         if(matchCreation !== null) {
-            console.log(matchCreation);
             currentElement = new E(matchCreation[2]);
             es[es.length] = currentElement;
         } else {
-            console.log(matchKeyValue);
             let key = matchKeyValue[1];
             let value = matchKeyValue[2];
             if (value[0] != "'") { // Not a string.
@@ -1509,6 +1506,15 @@ function ServerRequest_handleMapData(mapCode) {
 
 }
 
+function handleServerRequestResponse(request, operation, response) {
+    if (response.indexOf("var es = new Array();") != -1) {
+         ServerRequest_handleMapData(response);
+    }else {
+         aleiLog(DEBUG2, `Evaling for request "${request}" with operation of "${operation}": ${response}`)
+         window.eval(response)
+    };
+}
+
 function patchServerRequest() {
     // Patches ServerRequest function.
     // This function literally eval()'s every single thing that server sends.
@@ -1522,19 +1528,18 @@ function patchServerRequest() {
         window.eval = function(code) {evalingCode = code};
         _ogServerRequest(request, operation, callback);
         window.eval = _eval;
-
-        if (evalingCode.indexOf("var es = new Array();") != -1) {
-            ServerRequest_handleMapData(evalingCode);
-        }
-        else {
-            aleiLog(DEBUG2, `Evaling for request "${request}" with operation of "${operation}": ${evalingCode}`)
-            window.eval(evalingCode)
-        };
+        handleServerRequestResponse(request, operation, evalingCode);
     };
     aleiLog(DEBUG, "Patched ServerRequest");
 }
 
-(async function() {
+let ogEval = window.eval;
+window.eval = function(code) {
+    if(code.indexOf("var es = new Array();") != -1) {handleServerRequestResponse(null, null, code)}
+    else {ogEval(code)};
+}
+
+let ALE_start = (async function() {
    'use strict';
     // Handling rest of things
     addObjBoxResize();
@@ -1571,6 +1576,9 @@ function patchServerRequest() {
         doTooltip();
     }
     patchServerRequest();
+    window.eval = ogEval;
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
-})();
+});
+
+window.addEventListener("load", () => {ALE_start();});
