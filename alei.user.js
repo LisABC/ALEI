@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      6.0
+// @version      6.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1466,6 +1466,7 @@ function ServerRequest_handleMapData(mapCode) {
 
     let currentElement = null;
 
+    window.es = new Array(); // clear.
     let index = 2; // We skip var q; and es = new Array();
     for (;index < expressions.length-5; index++) { // We will also skip last 5, they are related to setting map id field and permissions.
         let expression = expressions[index];
