@@ -36,6 +36,7 @@ Discord server: https://discord.gg/K5jcNEvZ85
 - Allows for resizing object list. (First implemented in v4.9, completed in v5.0), cc: Casey
 - Shows same parameters. (v5.3), cc: Xeden, impl: Noname, modified: mici1234
 - Fixes snapping issues. (v5.4), impl: Prosu, cc: Shadowsyn
+- Patches map loading vulnerabilities like one mentioned in [https://discord.com/channels/1169664640465240154/1169667400376004764/1187082888202690671](message link in ALEI discord server) (v5.7), cc: Prosu & GCP5o
 
 ## How to install ?
 It's recommended to use [tampermonkey](https://www.tampermonkey.net/) as that gives you benefit of auto updating. Once you download tampermonkey, you can click [here](https://github.com/ZenoABC/ALEI/raw/main/alei.user.js), then tampermonkey will ask you whether to install or not, just click "install".
