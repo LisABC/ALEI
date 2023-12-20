@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      5.6
+// @version      5.7
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -19,8 +19,11 @@ function $query(selector) {
 
 const ROOT_ELEMENT = document.documentElement;
 const stylesheets = document.styleSheets;
-const INFO = 0
-const DEBUG = 1
+
+const INFO = 0;
+const DEBUG = 1;
+const DEBUG2 = 2;
+const WARN = -1;
 
 let aleiSettings = {
     rightPanelSize: "30vw",
@@ -32,13 +35,20 @@ let aleiSettings = {
     enableTooltips: false,
     showSameParameters: true
 }
+if (localStorage['ALEI_LOGLEVEL'] != undefined)
+    aleiSettings.logLevel = parseInt(localStorage['ALEI_LOGLEVEL']);
+
 let levelToNameMap = {
     0: "INFO",
-    1: "DEBUG"
+    1: "DEBUG",
+    2: "DEBUG2"
 }
 
 function aleiLog(level, text) {
-    if (level <= aleiSettings.logLevel)
+    if (level === WARN) {
+        console.warn(`[ALEI:WARNING]: ${text}`);
+        NewNote(`ALEI: Please check console.`, "#FFFF00");
+    }else if (level <= aleiSettings.logLevel)
         console.log(`[ALEI:${levelToNameMap[level]}]: ${text}`)
 }
 aleiLog(INFO, "Starting up...");
@@ -1445,6 +1455,85 @@ function PasteFromClipBoard(ClipName) {
     return true;
 }
 
+function ServerRequest_handleMapData(mapCode) {
+    // Branch of patchServerRequest
+    // Made to deal with map source related things.
+    aleiLog(DEBUG, "Parsing map source now.");
+
+    const objectKeyValueRegex = /(\w+)=((-?\d+)|('[ -~]*')|true|false)/;
+    const objectCreationRegex = /q=es\[(\d+)\]=new E\('(\w+)'\)/;
+
+    let expressions = mapCode.split(";");
+
+    let currentElement = null;
+
+    let index = 2; // We skip var q; and es = new Array();
+    for (;index < expressions.length-5; index++) { // We will also skip last 5, they are related to setting map id field and permissions.
+        let expression = expressions[index];
+        if(expression === "q=q.pm") {continue};
+
+        let matchKeyValue = objectKeyValueRegex.exec(expression);
+        let matchCreation = objectCreationRegex.exec(expression);
+
+        if (matchKeyValue === null && matchCreation === null) {
+            aleiLog(WARN, `Unable to figure out what kind of code is "${expression}", you MIGHT have issues.`);
+            continue;
+        }
+        if(matchCreation !== null) {
+            console.log(matchCreation);
+            currentElement = new E(matchCreation[2]);
+            es[es.length] = currentElement;
+        } else {
+            console.log(matchKeyValue);
+            let key = matchKeyValue[1];
+            let value = matchKeyValue[2];
+            if (value[0] != "'") { // Not a string.
+                if (value == "true") value = true;
+                else if(value == "false") value = false;
+                else value = parseInt(value);
+            } else {
+                // Is a string. We just strip quotation marks.
+                value = value.slice(1, -1);
+            }
+            currentElement.pm[key] = value;
+        }
+    }
+    // Now as for fixed parts.
+    let start = expressions.length - 5;
+    window.mapid = expressions[start].slice("\n\t\tmapid = '".length, -1);
+    window.mapid_field.value = mapid;
+
+    window.maprights = expressions[start+2].slice("\n\t\t\n\t\tmaprights.innerHTML='".length, -1);
+    NewNote(`Map "${mapid}" is successfully loaded.`, note_good);
+
+
+}
+
+function patchServerRequest() {
+    // Patches ServerRequest function.
+    // This function literally eval()'s every single thing that server sends.
+    // Which opens up to expected vulnerabilities.
+    // Hopefully in future, ALEI will completely get rid of eval.
+    // RFC: Maybe make this promise-based aswell so map makers can still do other stuff while server request is being processed ?
+    let _ogServerRequest = window.ServerRequest;
+    window.ServerRequest = function(request, operation, callback = null) {
+        let _eval = window.eval;
+        let evalingCode = "";
+        window.eval = function(code) {evalingCode = code};
+        _ogServerRequest(request, operation, callback);
+        window.eval = _eval;
+
+        if (evalingCode.indexOf("var es = new Array();") != -1) {
+            ServerRequest_handleMapData(evalingCode);
+        }
+        else {
+            aleiLog(DEBUG2, `Evaling for request "${request}" with operation of "${operation}": ${evalingCode}`)
+            window.eval(evalingCode)
+        };
+    };
+    aleiLog(DEBUG, "Patched ServerRequest");
+}
+
 (async function() {
    'use strict';
     // Handling rest of things
@@ -1481,6 +1570,7 @@ function PasteFromClipBoard(ClipName) {
     if(aleiSettings.enableTooltips) {
         doTooltip();
     }
+    patchServerRequest();
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
 })();
