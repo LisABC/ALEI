@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      6.2
+// @version      6.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1459,7 +1459,7 @@ function ServerRequest_handleMapData(mapCode) {
     // Made to deal with map source related things.
     aleiLog(DEBUG, "Parsing map source now.");
 
-    const objectKeyValueRegex = /(\w+)=((-?\d+)|('[ -~]*')|true|false)/;
+    const objectKeyValueRegex = /(\w+)=((-?\d+(\.\d+)?)|('[ -~]*')|true|false)/;
     const objectCreationRegex = /q=es\[(\d+)\]=new E\('(\w+)'\)/;
 
     let expressions = mapCode.split(";");
@@ -1488,6 +1488,7 @@ function ServerRequest_handleMapData(mapCode) {
             if (value[0] != "'") { // Not a string.
                 if (value == "true") value = true;
                 else if(value == "false") value = false;
+                else if(value.indexOf(".") != -1) value = parseFloat(value);
                 else value = parseInt(value);
             } else {
                 // Is a string. We just strip quotation marks.
