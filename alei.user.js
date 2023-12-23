@@ -1491,8 +1491,8 @@ function ServerRequest_handleMapData(mapCode) {
                 else if(value.indexOf(".") != -1) value = parseFloat(value);
                 else value = parseInt(value);
             } else {
-                // Is a string. We just strip quotation marks.
-                value = value.slice(1, -1);
+                // Is a string. We just strip quotation marks and fix apostrophes.
+                value = value.slice(1, -1).replace("\\'", "'");
             }
             currentElement.pm[key] = value;
         }
