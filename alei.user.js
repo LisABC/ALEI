@@ -478,37 +478,37 @@ function updateButtons() {
     createButton("Insert XML", "insertXMLButton", () => {
         let file = confirm("File (OK) or text (Cancel) ?");
 
-		if (file) {
-			let fileInput = document.createElement("input");
+        if (file) {
+            let fileInput = document.createElement("input");
 
-			fileInput.type = "file";
+            fileInput.type = "file";
 
-			fileInput.onchange = function() {
-				if (fileInput.files[0]) {
-					if (fileInput.files[0].name.split(".")[1] == "xml") {
-						let reader = new FileReader();
+            fileInput.onchange = function() {
+                if (fileInput.files[0]) {
+                    if (fileInput.files[0].name.split(".")[1] == "xml") {
+                        let reader = new FileReader();
 
-						reader.onload = function() {
-							insertXML(reader.result);
+                        reader.onload = function() {
+                            insertXML(reader.result);
 
-							fileInput.remove();
-						}
+                            fileInput.remove();
+                        }
 
-						reader.readAsText(fileInput.files[0]);
-					} else {
-						alert("Invalid file extension.");
-					}
-				}
-			}
+                        reader.readAsText(fileInput.files[0]);
+                    } else {
+                        alert("Invalid file extension.");
+                    }
+                }
+            }
 
-			fileInput.click();
-		} else {
-			let xml = prompt("Enter XML:", "");
+            fileInput.click();
+        } else {
+            let xml = prompt("Enter XML:", "");
 
-			if (xml !== null) {
-				insertXML(xml);
-			}
-		}
+            if (xml !== null) {
+                insertXML(xml);
+            }
+        }
     });
     // Readd 'rights' back.
     topPanel.innerHTML += appendBack;
@@ -713,7 +713,7 @@ function addSnappingOptions_helper() {
         element.innerHTML = snapping / 10;
         let toolClass = "tool_btn";
         if (GRID_SNAPPING == snapping) {
-           toolClass = "tool_btn2";
+            toolClass = "tool_btn2";
         }
         element.setAttribute("class", `${toolClass} tool_wid`);
         element.setAttribute("style", "width: 21px;");
@@ -741,39 +741,39 @@ function patchUpdateTools() {
 }
 
 function tryToNumber(x) {
-	if (!isNaN(Number(x))) {
-		return Number(x);
-	} else {
-		return x;
-	}
+    if (!isNaN(Number(x))) {
+        return Number(x);
+    } else {
+        return x;
+    }
 }
 
 function insertXML(xml) {
-	xml = "<map>" + xml.replaceAll("&", "[__Amp]") + "</map>";
+    xml = "<map>" + xml.replaceAll("&", "[__Amp]") + "</map>";
 
-	let parser = new DOMParser();
-	let map = parser.parseFromString(xml, "application/xml");
-	let objects = map.querySelectorAll("*");
+    let parser = new DOMParser();
+    let map = parser.parseFromString(xml, "application/xml");
+    let objects = map.querySelectorAll("*");
 
-	for (let i = 1; i < objects.length; i++) {
+    for (let i = 1; i < objects.length; i++) {
         let object = objects[i];
         if (object.tagName == "map") continue;
 
         let eo = new E(object.tagName);
         eo.pm = {};
 
-		for (let j = 0; j < object.attributes.length; j++) {
-			let name = object.attributes[j].name;
-			let value = object.attributes[j].value;
+        for (let j = 0; j < object.attributes.length; j++) {
+            let name = object.attributes[j].name;
+            let value = object.attributes[j].value;
 
-			eo.pm[name] = tryToNumber(value.replaceAll("[__Amp]", "&"));
-		}
+            eo.pm[name] = tryToNumber(value.replaceAll("[__Amp]", "&"));
+        }
 
-		es.push(eo);
-	}
+        es.push(eo);
+    }
 
-	need_redraw = 1;
-	need_GUIParams_update = 1;
+    need_redraw = 1;
+    need_GUIParams_update = 1;
 }
 
 function exportXML() {
@@ -794,32 +794,32 @@ function exportXML() {
             }
         }
 
-		if (mapid) {
-			download.download = mapid + " (selection).xml";
-		} else {
-			download.download = "newmap (selection).xml";
-		}
+        if (mapid) {
+            download.download = mapid + " (selection).xml";
+        } else {
+            download.download = "newmap (selection).xml";
+        }
     } else {
         for (let i = 0; i < es.length; i++) {
             if (es[i].exists) {
-				newstr += compi_obj(i);
-			}
+                newstr += compi_obj(i);
+            }
         }
 
-		if (mapid) {
-			download.download = mapid + ".xml";
-		} else {
-			download.download = "newmap.xml";
-		}
+        if (mapid) {
+            download.download = mapid + ".xml";
+        } else {
+            download.download = "newmap.xml";
+        }
     }
 
     download.href = "data:text," + escape(newstr);
 
-	if (newstr) {
-		download.click();
-	} else {
-		alert("Map is empty.");
-	}
+    if (newstr) {
+        download.click();
+    } else {
+        alert("Map is empty.");
+    }
 
     download.remove();
 }
@@ -912,12 +912,12 @@ function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approva
             str += `<div onclick="CloseImageContext(); setTimeout( function() { open_approved_decor_model = true; SaveFiltering(); search_phrase = '*by_login*'+last_login; UpdateImageList(); }, 1 );">Search for other approved images from &quot;${login}&quot;</div>`;
         }
 
-       str += `<span style="display:block;">&nbsp;</span>`;
-       if (is_fav_menu) {
-          str += `<div onclick="CloseImageContext();  setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&favorite_del=${id}', 'favorite_status' ); }, 1 ); ">Remove from favorites</div>`;
-       } else {
-        str += `<div onclick="CloseImageContext();  setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&favorite_add=${id}', 'favorite_status' ); }, 1 ); ">Add to favorites</div>`;
-       }
+        str += `<span style="display:block;">&nbsp;</span>`;
+        if (is_fav_menu) {
+            str += `<div onclick="CloseImageContext();  setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&favorite_del=${id}', 'favorite_status' ); }, 1 ); ">Remove from favorites</div>`;
+        } else {
+            str += `<div onclick="CloseImageContext();  setTimeout( function() { ServerRequest('a=get_images&for_class='+last_for_class+'&favorite_add=${id}', 'favorite_status' ); }, 1 ); ">Add to favorites</div>`;
+        }
 
     }
 
@@ -933,50 +933,50 @@ function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approva
 }
 
 function findObjects(name) {
-	let exact = confirm("Exact name?");
-	let notFound = 1;
+    let exact = confirm("Exact name?");
+    let notFound = 1;
 
-	function pred(d) {
-   		if (exact) {return d == name;}
-   		else {return d.includes(name)}
-	}
+    function pred(d) {
+        if (exact) {return d == name;}
+        else {return d.includes(name)}
+    }
 
-	for (let i = 0; i < es.length; i++) {
-    		es[i].selected = 0;
+    for (let i = 0; i < es.length; i++) {
+        es[i].selected = 0;
 
-    		if (es[i].pm.uid) {
-        		if (pred(es[i].pm.uid) && MatchLayer(es[i])) {
-        	    		es[i].selected = 1;
-            			notFound = 0;
-        		}
-		}
-	}
+        if (es[i].pm.uid) {
+            if (pred(es[i].pm.uid) && MatchLayer(es[i])) {
+                es[i].selected = 1;
+                notFound = 0;
+            }
+        }
+    }
 
-	need_GUIParams_update = 1;
-	need_redraw = 1;
+    need_GUIParams_update = 1;
+    need_redraw = 1;
 
-	return notFound;
+    return notFound;
 }
 
 document.addEventListener("keydown", e => {
-	if (e.ctrlKey && e.code == "KeyS") {
-		e.preventDefault();
-		document.getElementsByClassName("field_btn")[0].click();
-	}
+    if (e.ctrlKey && e.code == "KeyS") {
+        e.preventDefault();
+        document.getElementsByClassName("field_btn")[0].click();
+    }
 
-	if (e.ctrlKey && e.code == "KeyF") {
-		e.preventDefault();
+    if (e.ctrlKey && e.code == "KeyF") {
+        e.preventDefault();
 
-		let name = prompt("Find objects:", "");
+        let name = prompt("Find objects:", "");
 
-		if (name !== null && name !== "") {
-			let notFound = findObjects(name);
+        if (name !== null && name !== "") {
+            let notFound = findObjects(name);
 
-			if (notFound) {
-				alert("Nothing found.");
-			}
-		}
-	}
+            if (notFound) {
+                alert("Nothing found.");
+            }
+        }
+    }
 });
 
 function doTooltip() {
@@ -997,38 +997,38 @@ function doTooltip() {
     document.body.append(tooltip);
 
     document.addEventListener("mousemove", e => {
-    	if (e.target.title) {
-    		e.target.dataset.title = e.target.title;
-    		e.target.title = "";
-    	}
+        if (e.target.title) {
+            e.target.dataset.title = e.target.title;
+            e.target.title = "";
+        }
 
-    	if (e.target.parentElement.title) {
-    		e.target.parentElement.dataset.title = e.target.parentElement.title;
-    		e.target.parentElement.title = "";
-    	}
+        if (e.target.parentElement.title) {
+            e.target.parentElement.dataset.title = e.target.parentElement.title;
+            e.target.parentElement.title = "";
+        }
         let leftOffset = 150
 
-    	if (e.target.dataset.title) {
+        if (e.target.dataset.title) {
             let to = e.target.dataset.title.length
-    		tooltip.style.left = to + leftOffset + e.clientX + 20 + "px";
-    		tooltip.innerHTML = e.target.dataset.title;
+            tooltip.style.left = to + leftOffset + e.clientX + 20 + "px";
+            tooltip.innerHTML = e.target.dataset.title;
 
-    		if (tooltip.getBoundingClientRect().height != 31) {
-    			tooltip.style.left = to + leftOffset + e.clientX - 20 - tooltip.getBoundingClientRect().width + "px";
-    		}
-    	} else if (e.target.parentElement.dataset.title) {
+            if (tooltip.getBoundingClientRect().height != 31) {
+                tooltip.style.left = to + leftOffset + e.clientX - 20 - tooltip.getBoundingClientRect().width + "px";
+            }
+        } else if (e.target.parentElement.dataset.title) {
             let to = e.target.parentElement.dataset.title.length
-    		tooltip.style.left = to + leftOffset + e.clientX + 20 + "px";
-    		tooltip.style.top = e.clientY + "px";
-    		tooltip.innerHTML = e.target.parentElement.dataset.title;
+            tooltip.style.left = to + leftOffset + e.clientX + 20 + "px";
+            tooltip.style.top = e.clientY + "px";
+            tooltip.innerHTML = e.target.parentElement.dataset.title;
 
-    		if (tooltip.getBoundingClientRect().height != 31) {
-    			tooltip.style.left = to + leftOffset + e.clientX - 20 - tooltip.getBoundingClientRect().width + "px";
-    		}
-    	} else {
-    		tooltip.style.left = -100 + leftOffset + "px";
-    		tooltip.style.top = "-100px";
-    	}
+            if (tooltip.getBoundingClientRect().height != 31) {
+                tooltip.style.left = to + leftOffset + e.clientX - 20 - tooltip.getBoundingClientRect().width + "px";
+            }
+        } else {
+            tooltip.style.left = -100 + leftOffset + "px";
+            tooltip.style.top = "-100px";
+        }
     });
     aleiLog(DEBUG, "Added tooltip.")
 }
@@ -1051,95 +1051,95 @@ function patchDecorUpload() {
 }
 
 function setParameter(index, value) {
-	let rightParams = document.getElementById("rparams");
+    let rightParams = document.getElementById("rparams");
 
-	rightParams.childNodes[index].childNodes[1].innerHTML = value;
+    rightParams.childNodes[index].childNodes[1].innerHTML = value;
 }
 
 function getSelection() {
-	let objects = [];
+    let objects = [];
 
-	for (let i = 0; i < es.length; i++) {
-		if (es[i].selected) {
-			objects.push(es[i]);
-		}
-	}
+    for (let i = 0; i < es.length; i++) {
+        if (es[i].selected) {
+            objects.push(es[i]);
+        }
+    }
 
-	return objects;
+    return objects;
 }
 
 function areObjectsOfSameType(objects) {
-	let same = 1;
+    let same = 1;
 
-	for (let i = 0; i < objects.length; i++) {
-		if (objects[i]._class != objects[0]._class) {
-			same = 0;
-		}
-	}
+    for (let i = 0; i < objects.length; i++) {
+        if (objects[i]._class != objects[0]._class) {
+            same = 0;
+        }
+    }
 
-	return same;
+    return same;
 }
 
 function removeSameItems(array) {
-	return Array.from(new Set(array));
+    return Array.from(new Set(array));
 }
 
 function removeItems(array, items) {
-	let copy = JSON.parse(JSON.stringify(array));
+    let copy = JSON.parse(JSON.stringify(array));
 
-	for (let i = 0; i < items.length; i++) {
-		copy.splice(copy.indexOf(items[i]), 1);
-	}
+    for (let i = 0; i < items.length; i++) {
+        copy.splice(copy.indexOf(items[i]), 1);
+    }
 
-	return copy;
+    return copy;
 }
 
 function parameterNamesToIndexes(parameters, objectParameters) {
-	let indexes = [];
+    let indexes = [];
 
-	for (let i = 0; i < parameters.length; i++) {
-		indexes.push(objectParameters.indexOf(parameters[i]));
-	}
+    for (let i = 0; i < parameters.length; i++) {
+        indexes.push(objectParameters.indexOf(parameters[i]));
+    }
 
-	return indexes;
+    return indexes;
 }
 
 function getSameParameters(objects) {
-	let differentParameters = [];
-	let parameters = Object.keys(objects[0].pm);
+    let differentParameters = [];
+    let parameters = Object.keys(objects[0].pm);
 
-	for (let i = 0; i < objects.length; i++) {
-		for (let j = 0; j < parameters.length; j++) {
-			if (objects[i].pm[parameters[j]] != objects[0].pm[parameters[j]]) {
-				differentParameters.push(parameters[j]);
-			}
-		}
-	}
+    for (let i = 0; i < objects.length; i++) {
+        for (let j = 0; j < parameters.length; j++) {
+            if (objects[i].pm[parameters[j]] != objects[0].pm[parameters[j]]) {
+                differentParameters.push(parameters[j]);
+            }
+        }
+    }
 
-	differentParameters = removeSameItems(differentParameters);
-	differentParameters = removeItems(parameters, differentParameters);
+    differentParameters = removeSameItems(differentParameters);
+    differentParameters = removeItems(parameters, differentParameters);
 
-	return parameterNamesToIndexes(differentParameters, parameters);
+    return parameterNamesToIndexes(differentParameters, parameters);
 }
 
 function toBoolean(str) {
-	if (isNaN(Number(str))) {
-		return str == "true";
-	} else {
-		return Boolean(str);
-	}
+    if (isNaN(Number(str))) {
+        return str == "true";
+    } else {
+        return Boolean(str);
+    }
 }
 
 function fixIndex(index, objectType) {
-	let fixedIndex = index;
+    let fixedIndex = index;
 
-	if (objectType == "trigger") {
-		if (index > 4) {
-			fixedIndex = index + Math.floor((index - 2) / 3);
-		}
-	}
+    if (objectType == "trigger") {
+        if (index > 4) {
+            fixedIndex = index + Math.floor((index - 2) / 3);
+        }
+    }
 
-	return fixedIndex;
+    return fixedIndex;
 }
 
 const parameterMap = {
@@ -1172,11 +1172,11 @@ const parameterMap = {
 }
 
 function fixParameterValue(name, value, objectType) {
-	let fixedValue;
+    let fixedValue;
 
-	if (special_values_table[name]) {
-		fixedValue = special_values_table[name][value];
-	} else {
+    if (special_values_table[name]) {
+        fixedValue = special_values_table[name][value];
+    } else {
         if (parameterMap[objectType] && parameterMap[objectType][name]) {
             fixedValue = special_values_table[ parameterMap[objectType][name] ][value];
         }else if (name.slice(0, 8) == "actions_" && name.slice(-5) == "_type") {
@@ -1184,26 +1184,26 @@ function fixParameterValue(name, value, objectType) {
         }else {
             fixedValue = value;
         }
-	}
+    }
 
-	return fixedValue;
+    return fixedValue;
 }
 
 function setSameParameters() {
-	let objects = getSelection();
+    let objects = getSelection();
 
-	if (areObjectsOfSameType(objects) && objects.length >= 2) {
-		let indexes = getSameParameters(objects);
-		let parameters = Object.keys(objects[0].pm);
+    if (areObjectsOfSameType(objects) && objects.length >= 2) {
+        let indexes = getSameParameters(objects);
+        let parameters = Object.keys(objects[0].pm);
 
-		for (let i = 0; i < indexes.length; i++) {
-			let name = parameters[indexes[i]];
-			let value = objects[0].pm[parameters[indexes[i]]];
-			let objectType = objects[0]._class;
+        for (let i = 0; i < indexes.length; i++) {
+            let name = parameters[indexes[i]];
+            let value = objects[0].pm[parameters[indexes[i]]];
+            let objectType = objects[0]._class;
 
-			setParameter(fixIndex(indexes[i], objectType), fixParameterValue(name, value, objectType));
-		}
-	}
+            setParameter(fixIndex(indexes[i], objectType), fixParameterValue(name, value, objectType));
+        }
+    }
 }
 
 function showSameTypeParameters() {
@@ -1480,11 +1480,11 @@ function ServerRequest_handleMapData(mapCode) {
 
 function handleServerRequestResponse(request, operation, response) {
     if (response.indexOf("var es = new Array();") != -1) {
-         ServerRequest_handleMapData(response);
+        ServerRequest_handleMapData(response);
     }else {
-         aleiLog(DEBUG2, `Evaling for request "${request}" with operation of "${operation}": ${response}`)
-         try {JS_eval(response);}
-         catch(e) {NewNote("Eval error!", note_bad); console.error(e);}
+        aleiLog(DEBUG2, `Evaling for request "${request}" with operation of "${operation}": ${response}`)
+        try {JS_eval(response);}
+        catch(e) {NewNote("Eval error!", note_bad); console.error(e);}
     };
 }
 
@@ -1599,7 +1599,7 @@ function patchUpdateGUIParams() {
 }
 
 let ALE_start = (async function() {
-   'use strict';
+    'use strict';
     // Handling rest of things
     addObjBoxResize();
     addPropertyPanelResize();
