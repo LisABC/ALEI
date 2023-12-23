@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      6.3
+// @version      6.5
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -330,10 +330,14 @@ function optimize() {
         let ost = window.setTimeout;
         window.setTimeout = (f, ms) => {
             window.setTimeout = ost; // Assign original setTimeout
-            setTimeout(() => { // Make function that calls original function and sets cache.
-                f();
-                ogImageLists[for_class] = image_list.innerHTML;
-            }, ms);
+            window.ServerRequest = (req, op, callback = null) => {
+                window.ServerRequest = ALEI_ServerRequest; // Assign original ServerRequest
+                // We made ServerRequest an async function, so we can just register on it
+                ServerRequest(req, op, callback).then(() => {
+                    ogImageLists[for_class] = image_list.innerHTML;
+                });
+            };
+            f();
         }
         _browseImages(for_class, current_value, callback);
         image_list.innerHTML = ogImageLists[for_class]; // Show what is in cache. (If cache didn't have the class, it will just show the previously set default value)
@@ -389,33 +393,7 @@ function updateDecors() {
         CACHED_DECORS[decor_model] = img_decors[decor_model];
         CUSTOM_IMAGES_APPROVED[decor_model] = true; // Since it's obviously vanilla, and other vanilla decors are approved, it's only natural if we approve added decors too
     }
-    let _serverRequest = ServerRequest;
-    window.ServerRequest = function(req, op, callback) {
-        let addDecors = false;
-        if (req.indexOf("a=get_images") != -1 && req.indexOf("for_class=decor_model") != -1) addDecors = true; // We don't want to mess with background business, only decors
-        _serverRequest(req, op, callback);
-        try {
-            if (addDecors) {
-                let list_native = $id("list_native");
-                for(let i = 0; i < decors.length; i++) {
-                    let decor = decors[i];
-                    let decor_model = decor[0];
-                    let decor_name = decor[1];
-                    let decor_image = decor[2];
-                    list_native.innerHTML += `
-                    <div class="img_option" onClick="CustomImageSelected('${decor_model}', '${decor_name}' )">
-                       <div class="imgdiv" style="background:url(${decor_image})"></div>
-                       <div>
-                         ${decor_name}
-                       </div>
-                    </div>
-                    `
-                }
-                aleiLog(DEBUG, "Updated decor list.");
-            }
-        }
-        catch(e) {} // We assume we are not in decor list yet.
-    }
+    window.ALEI_decors = decors;
 }
 
 function updateOffsets() {
@@ -500,37 +478,37 @@ function updateButtons() {
     createButton("Insert XML", "insertXMLButton", () => {
         let file = confirm("File (OK) or text (Cancel) ?");
 
-        if (file) {
-            let fileInput = document.createElement("input");
+		if (file) {
+			let fileInput = document.createElement("input");
 
-            fileInput.type = "file";
+			fileInput.type = "file";
 
-            fileInput.onchange = function() {
-                if (fileInput.files[0]) {
-                    if (fileInput.files[0].name.split(".")[1] == "xml") {
-                        let reader = new FileReader();
+			fileInput.onchange = function() {
+				if (fileInput.files[0]) {
+					if (fileInput.files[0].name.split(".")[1] == "xml") {
+						let reader = new FileReader();
 
-                        reader.onload = function() {
-                            insertXML(reader.result);
+						reader.onload = function() {
+							insertXML(reader.result);
 
-                            fileInput.remove();
-                        }
+							fileInput.remove();
+						}
 
-                        reader.readAsText(fileInput.files[0]);
-                    } else {
-                        alert("Invalid file extension.");
-                    }
-                }
-            }
+						reader.readAsText(fileInput.files[0]);
+					} else {
+						alert("Invalid file extension.");
+					}
+				}
+			}
 
-            fileInput.click();
-        } else {
-            let xml = prompt("Enter XML:", "");
+			fileInput.click();
+		} else {
+			let xml = prompt("Enter XML:", "");
 
-            if (xml !== null) {
-                insertXML(xml);
-            }
-        }
+			if (xml !== null) {
+				insertXML(xml);
+			}
+		}
     });
     // Readd 'rights' back.
     topPanel.innerHTML += appendBack;
@@ -763,39 +741,39 @@ function patchUpdateTools() {
 }
 
 function tryToNumber(x) {
-    if (!isNaN(Number(x))) {
-        return Number(x);
-    } else {
-        return x;
-    }
+	if (!isNaN(Number(x))) {
+		return Number(x);
+	} else {
+		return x;
+	}
 }
 
 function insertXML(xml) {
-    xml = "<map>" + xml.replaceAll("&", "[__Amp]") + "</map>";
+	xml = "<map>" + xml.replaceAll("&", "[__Amp]") + "</map>";
 
-    let parser = new DOMParser();
-    let map = parser.parseFromString(xml, "application/xml");
-    let objects = map.querySelectorAll("*");
+	let parser = new DOMParser();
+	let map = parser.parseFromString(xml, "application/xml");
+	let objects = map.querySelectorAll("*");
 
-    for (let i = 1; i < objects.length; i++) {
+	for (let i = 1; i < objects.length; i++) {
         let object = objects[i];
         if (object.tagName == "map") continue;
 
         let eo = new E(object.tagName);
         eo.pm = {};
 
-        for (let j = 0; j < object.attributes.length; j++) {
-            let name = object.attributes[j].name;
-            let value = object.attributes[j].value;
+		for (let j = 0; j < object.attributes.length; j++) {
+			let name = object.attributes[j].name;
+			let value = object.attributes[j].value;
 
-            eo.pm[name] = tryToNumber(value.replaceAll("[__Amp]", "&"));
-        }
+			eo.pm[name] = tryToNumber(value.replaceAll("[__Amp]", "&"));
+		}
 
-        es.push(eo);
-    }
+		es.push(eo);
+	}
 
-    need_redraw = 1;
-    need_GUIParams_update = 1;
+	need_redraw = 1;
+	need_GUIParams_update = 1;
 }
 
 function exportXML() {
@@ -816,32 +794,32 @@ function exportXML() {
             }
         }
 
-        if (mapid) {
-            download.download = mapid + " (selection).xml";
-        } else {
-            download.download = "newmap (selection).xml";
-        }
+		if (mapid) {
+			download.download = mapid + " (selection).xml";
+		} else {
+			download.download = "newmap (selection).xml";
+		}
     } else {
         for (let i = 0; i < es.length; i++) {
             if (es[i].exists) {
-                newstr += compi_obj(i);
-            }
+				newstr += compi_obj(i);
+			}
         }
 
-        if (mapid) {
-            download.download = mapid + ".xml";
-        } else {
-            download.download = "newmap.xml";
-        }
+		if (mapid) {
+			download.download = mapid + ".xml";
+		} else {
+			download.download = "newmap.xml";
+		}
     }
 
     download.href = "data:text," + escape(newstr);
 
-    if (newstr) {
-        download.click();
-    } else {
-        alert("Map is empty.");
-    }
+	if (newstr) {
+		download.click();
+	} else {
+		alert("Map is empty.");
+	}
 
     download.remove();
 }
@@ -881,11 +859,7 @@ window.aleiContextRenameImage = function(id) {
     var v = prompt('New name:', imageContextMap[id]);
     CloseImageContext();
     if ( v !== null ) {
-        setTimeout( function() {
-            ServerRequest(`a=get_images&for_class=${last_for_class}&set_title_for=${id}&value=${v}`, "rename_image");
-        },
-        1
-      );
+        ServerRequest(`a=get_images&for_class=${last_for_class}&set_title_for=${id}&value=${v}`, "rename_image");
     }
 }
 window.aleiContextDeleteImage = function(id) {
@@ -893,12 +867,7 @@ window.aleiContextDeleteImage = function(id) {
     CloseImageContext();
     if ( v ) {
         last_element.style.opacity = '0.5';
-        setTimeout(
-            function() {
-                ServerRequest(`a=get_images&for_class=${last_for_class}&delete=${id}`, 'delete_image' );
-            },
-            1
-        );
+        ServerRequest(`a=get_images&for_class=${last_for_class}&delete=${id}`, 'delete_image' );
     }
 }
 
@@ -908,7 +877,7 @@ function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approva
     last_login = login;
     e.preventDefault();
 
-    var image_context = $id('image_context');
+    var image_context = document.getElementById('image_context');
 
     var str = '';
 
@@ -964,50 +933,50 @@ function ImageContext(id, e, old_name, element, moderator_menu, awaiting_approva
 }
 
 function findObjects(name) {
-    let exact = confirm("Exact name?");
-    let notFound = 1;
+	let exact = confirm("Exact name?");
+	let notFound = 1;
 
-    function pred(d) {
-        if (exact) {return d == name;}
-        else {return d.includes(name)}
-    }
+	function pred(d) {
+   		if (exact) {return d == name;}
+   		else {return d.includes(name)}
+	}
 
-    for (let i = 0; i < es.length; i++) {
-            es[i].selected = 0;
+	for (let i = 0; i < es.length; i++) {
+    		es[i].selected = 0;
 
-            if (es[i].pm.uid) {
-                if (pred(es[i].pm.uid) && MatchLayer(es[i])) {
-                        es[i].selected = 1;
-                        notFound = 0;
-                }
-        }
-    }
+    		if (es[i].pm.uid) {
+        		if (pred(es[i].pm.uid) && MatchLayer(es[i])) {
+        	    		es[i].selected = 1;
+            			notFound = 0;
+        		}
+		}
+	}
 
-    need_GUIParams_update = 1;
-    need_redraw = 1;
+	need_GUIParams_update = 1;
+	need_redraw = 1;
 
-    return notFound;
+	return notFound;
 }
 
 document.addEventListener("keydown", e => {
-    if (e.ctrlKey && e.code == "KeyS") {
-        e.preventDefault();
-        document.getElementsByClassName("field_btn")[0].click();
-    }
+	if (e.ctrlKey && e.code == "KeyS") {
+		e.preventDefault();
+		document.getElementsByClassName("field_btn")[0].click();
+	}
 
-    if (e.ctrlKey && e.code == "KeyF") {
-        e.preventDefault();
+	if (e.ctrlKey && e.code == "KeyF") {
+		e.preventDefault();
 
-        let name = prompt("Find objects:", "");
+		let name = prompt("Find objects:", "");
 
-        if (name !== null && name !== "") {
-            let notFound = findObjects(name);
+		if (name !== null && name !== "") {
+			let notFound = findObjects(name);
 
-            if (notFound) {
-                alert("Nothing found.");
-            }
-        }
-    }
+			if (notFound) {
+				alert("Nothing found.");
+			}
+		}
+	}
 });
 
 function doTooltip() {
@@ -1028,38 +997,38 @@ function doTooltip() {
     document.body.append(tooltip);
 
     document.addEventListener("mousemove", e => {
-        if (e.target.title) {
-            e.target.dataset.title = e.target.title;
-            e.target.title = "";
-        }
+    	if (e.target.title) {
+    		e.target.dataset.title = e.target.title;
+    		e.target.title = "";
+    	}
 
-        if (e.target.parentElement.title) {
-            e.target.parentElement.dataset.title = e.target.parentElement.title;
-            e.target.parentElement.title = "";
-        }
+    	if (e.target.parentElement.title) {
+    		e.target.parentElement.dataset.title = e.target.parentElement.title;
+    		e.target.parentElement.title = "";
+    	}
         let leftOffset = 150
 
-        if (e.target.dataset.title) {
+    	if (e.target.dataset.title) {
             let to = e.target.dataset.title.length
-            tooltip.style.left = to + leftOffset + e.clientX + 20 + "px";
-            tooltip.innerHTML = e.target.dataset.title;
+    		tooltip.style.left = to + leftOffset + e.clientX + 20 + "px";
+    		tooltip.innerHTML = e.target.dataset.title;
 
-            if (tooltip.getBoundingClientRect().height != 31) {
-                tooltip.style.left = to + leftOffset + e.clientX - 20 - tooltip.getBoundingClientRect().width + "px";
-            }
-        } else if (e.target.parentElement.dataset.title) {
+    		if (tooltip.getBoundingClientRect().height != 31) {
+    			tooltip.style.left = to + leftOffset + e.clientX - 20 - tooltip.getBoundingClientRect().width + "px";
+    		}
+    	} else if (e.target.parentElement.dataset.title) {
             let to = e.target.parentElement.dataset.title.length
-            tooltip.style.left = to + leftOffset + e.clientX + 20 + "px";
-            tooltip.style.top = e.clientY + "px";
-            tooltip.innerHTML = e.target.parentElement.dataset.title;
+    		tooltip.style.left = to + leftOffset + e.clientX + 20 + "px";
+    		tooltip.style.top = e.clientY + "px";
+    		tooltip.innerHTML = e.target.parentElement.dataset.title;
 
-            if (tooltip.getBoundingClientRect().height != 31) {
-                tooltip.style.left = to + leftOffset + e.clientX - 20 - tooltip.getBoundingClientRect().width + "px";
-            }
-        } else {
-            tooltip.style.left = -100 + leftOffset + "px";
-            tooltip.style.top = "-100px";
-        }
+    		if (tooltip.getBoundingClientRect().height != 31) {
+    			tooltip.style.left = to + leftOffset + e.clientX - 20 - tooltip.getBoundingClientRect().width + "px";
+    		}
+    	} else {
+    		tooltip.style.left = -100 + leftOffset + "px";
+    		tooltip.style.top = "-100px";
+    	}
     });
     aleiLog(DEBUG, "Added tooltip.")
 }
@@ -1082,95 +1051,95 @@ function patchDecorUpload() {
 }
 
 function setParameter(index, value) {
-    let rightParams = $id("rparams");
+	let rightParams = document.getElementById("rparams");
 
-    rightParams.childNodes[index].childNodes[1].innerHTML = value;
+	rightParams.childNodes[index].childNodes[1].innerHTML = value;
 }
 
 function getSelection() {
-    let objects = [];
+	let objects = [];
 
-    for (let i = 0; i < es.length; i++) {
-        if (es[i].selected) {
-            objects.push(es[i]);
-        }
-    }
+	for (let i = 0; i < es.length; i++) {
+		if (es[i].selected) {
+			objects.push(es[i]);
+		}
+	}
 
-    return objects;
+	return objects;
 }
 
 function areObjectsOfSameType(objects) {
-    let same = 1;
+	let same = 1;
 
-    for (let i = 0; i < objects.length; i++) {
-        if (objects[i]._class != objects[0]._class) {
-            same = 0;
-        }
-    }
+	for (let i = 0; i < objects.length; i++) {
+		if (objects[i]._class != objects[0]._class) {
+			same = 0;
+		}
+	}
 
-    return same;
+	return same;
 }
 
 function removeSameItems(array) {
-    return Array.from(new Set(array));
+	return Array.from(new Set(array));
 }
 
 function removeItems(array, items) {
-    let copy = JSON.parse(JSON.stringify(array));
+	let copy = JSON.parse(JSON.stringify(array));
 
-    for (let i = 0; i < items.length; i++) {
-        copy.splice(copy.indexOf(items[i]), 1);
-    }
+	for (let i = 0; i < items.length; i++) {
+		copy.splice(copy.indexOf(items[i]), 1);
+	}
 
-    return copy;
+	return copy;
 }
 
 function parameterNamesToIndexes(parameters, objectParameters) {
-    let indexes = [];
+	let indexes = [];
 
-    for (let i = 0; i < parameters.length; i++) {
-        indexes.push(objectParameters.indexOf(parameters[i]));
-    }
+	for (let i = 0; i < parameters.length; i++) {
+		indexes.push(objectParameters.indexOf(parameters[i]));
+	}
 
-    return indexes;
+	return indexes;
 }
 
 function getSameParameters(objects) {
-    let differentParameters = [];
-    let parameters = Object.keys(objects[0].pm);
+	let differentParameters = [];
+	let parameters = Object.keys(objects[0].pm);
 
-    for (let i = 0; i < objects.length; i++) {
-        for (let j = 0; j < parameters.length; j++) {
-            if (objects[i].pm[parameters[j]] != objects[0].pm[parameters[j]]) {
-                differentParameters.push(parameters[j]);
-            }
-        }
-    }
+	for (let i = 0; i < objects.length; i++) {
+		for (let j = 0; j < parameters.length; j++) {
+			if (objects[i].pm[parameters[j]] != objects[0].pm[parameters[j]]) {
+				differentParameters.push(parameters[j]);
+			}
+		}
+	}
 
-    differentParameters = removeSameItems(differentParameters);
-    differentParameters = removeItems(parameters, differentParameters);
+	differentParameters = removeSameItems(differentParameters);
+	differentParameters = removeItems(parameters, differentParameters);
 
-    return parameterNamesToIndexes(differentParameters, parameters);
+	return parameterNamesToIndexes(differentParameters, parameters);
 }
 
 function toBoolean(str) {
-    if (isNaN(Number(str))) {
-        return str == "true";
-    } else {
-        return Boolean(str);
-    }
+	if (isNaN(Number(str))) {
+		return str == "true";
+	} else {
+		return Boolean(str);
+	}
 }
 
 function fixIndex(index, objectType) {
-    let fixedIndex = index;
+	let fixedIndex = index;
 
-    if (objectType == "trigger") {
-        if (index > 4) {
-            fixedIndex = index + Math.floor((index - 2) / 3);
-        }
-    }
+	if (objectType == "trigger") {
+		if (index > 4) {
+			fixedIndex = index + Math.floor((index - 2) / 3);
+		}
+	}
 
-    return fixedIndex;
+	return fixedIndex;
 }
 
 const parameterMap = {
@@ -1203,11 +1172,11 @@ const parameterMap = {
 }
 
 function fixParameterValue(name, value, objectType) {
-    let fixedValue;
+	let fixedValue;
 
-    if (special_values_table[name]) {
-        fixedValue = special_values_table[name][value];
-    } else {
+	if (special_values_table[name]) {
+		fixedValue = special_values_table[name][value];
+	} else {
         if (parameterMap[objectType] && parameterMap[objectType][name]) {
             fixedValue = special_values_table[ parameterMap[objectType][name] ][value];
         }else if (name.slice(0, 8) == "actions_" && name.slice(-5) == "_type") {
@@ -1215,26 +1184,26 @@ function fixParameterValue(name, value, objectType) {
         }else {
             fixedValue = value;
         }
-    }
+	}
 
-    return fixedValue;
+	return fixedValue;
 }
 
 function setSameParameters() {
-    let objects = getSelection();
+	let objects = getSelection();
 
-    if (areObjectsOfSameType(objects) && objects.length >= 2) {
-        let indexes = getSameParameters(objects);
-        let parameters = Object.keys(objects[0].pm);
+	if (areObjectsOfSameType(objects) && objects.length >= 2) {
+		let indexes = getSameParameters(objects);
+		let parameters = Object.keys(objects[0].pm);
 
-        for (let i = 0; i < indexes.length; i++) {
-            let name = parameters[indexes[i]];
-            let value = objects[0].pm[parameters[indexes[i]]];
-            let objectType = objects[0]._class;
+		for (let i = 0; i < indexes.length; i++) {
+			let name = parameters[indexes[i]];
+			let value = objects[0].pm[parameters[indexes[i]]];
+			let objectType = objects[0]._class;
 
-            setParameter(fixIndex(indexes[i], objectType), fixParameterValue(name, value, objectType));
-        }
-    }
+			setParameter(fixIndex(indexes[i], objectType), fixParameterValue(name, value, objectType));
+		}
+	}
 }
 
 function showSameTypeParameters() {
@@ -1514,8 +1483,86 @@ function handleServerRequestResponse(request, operation, response) {
          ServerRequest_handleMapData(response);
     }else {
          aleiLog(DEBUG2, `Evaling for request "${request}" with operation of "${operation}": ${response}`)
-         JS_eval(response)
+         try {JS_eval(response);}
+         catch(e) {NewNote("Eval error!", note_bad); console.error(e);}
     };
+}
+
+function makeRequest(method, url, data) {
+    return new Promise(function (resolve, reject) {
+        let xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xhr.onload = function () {
+            if (this.status >= 200 && this.status < 300) {
+                resolve({status: 200, response: xhr.response});
+            } else {
+                reject({
+                    status: this.status,
+                    statusText: xhr.statusText
+                });
+            }
+        };
+        xhr.onerror = function () {
+            reject({
+                status: this.status,
+                statusText: xhr.statusText
+            });
+        };
+        xhr.send(data);
+    });
+}
+
+function updateDecorList() {
+    try {
+        let list_native = $id("list_native");
+        for(let i = 0; i < ALEI_decors.length; i++) {
+            let decor = ALEI_decors[i];
+            let decor_model = decor[0];
+            let decor_name = decor[1];
+            let decor_image = decor[2];
+            list_native.innerHTML += `
+                    <div class="img_option" onClick="CustomImageSelected('${decor_model}', '${decor_name}' )">
+                       <div class="imgdiv" style="background:url(${decor_image})"></div>
+                       <div>
+                         ${decor_name}
+                       </div>
+                    </div>
+                    `
+        }
+        aleiLog(DEBUG, "Updated decor list.");
+    }
+    catch(e) {} // We assume we are not in decor list yet.
+}
+
+async function ALEI_ServerRequest(request, operation, callback = null) {
+    let response = await makeRequest("POST", `e_server.php?a=${request_a}`, request);
+    if (response.status != 200) {
+        if (operation == 'save') NewNote('Oops! Error occoured during saving. Usually it may be happening due to connection problems. Map will be temporary saved to your computer\'s LocalStorage', note_bad);
+        else if (operation == 'load') NewNote('Oops! Error occoured durning loading. Usually it may be happening due to connection problems.', note_bad)
+        return;
+    }
+    try {
+        handleServerRequestResponse(request, operation, response.response);
+        if (request.indexOf("a=get_images") != -1 && request.indexOf("for_class=decor_model") != -1) {
+            updateDecorList();
+        }
+        window.ImageContext = ImageContext;
+        if (operation == 'save' || operation == 'load') {
+            changes_made = false;
+            if (operation == 'load') {
+                need_redraw = true;
+                need_GUIParams_update = true;
+                ClearUndos();
+            }
+        }
+    } catch (e) {
+        NewNote('Server responds with unclear message. Looks like one of recent actions wasn\'t successful.', note_bad);
+        debugger;
+    }
+    if (callback != null) {
+        callback();
+    }
 }
 
 function patchServerRequest() {
@@ -1524,17 +1571,11 @@ function patchServerRequest() {
     // Which opens up to expected vulnerabilities.
     // Hopefully in future, ALEI will completely get rid of eval.
     // RFC: Maybe make this promise-based aswell so map makers can still do other stuff while server request is being processed ?
-    let _ogServerRequest = window.ServerRequest;
-    window.ServerRequest = function(request, operation, callback = null) {
-        let evalingCode = "";
-        window.eval = function(code) {evalingCode = code};
-        _ogServerRequest(request, operation, callback);
-        window.eval = JS_eval;
-        handleServerRequestResponse(request, operation, evalingCode);
-    };
+    window.ServerRequest = ALEI_ServerRequest;
     aleiLog(DEBUG, "Patched ServerRequest");
 }
-window.eval = function(code) { // Temporarily prevnt map load evals till ALEI takes control
+
+window.eval = function(code) { // Temporarily preventing map load evals till ALEI takes the control
     handleServerRequestResponse(null, null, code);
 };
 
@@ -1546,7 +1587,7 @@ function patchUpdateGUIParams() {
             let resp = origGPV(base, value);
 
             if (FORCE_TEXT_OPTIONS || ["nochange"].indexOf(base) != -1) {
-                resp = `${value}`.split('"').join("&quot;");
+                resp = `${value}`.replaceAll('"', "&quot;");
                 resp = `<pvalue real="${resp}">- not used -</pvalue>`
             }
             return resp;
@@ -1583,12 +1624,6 @@ let ALE_start = (async function() {
     window.UpdatePhysicalParam = UpdatePhysicalParam;
     window.PasteFromClipBoard = PasteFromClipBoard;
     showSameTypeParameters();
-    // Patching delete and rename in decor list.
-    function overwriteImageContext() {
-        window.ImageContext = ImageContext;
-        setTimeout(overwriteImageContext, 1000); // Function comes from evaling ServerRequest, and for some reason it gets overwritten, so we have to constantly overwrite.
-    }
-    overwriteImageContext();
     // Tooltip.
     if(aleiSettings.enableTooltips) {
         doTooltip();
@@ -1600,4 +1635,4 @@ let ALE_start = (async function() {
     aleiLog(INFO, "Welcome!")
 });
 
-window.addEventListener("load", () => ALE_start());
+window.addEventListener("load", () => {ALE_start();});
