@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      6.6
+// @version      6.7
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1430,52 +1430,71 @@ function ServerRequest_handleMapData(mapCode) {
     aleiLog(DEBUG, "Parsing map source now.");
 
     const objectKeyValueRegex = /(\w+)=((-?\d+(\.\d+)?)|('[ -~]*')|true|false)/;
-    const objectCreationRegex = /q=es\[(\d+)\]=new E\('(\w+)'\)/;
+    const objectCreationRegex = /q=es\[\d+\]=new E\('(\w+)'\)/;
 
-    let expressions = mapCode.split(";");
+    let expressions = mapCode.split(";\n");
 
     let currentElement = null;
 
     window.es = new Array(); // clear.
     let index = 2; // We skip var q; and es = new Array();
-    for (;index < expressions.length-5; index++) { // We will also skip last 5, they are related to setting map id field and permissions.
+    for (;index < expressions.length; index++) {
         let expression = expressions[index];
-        if(expression === "q=q.pm") {continue};
 
+        // Skip if it's just only tab or newlines
+        if(expression.replaceAll("\n", "").replaceAll("\t", "").length == 0) {continue};
+
+        // Map ID related stuff.
+        if (expression.indexOf("mapid = '") != -1) {
+            window.mapid = expression.split(" = ")[1].slice(1, -1);
+            mapid_field.value = mapid;
+            continue;
+        }
+        else if (expression == "\t\tmapid_field.value = mapid") {continue;}
+        else if (expression.indexOf("maprights.innerHTML='") != -1) {
+            let rights = expression.split(";")[0].split(".innerHTML=")[1].slice(1, -1);
+            maprights.value = rights;
+            NewNote(`Map '${mapid}' has been successfully loaded.`, note_good);
+            continue
+        }
+        // Actual mapdata.
+        if(expression.indexOf(";q=q.pm;") != -1) { // Creation which is q=es[...]=new E(...);q=q.pm;q.(...)=(...);
+            let creation = objectCreationRegex.exec(expression);
+            currentElement = new E(creation[1]);
+            es[es.length] = currentElement;
+
+            let splt = expression.split(";");
+            if (splt.length > 3) {
+                // There is supposed to be only 3 ;'s
+                // initializing;setting;firstProperty
+                // Assuming that server only gives first property and does not send more than 1 in creation line
+                aleiLog(WARN, `Expected 3 items, got ${splt.length} - ${splt}`);
+                continue;
+            }
+            expression = splt[2];
+        };
+        // Key value
+        // In format of q.(___)=(___);
         let matchKeyValue = objectKeyValueRegex.exec(expression);
-        let matchCreation = objectCreationRegex.exec(expression);
 
-        if (matchKeyValue === null && matchCreation === null) {
+        if (matchKeyValue === null) {
             aleiLog(WARN, `Unable to figure out what kind of code is "${expression}", you MIGHT have issues.`);
             continue;
         }
-        if(matchCreation !== null) {
-            currentElement = new E(matchCreation[2]);
-            es[es.length] = currentElement;
+        let key = matchKeyValue[1];
+        let value = matchKeyValue[2];
+        if (value[0] != "'") { // Not a string.
+            if (value == "true") value = true;
+            else if(value == "false") value = false;
+            else if(value.indexOf(".") != -1) value = parseFloat(value);
+            else value = parseInt(value);
         } else {
-            let key = matchKeyValue[1];
-            let value = matchKeyValue[2];
-            if (value[0] != "'") { // Not a string.
-                if (value == "true") value = true;
-                else if(value == "false") value = false;
-                else if(value.indexOf(".") != -1) value = parseFloat(value);
-                else value = parseInt(value);
-            } else {
-                // Is a string. We just strip quotation marks and fix apostrophes.
-                value = value.slice(1, -1).replaceAll("\\'", "'");
-            }
-            currentElement.pm[key] = value;
+            // Is a string. We just strip quotation marks and fix apostrophes.
+            value = value.slice(1, -1).replaceAll("\\'", "'");
         }
+        currentElement.pm[key] = value;
+
     }
-    // Now as for fixed parts.
-    let start = expressions.length - 5;
-    window.mapid = expressions[start].slice("\n\t\tmapid = '".length, -1);
-    window.mapid_field.value = mapid;
-
-    window.maprights = expressions[start+2].slice("\n\t\t\n\t\tmaprights.innerHTML='".length, -1);
-    NewNote(`Map "${mapid}" is successfully loaded.`, note_good);
-
-
 }
 
 function handleServerRequestResponse(request, operation, response) {
@@ -1557,6 +1576,7 @@ async function ALEI_ServerRequest(request, operation, callback = null) {
             }
         }
     } catch (e) {
+        console.error(e);
         NewNote('Server responds with unclear message. Looks like one of recent actions wasn\'t successful.', note_bad);
         debugger;
     }
