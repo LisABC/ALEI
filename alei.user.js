@@ -1635,4 +1635,4 @@ let ALE_start = (async function() {
     aleiLog(INFO, "Welcome!")
 });
 
-window.addEventListener("load", () => {ALE_start();});
+window.addEventListener("load", () => ALE_start());
