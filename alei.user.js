@@ -1514,7 +1514,7 @@ function handleServerRequestResponse(request, operation, response) {
          ServerRequest_handleMapData(response);
     }else {
          aleiLog(DEBUG2, `Evaling for request "${request}" with operation of "${operation}": ${response}`)
-         window.eval(response)
+         JS_eval(response)
     };
 }
 
@@ -1526,22 +1526,36 @@ function patchServerRequest() {
     // RFC: Maybe make this promise-based aswell so map makers can still do other stuff while server request is being processed ?
     let _ogServerRequest = window.ServerRequest;
     window.ServerRequest = function(request, operation, callback = null) {
-        let _eval = window.eval;
         let evalingCode = "";
         window.eval = function(code) {evalingCode = code};
         _ogServerRequest(request, operation, callback);
-        window.eval = _eval;
+        window.eval = JS_eval;
         handleServerRequestResponse(request, operation, evalingCode);
     };
     aleiLog(DEBUG, "Patched ServerRequest");
 }
-
-function TemporaryEval(code) {
-    window.eval = JS_eval;
+window.eval = function(code) { // Temporarily prevnt map load evals till ALEI takes control
     handleServerRequestResponse(null, null, code);
-    window.eval = TemporaryEval;
+};
+
+function patchUpdateGUIParams() {
+    let origUGP = window.UpdateGUIParams;
+    let origGPV = window.GenParamVal;
+    window.UpdateGUIParams = function() {
+        window.GenParamVal = function(base, value) {
+            let resp = origGPV(base, value);
+
+            if (FORCE_TEXT_OPTIONS || ["nochange"].indexOf(base) != -1) {
+                resp = `${value}`.split('"').join("&quot;");
+                resp = `<pvalue real="${resp}">- not used -</pvalue>`
+            }
+            return resp;
+        }
+        origUGP();
+        window.GenParamVal = origGPV;
+    }
+    aleiLog(DEBUG, "Patched UpdateGUIParams");
 }
-window.eval = TemporaryEval;
 
 let ALE_start = (async function() {
    'use strict';
@@ -1581,6 +1595,7 @@ let ALE_start = (async function() {
     }
     window.eval = JS_eval;
     patchServerRequest();
+    patchUpdateGUIParams();
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
 });
