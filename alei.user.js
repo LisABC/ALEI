@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      6.5
+// @version      6.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1586,7 +1586,7 @@ function patchUpdateGUIParams() {
         window.GenParamVal = function(base, value) {
             let resp = origGPV(base, value);
 
-            if (FORCE_TEXT_OPTIONS || ["nochange"].indexOf(base) != -1) {
+            if (base == "nochange") {
                 resp = `${value}`.replaceAll('"', "&quot;");
                 resp = `<pvalue real="${resp}">- not used -</pvalue>`
             }
