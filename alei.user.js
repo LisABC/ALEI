@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      6.7
+// @version      6.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1621,8 +1621,8 @@ function patchUpdateGUIParams() {
 let ALE_start = (async function() {
     'use strict';
     // Handling rest of things
-    addObjBoxResize();
     addPropertyPanelResize();
+    addObjBoxResize();
 
     updateStyles();
     updateSkins();
