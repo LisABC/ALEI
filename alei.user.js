@@ -24,6 +24,14 @@ const DEBUG = 1;
 const DEBUG2 = 2;
 const WARN = -1;
 
+// Just for styling.
+const ANSI_RESET = "\x1B[0m"
+const ANSI_RED = "\x1B[31m"
+const ANSI_GREY = "\x1B[37m"
+const ANSI_GREEN = "\x1B[92m"
+const ANSI_YELLOW = "\x1B[93m"
+const ANSI_CYAN = "\x1B[96m"
+
 let aleiSettings = {
     rightPanelSize: "30vw",
     inpValueWidth: "100%",
@@ -38,9 +46,9 @@ if (localStorage['ALEI_LOGLEVEL'] != undefined)
     aleiSettings.logLevel = parseInt(localStorage['ALEI_LOGLEVEL']);
 
 let levelToNameMap = {
-    0: "INFO",
-    1: "DEBUG",
-    2: "DEBUG2"
+    0: `${ANSI_CYAN}INFO${ANSI_RESET}`,
+    1: `${ANSI_GREEN}DEBUG${ANSI_RESET}`,
+    2: `${ANSI_GREEN}DEBUG2${ANSI_RESET}`
 }
 
 function aleiLog(level, text) {
@@ -48,7 +56,7 @@ function aleiLog(level, text) {
         console.warn(`[ALEI:WARNING]: ${text}`);
         NewNote(`ALEI: Please check console.`, "#FFFF00");
     }else if (level <= aleiSettings.logLevel)
-        console.log(`[ALEI:${levelToNameMap[level]}]: ${text}`)
+        console.log(`[${ANSI_GREEN}ALEI:${levelToNameMap[level]}]: ${text}`)
 }
 aleiLog(INFO, "Starting up...");
 
@@ -1501,7 +1509,7 @@ function handleServerRequestResponse(request, operation, response) {
     if (response.indexOf("var es = new Array();") != -1) {
         ServerRequest_handleMapData(response);
     }else {
-        aleiLog(DEBUG2, `Evaling for request "${request}" with operation of "${operation}": ${response}`)
+        aleiLog(DEBUG2, `Evaling for request ${ANSI_YELLOW}"${request}"${ANSI_RESET} with operation of ${ANSI_YELLOW}"${operation}"${ANSI_RESET}: ${response}`)
         try {JS_eval(response);}
         catch(e) {NewNote("Eval error!", note_bad); console.error(e);}
     };
