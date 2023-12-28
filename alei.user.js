@@ -1603,6 +1603,7 @@ window.eval = function(code) { // Temporarily overriding eval so we can patch Se
         handleServerRequestResponse(null, null, code);
         patchServerRequest();
         // We are pretty much done, we have patched ServerRequest, so just roll with old eval.
+        // Oh and a note for myself incase i confuse myself: vanilla ServerRequest is synchronous
         window.eval = JS_eval;
     } else {
         // Is not defined.
