@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      6.9
+// @version      7.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1585,18 +1585,31 @@ async function ALEI_ServerRequest(request, operation, callback = null) {
     }
 }
 
+let _serverRequestPatched = false;
 function patchServerRequest() {
+    // This code just exists to prevent logging more than once
+    if (_serverRequestPatched) return;
+    _serverRequestPatched = true;
     // Patches ServerRequest function.
-    // This function literally eval()'s every single thing that server sends.
+    // vanilla ServerRequest function literally eval()'s every single thing that server sends.
     // Which opens up to expected vulnerabilities.
     // Hopefully in future, ALEI will completely get rid of eval.
-    // RFC: Maybe make this promise-based aswell so map makers can still do other stuff while server request is being processed ?
     window.ServerRequest = ALEI_ServerRequest;
     aleiLog(DEBUG, "Patched ServerRequest");
 }
 
-window.eval = function(code) { // Temporarily preventing map load evals till ALEI takes the control
-    handleServerRequestResponse(null, null, code);
+window.eval = function(code) { // Temporarily overriding eval so we can patch ServerRequest as early as possible
+    if (window.ServerRequest !== undefined) { // ServerRequest is defined.
+        handleServerRequestResponse(null, null, code);
+        patchServerRequest();
+        // We are pretty much done, we have patched ServerRequest, so just roll with old eval.
+        window.eval = JS_eval;
+    } else {
+        // Is not defined.
+        // Is this even possible in normal circumstances?
+        console.log(code);
+        debugger;
+    }
 };
 
 function patchUpdateGUIParams() {
@@ -1648,7 +1661,6 @@ let ALE_start = (async function() {
     if(aleiSettings.enableTooltips) {
         doTooltip();
     }
-    window.eval = JS_eval;
     patchServerRequest();
     patchUpdateGUIParams();
     NewNote("ALEI: Welcome!", "#7777FF");
