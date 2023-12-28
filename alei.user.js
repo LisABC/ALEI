@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      7.0
+// @version      7.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -28,8 +28,8 @@ const WARN = -1;
 const ANSI_RESET = "\x1B[0m"
 const ANSI_RED = "\x1B[31m"
 const ANSI_GREY = "\x1B[37m"
-const ANSI_GREEN = "\x1B[92m"
 const ANSI_YELLOW = "\x1B[93m"
+const ANSI_GREEN = "\x1B[92m"
 const ANSI_CYAN = "\x1B[96m"
 
 let aleiSettings = {
@@ -1410,24 +1410,16 @@ function PasteFromClipBoard(ClipName) {
             }
     }
     // Again by Prosu
-    if (true) {
-        x1 = Math.round((m_pos_x - m_down_x) / GRID_SNAPPING) * GRID_SNAPPING;
-        y1 = Math.round((m_pos_y - m_down_y) / GRID_SNAPPING) * GRID_SNAPPING;
-        for (var i = 0; i < es.length; i++) {
-            if (es[i].exists) {
-                if (MatchLayer(es[i]) || paint_draw_mode) {
-                    if (es[i].selected) {
-                        if (es[i]._isphysical) {
-                            es[i].pm.x += x1;
-                            es[i].pm.y += y1;
-                        }
-                    }
-                }
-            }
+    x1 = Math.round((m_pos_x - m_down_x) / GRID_SNAPPING) * GRID_SNAPPING;
+    y1 = Math.round((m_pos_y - m_down_y) / GRID_SNAPPING) * GRID_SNAPPING;
+    for (var i = 0; i < es.length; i++) {
+        if (es[i]._isphysical && es[i].exists && es[i].selected && (MatchLayer(es[i]) || paint_draw_mode)) {
+            es[i].pm.x += x1;
+            es[i].pm.y += y1;
         }
-        m_down_x += x1;
-        m_down_y += y1;
     }
+    m_down_x += x1;
+    m_down_y += y1;
     lfz(false);
     return true;
 }
