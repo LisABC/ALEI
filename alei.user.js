@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      7.1
+// @version      7.2
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -40,10 +40,24 @@ let aleiSettings = {
     logLevel: 0,
     showTriggerIDs: false,
     enableTooltips: false,
-    showSameParameters: true
+    showSameParameters: true,
+    rematchUID: false
 }
+
 if (localStorage['ALEI_LOGLEVEL'] != undefined)
     aleiSettings.logLevel = parseInt(localStorage['ALEI_LOGLEVEL']);
+if (localStorage['ALEI_REMATCHUID'] != undefined)
+    aleiSettings.rematchUID = localStorage['ALEI_REMATCHUID'] === "1";
+
+function writeStorage(key, value) {
+    try {
+        localStorage[key] = value;
+    } catch (e) {
+        NewNote("ALEI: There was some issue trying to save into storage. You might need to clear your datas.", note_bad);
+        console.error(e);
+        debugger;
+    }
+}
 
 let levelToNameMap = {
     0: `${ANSI_CYAN}INFO${ANSI_RESET}`,
@@ -656,7 +670,7 @@ function addPropertyPanelResize() {
 
     root.addEventListener('mouseup', (e) => {
         splitter_is_down = false;
-        localStorage['RIGHT_PANEL_WIDTH'] = right_panel.clientWidth + 'px';
+        writeStorage('RIGHT_PANEL_WIDTH', right_panel.clientWidth + 'px');
     });
 
     root.addEventListener('mousemove', (e) => {
@@ -733,9 +747,38 @@ function addSnappingOptions_helper() {
     $query(`a[onmousedown="GridSnappingSet(10);"]`).outerHTML = newHTML;
 }
 
+window.ALEI_UpdateRematchUIDSetting = function(value) {
+    aleiSettings.rematchUID = value;
+    writeStorage("ALEI_REMATCHUID", value + 0);
+    UpdateTools();
+}
+
+function addRematchUIOptions_helper() {
+    $query(`a[onmousedown="EvalSet('param_panel_size',800);SaveBrowserSettings();UpdateCSS();"]`).remove();
+
+    let result = document.evaluate("//span[contains(., 'Param')]", left_panel, null, XPathResult.ANY_TYPE, null);
+    result.iterateNext();
+    result.iterateNext().innerHTML = "Remap UID (W.I.P)";
+
+    for (let value of [[true, "Yes", 0], [false, "No", 200]]) {
+        let element = document.createElement("a");
+        element.innerHTML = value[1];
+
+        let toolClass = "tool_btn";
+        if(aleiSettings.rematchUID == value[0]) toolClass = "tool_btn2";
+
+        element.setAttribute("class", `${toolClass} tool_wid`);
+        element.setAttribute("style", "width: 64px;");
+        element.setAttribute("onmousedown", `ALEI_UpdateRematchUIDSetting(${value[0]})`);
+
+        $query(`a[onmousedown="EvalSet('param_panel_size',${value[2]});SaveBrowserSettings();UpdateCSS();"]`).outerHTML = element.outerHTML;
+    }
+
+}
+
 function onToolUpdate() {
-    // Thanks eric.
     addSnappingOptions_helper();
+    addRematchUIOptions_helper();
 }
 
 function patchUpdateTools() {
@@ -1500,6 +1543,8 @@ function ServerRequest_handleMapData(mapCode) {
 function handleServerRequestResponse(request, operation, response) {
     if (response.indexOf("var es = new Array();") != -1) {
         ServerRequest_handleMapData(response);
+    }else if (response.indexOf("param_panel_size = v") != -1) {
+        return; // Ignore.
     }else {
         aleiLog(DEBUG2, `Evaling for request ${ANSI_YELLOW}"${request}"${ANSI_RESET} with operation of ${ANSI_YELLOW}"${operation}"${ANSI_RESET}: ${response}`)
         try {JS_eval(response);}
@@ -1632,6 +1677,15 @@ function patchUpdateGUIParams() {
     aleiLog(DEBUG, "Patched UpdateGUIParams");
 }
 
+function patchEvalSet() {
+    window.EvalSet = function(key, value) {
+        // No evaling. Death to eval !
+        window[key] = value;
+        UpdateTools();
+    }
+    aleiLog(DEBUG, "Patched EvalSet");
+}
+
 let ALE_start = (async function() {
     'use strict';
     // Handling rest of things
@@ -1654,6 +1708,7 @@ let ALE_start = (async function() {
     patchUpdateTools();
     patchDecorUpload();
     patchEntityClass();
+    patchEvalSet();
     // Allowing for spaces in parameters.
     window.UpdatePhysicalParam = UpdatePhysicalParam;
     window.PasteFromClipBoard = PasteFromClipBoard;
