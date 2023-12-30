@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      7.2
+// @version      7.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
+// @run-at       document-start
 // @icon         https://github.com/ZenoABC/ALEI/blob/main/icon.png?raw=true
 // @grant        none
 // ==/UserScript==
@@ -55,7 +56,6 @@ function writeStorage(key, value) {
     } catch (e) {
         NewNote("ALEI: There was some issue trying to save into storage. You might need to clear your datas.", note_bad);
         console.error(e);
-        debugger;
     }
 }
 
