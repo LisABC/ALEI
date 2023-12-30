@@ -758,7 +758,7 @@ function addRematchUIOptions_helper() {
 
     let result = document.evaluate("//span[contains(., 'Param')]", left_panel, null, XPathResult.ANY_TYPE, null);
     result.iterateNext();
-    result.iterateNext().innerHTML = "Remap UID (W.I.P)";
+    result.iterateNext().innerHTML = "Remap UID";
 
     for (let value of [[true, "Yes", 0], [false, "No", 200]]) {
         let element = document.createElement("a");
