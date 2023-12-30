@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      7.3
+// @version      7.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -875,30 +875,79 @@ function exportXML() {
     download.remove();
 }
 ///////////////////////////////
+const _ignoredKeys = [
+    // Numbers obviously cannot have texts.
+    "x",
+    "y",
+    "w",
+    "h",
+    "maxcalls",
+    "command",
+    "upg",
+    "tox",
+    "toy",
+    "stab",
+    "damage",
+    "u",
+    "v",
+    "sx",
+    "sy",
+    "r",
+    "f",
+    "power",
+    // Booleans obviously cannot have texts.
+    "enabled",
+    "flare",
+    // We are obviously not going to change UID
+    "uid",
+    // We are obviously not going to change models
+    "gun_model",
+    "model",
+];
+function updateUIDReferences(oldName, newName) {
+    aleiLog(DEBUG2, `Updating UID references from ${ANSI_CYAN}${oldName}${ANSI_RESET} to ${ANSI_CYAN}${newName}${ANSI_RESET}`);
+    for (let i = 0; i < es.length; i++) {
+        let element = es[i];
+        if (!element.exists) continue;
+        let properties = element.pm;
+
+        for (let entry of Object.entries(properties)) {
+            let key = entry[0];
+            let value = entry[1];
+
+            if (_ignoredKeys.indexOf(key) != -1) continue;
+            if (typeof(value) !== "string") continue;
+            properties[key] = value.replaceAll(oldName, newName);
+        }
+    }
+}
+
 function UpdatePhysicalParam(paramname, chvalue) {
     lcz();
     var layer_mismatch = false;
     var list_changes = '';
     for (var elems = 0; elems < es.length; elems++)
-        if (es[elems].exists)
-            if (es[elems].selected) {
-                if (es[elems].pm.hasOwnProperty(paramname)) {
-                    if (MatchLayer(es[elems])) {
-                        var lup = (typeof(paramname) == 'string') ? '"' + paramname + '"' : paramname;
-                        if (typeof(chvalue) == 'number' || ((chvalue === 0))) {
-                            lnd('es[' + elems + '].pm[' + lup + '] = ' + es[elems].pm[paramname] + ';');
-                            ldn('es[' + elems + '].pm[' + lup + '] = ' + chvalue + ';');
-                            es[elems].pm[paramname] = Number(chvalue);
-                        } else if (typeof(chvalue) == 'string') {
-                            lnd('es[' + elems + '].pm[' + lup + '] = "' + es[elems].pm[paramname] + '";');
-                            ldn('es[' + elems + '].pm[' + lup + '] = "' + chvalue + '";');
-                            es[elems].pm[paramname] = chvalue;
-                        } else {
-                            alert('Unknown value type: ' + typeof(chvalue));
-                        }
-                        list_changes += 'Parameter "' + paramname + '" of object "' + (es[elems].pm.uid != null ? es[elems].pm.uid : es[elems]._class) + '" was set to "' + chvalue + '"<br>';
-                    } else layer_mismatch = true;
-                }
+        if (es[elems].exists && es[elems].selected)
+            if (es[elems].pm.hasOwnProperty(paramname)) {
+                if (MatchLayer(es[elems])) {
+                    if (paramname == "uid" && aleiSettings.rematchUID) {
+                        updateUIDReferences(es[elems].pm.uid, chvalue);
+                    }
+
+                    var lup = (typeof(paramname) == 'string') ? '"' + paramname + '"' : paramname;
+                    if (typeof(chvalue) == 'number' || ((chvalue === 0))) {
+                        lnd('es[' + elems + '].pm[' + lup + '] = ' + es[elems].pm[paramname] + ';');
+                        ldn('es[' + elems + '].pm[' + lup + '] = ' + chvalue + ';');
+                        es[elems].pm[paramname] = Number(chvalue);
+                    } else if (typeof(chvalue) == 'string') {
+                        lnd('es[' + elems + '].pm[' + lup + '] = "' + es[elems].pm[paramname] + '";');
+                        ldn('es[' + elems + '].pm[' + lup + '] = "' + chvalue + '";');
+                        es[elems].pm[paramname] = chvalue;
+                    } else {
+                        alert('Unknown value type: ' + typeof(chvalue));
+                    }
+                    list_changes += 'Parameter "' + paramname + '" of object "' + (es[elems].pm.uid != null ? es[elems].pm.uid : es[elems]._class) + '" was set to "' + chvalue + '"<br>';
+                } else layer_mismatch = true;
             } need_redraw = true;
     NewNote('Operation complete:<br><br>' + list_changes, note_passive);
     if (layer_mismatch) NewNote('Note: Some changes weren\'t made due to missmatch of active layer and class of selected objects', note_neutral);
