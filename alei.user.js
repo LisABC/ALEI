@@ -1543,8 +1543,6 @@ function ServerRequest_handleMapData(mapCode) {
 function handleServerRequestResponse(request, operation, response) {
     if (response.indexOf("var es = new Array();") != -1) {
         ServerRequest_handleMapData(response);
-    }else if (response.indexOf("param_panel_size = v") != -1) {
-        return; // Ignore.
     }else {
         aleiLog(DEBUG2, `Evaling for request ${ANSI_YELLOW}"${request}"${ANSI_RESET} with operation of ${ANSI_YELLOW}"${operation}"${ANSI_RESET}: ${response}`)
         try {JS_eval(response);}
