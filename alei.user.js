@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      7.5
+// @version      7.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -300,7 +300,7 @@ function updateSkins() {
         [161, "Amber Gallynew"],
 
         [162, "Pinkine"],
-        [163, "Oryx"],
+        [163, "Raider"],
         [164, "Blue Heavy Hero"],
         [165, "Red Heavy Hero"],
         [166, "Orakin"],
@@ -313,14 +313,47 @@ function updateSkins() {
         [172, "Grosk"],
         [173, "Futuristic Knight"],
         [174, "Uncivil Proxy"],
-        [175, "Nexxon Contractor"],
-        [176, "Assimilated Reakhohsha Operative"],
+
+        [175, "Serkova Insertion Unit"],
+        [176, "Moon Marksman"],
+
         [177, "Slayer"],
 
-        [178, "Nexxon Captain"],
-        [179, "Savage Falkok"],
-        [180, "Savage Phoenix"]
-
+        [178, "Newgen Marine"],
+        [179, "Sgt. Davais"],
+        [180, "Phantom (Orange)"],
+        [181, "Huntsmen"],
+        [182, "Huntsmen (Swamp)"],
+        [183, "Lt. Ferbo"],
+        [184, "Titan"],
+        [185, "Vorean"],
+        [186, "Drohnen Skinnisher"],
+        [187, "Cromastakan"],
+        [188, "Sgt. Davais (Purple)"],
+        [189, "Maroom"],
+        [190, "Outsider"],
+        [191, "Serkova Recon Unit"],
+        [192, "Drohnen Drifter"],
+        [193, "Moon Captain"],
+        [194, "Phantom (Blue)"],
+        [195, "Wraith"],
+        [196, "Earth Heavy Spec. Op"],
+        [197, "Phantom (Purple)"],
+        [198, "Deleted Character"],
+        [199, "Drohnen Skirmisher"],
+        [200, "Deleted Character"],
+        [201, "Deleted Character"],
+        [202, "Deleted Character"],
+        [203, "Serkova Gunner Unit"],
+        [204, "Serkova Grenader Unit"],
+        [205, "Serkova Team Leader"],
+        [206, "Serkova Resource Unit"],
+        [207, "Serkova Technician Unit"],
+        [208, "Serkova Grub"],
+        [209, "Serkova Reinforced Grub"],
+        [210, "Serkova Devastator Grub"],
+        [211, "XBT-117 Android"],
+        [212, "Teneguilae"]
     ]
     for(let li = 0; li < charlists.length; li++) {
         let charID = charlists[li][0];
