@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      7.7
+// @version      7.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -949,9 +949,25 @@ function updateUIDReferences(oldName, newName) {
             let key = entry[0];
             let value = entry[1];
 
-            if (_ignoredKeys.indexOf(key) != -1) continue;
+            // Quick elimination
+            if (_ignoredKeys.indexOf(key) !== -1) continue;
             if (typeof(value) !== "string") continue;
-            properties[key] = value.replaceAll(oldName, newName);
+            if (value.indexOf(oldName) === -1) continue;
+
+            // Actual replacement
+            if (value === oldName) { // Fine.
+                properties[key] = newName;
+                continue;
+            }
+
+            let splt = value.split(",");
+            for (let i = 0; i < splt.length; i++) {
+                let item = splt[i];
+                if (item.trim() == oldName) {
+                    splt[i] = item.replace(oldName, newName);
+                }
+            }
+            properties[key] = splt.join(",");
         }
     }
     window.need_GUIParams_update = true;
