@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      7.8
+// @version      7.9
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -33,22 +33,29 @@ const ANSI_YELLOW = "\x1B[93m"
 const ANSI_GREEN = "\x1B[92m"
 const ANSI_CYAN = "\x1B[96m"
 
-let aleiSettings = {
-    rightPanelSize: "30vw",
-    inpValueWidth: "100%",
-    triggerEditTextSize: "12px",
-    starsImage: "stars2.jpg",
-    logLevel: 0,
-    showTriggerIDs: false,
-    enableTooltips: false,
-    showSameParameters: true,
-    rematchUID: false
+function readStorage(key, defaultValue, func) {
+    let val = localStorage[key];
+    if (val === undefined) return defaultValue;
+    return func(localStorage[key])
 }
 
-if (localStorage['ALEI_LOGLEVEL'] != undefined)
-    aleiSettings.logLevel = parseInt(localStorage['ALEI_LOGLEVEL']);
-if (localStorage['ALEI_REMATCHUID'] != undefined)
-    aleiSettings.rematchUID = localStorage['ALEI_REMATCHUID'] === "1";
+if (localStorage['RIGHT_PANEL_WIDTH'] != undefined)
+    localStorage["ALEI_RightPanelWidth"] = localStorage["RIGHT_PANEL_WIDTH"];
+    localStorage.removeItem("RIGHT_PANEL_WIDTH");
+
+let aleiSettings = {
+    rightPanelSize:     readStorage("ALEI_RightPanelWidth", "30vw", (val) => val),
+    inpValueWidth:      "100%",
+    triggerEditTextSize:"12px",
+    starsImage:         "stars2.jpg",
+    logLevel:           readStorage("ALEI_LogLevel",             0,     parseInt           ),
+    showTriggerIDs:     readStorage("ALEI_ShowTriggerIDs",       false, (val) => val === "1"),
+    enableTooltips:     readStorage("ALEI_ShowTooltips",         false, (val) => val === "1"),
+    showSameParameters: readStorage("ALEI_ShowSameParameters",   true , (val) => val === "1"),
+    rematchUID:         readStorage("ALEI_RemapUID",             false, (val) => val === "1"),
+    showIDs:            readStorage("ALEI_ShowIDs",              false, (val) => val === "1")
+}
+window.aleiSettings = aleiSettings;
 
 function writeStorage(key, value) {
     try {
@@ -83,13 +90,18 @@ let aleiSessionID = null; // ID of this session
 let aleiSessionList = []; // Set of known session IDs
 
 function updateParameters() {
-    // Adds parameters that game accepts but does not exist in ALE.
+    // Does things to parameters depending on purpose.
     function add(key, type, name, objType) {
         param_type[param_type.length] = [key, type, name, "", objType];
     }
+    // Adding parameters that the game accepts but ALE does not have.
     add("moving", "bool", "Is Moving?", "door");
     add("tarx", "value", "Target X", "door");
     add("tary", "value", "Target Y", "door");
+    // Adding our own parameter for showıng IDs.
+    param_type[param_type.length] = ["__id", "value", "ID", "", "*"]
+    // Patching parameters
+    param_type[0] = ['uid', 'string', 'Name', 'Object Name', '*'];
 }
 
 function updateSounds() {
@@ -704,15 +716,12 @@ function addPropertyPanelResize() {
 
     root.addEventListener('mouseup', (e) => {
         splitter_is_down = false;
-        writeStorage('RIGHT_PANEL_WIDTH', right_panel.clientWidth + 'px');
+        writeStorage('ALEI_RightPanelWidth', right_panel.clientWidth + 'px');
     });
 
     root.addEventListener('mousemove', (e) => {
         if (splitter_is_down) splitter_resize(e);
     });
-
-    if (localStorage['RIGHT_PANEL_WIDTH'] != undefined)
-        aleiSettings.rightPanelSize = localStorage['RIGHT_PANEL_WIDTH'];
 
     splitter.style.right = aleiSettings.rightPanelSize;
     ROOT_ELEMENT.style.setProperty("--param_panel_size", splitter.style.right);
@@ -783,7 +792,7 @@ function addSnappingOptions_helper() {
 
 window.ALEI_UpdateRematchUIDSetting = function(value) {
     aleiSettings.rematchUID = value;
-    writeStorage("ALEI_REMATCHUID", value + 0);
+    writeStorage("ALEI_RemapUID", value + 0);
     UpdateTools();
 }
 
@@ -1211,7 +1220,7 @@ function getSelection() {
     let objects = [];
 
     for (let i = 0; i < es.length; i++) {
-        if (es[i].selected) {
+        if (es[i].selected && es[i].exists) {
             objects.push(es[i]);
         }
     }
@@ -1357,6 +1366,18 @@ function setSameParameters() {
     }
 }
 
+function assignObjectIDs() {
+    if (!aleiSettings.showIDs) return;
+    let idmap = {};
+    for (let element of es) {
+        if (!element.exists) continue;
+        if (idmap[element._class] === undefined) idmap[element._class] = -1;
+
+        idmap[element._class] += 1;
+        element.aleiID = idmap[element._class];
+    }
+}
+
 function showSameTypeParameters() {
     if (!aleiSettings.showSameParameters) return;
     let oldAni = window.ani;
@@ -1364,6 +1385,7 @@ function showSameTypeParameters() {
         let ngpu = need_GUIParams_update;
         oldAni();
         if (ngpu) {
+            assignObjectIDs();
             setSameParameters();
         }
     }
@@ -1415,6 +1437,7 @@ function patch_m_down() {
         let previousEsLength = es.length;
         og_mdown(e);
         if (es.length > previousEsLength) { // New element is made.
+            assignObjectIDs();
             let element = es[es.length - 1];
             if (!("x" in element.pm)) return;
             // We now have to do job of fixPos, we cannot set fixPos to have it argument-based directly because of scoping
@@ -1769,7 +1792,17 @@ function patchUpdateGUIParams() {
             }
             return resp;
         }
+        let selected = getSelection();
+        let shouldDisplayID = (selected.length == 1) && aleiSettings.showIDs;
+
+        if (shouldDisplayID) {
+            //selected[0].pm.__id = selected[0].aleiID;
+            let entries = Object.entries(selected[0].pm);
+            entries.splice(0, 0, ["__id",  selected[0].aleiID ]);
+            selected[0].pm = Object.fromEntries(entries);
+        }
         origUGP();
+        if (shouldDisplayID) delete selected[0].pm.__id;
         window.GenParamVal = origGPV;
     }
     aleiLog(DEBUG, "Patched UpdateGUIParams");
