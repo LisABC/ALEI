@@ -39,6 +39,7 @@ Discord server: https://discord.gg/K5jcNEvZ85
 - Patches map loading vulnerabilities like one mentioned in [message link in ALEI discord server](https://discord.com/channels/1169664640465240154/1169667400376004764/1187082888202690671) (v5.7, fully implemented in  v5.8), cc: Prosu & GCP5o
 - Makes requests asynchronous. (v6.5)
 - Opt-in automatic re-references when object gets renamed. (started in v7.3, completed in v7.4), cc: Nightmare
+- Opt-in display in-game ID of objects. (v8.0)
 
 ## How to install ?
 It's recommended to use [tampermonkey](https://www.tampermonkey.net/) as that gives you benefit of auto updating. Once you download tampermonkey, you can click [here](https://github.com/ZenoABC/ALEI/raw/main/alei.user.js), then tampermonkey will ask you whether to install or not, just click "install".
