@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      8.0
+// @version      8.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -578,6 +578,7 @@ function updateButtons() {
             }
         }
     });
+    createButton("ALEI Settings", "openALEISettings", showSettings);
     // Readd 'rights' back.
     topPanel.innerHTML += appendBack;
     // Update original reference
@@ -1666,6 +1667,12 @@ function ServerRequest_handleMapData(mapCode) {
 function handleServerRequestResponse(request, operation, response) {
     if (response.indexOf("var es = new Array();") != -1) {
         ServerRequest_handleMapData(response);
+    }else if (response.indexOf("knownmaps = [") !== -1) {
+        window.knownmaps = [];
+        for (let map of response.match(/"(.*?)"/g)) {
+            knownmaps.push(map.slice(1, -1))
+        }
+        aleiLog(DEBUG, `Updated knownmaps with ${knownmaps.length} maps`);
     }else {
         aleiLog(DEBUG2, `Evaling for request ${ANSI_YELLOW}"${request}"${ANSI_RESET} with operation of ${ANSI_YELLOW}"${operation}"${ANSI_RESET}: ${response}`)
         try {JS_eval(response);}
@@ -1817,7 +1824,7 @@ function patchUpdateGUIParams() {
 
 function patchEvalSet() {
     window.EvalSet = function(key, value) {
-        // No evaling. Death to eval !
+        // No evaling. Death to eval (except for when i want to use it...)!
         window[key] = value;
         UpdateTools();
     }
