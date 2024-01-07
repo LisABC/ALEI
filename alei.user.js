@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      8.1
+// @version      8.2
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -39,21 +39,21 @@ function readStorage(key, defaultValue, func) {
     return func(localStorage[key])
 }
 
-if (localStorage['RIGHT_PANEL_WIDTH'] != undefined)
+if (localStorage['RIGHT_PANEL_WIDTH'] != undefined) {
     localStorage["ALEI_RightPanelWidth"] = localStorage["RIGHT_PANEL_WIDTH"];
     localStorage.removeItem("RIGHT_PANEL_WIDTH");
+}
 
 let aleiSettings = {
-    rightPanelSize:     readStorage("ALEI_RightPanelWidth", "30vw", (val) => val),
-    inpValueWidth:      "100%",
-    triggerEditTextSize:"12px",
-    starsImage:         "stars2.jpg",
-    logLevel:           readStorage("ALEI_LogLevel",             0,     parseInt           ),
-    showTriggerIDs:     readStorage("ALEI_ShowTriggerIDs",       false, (val) => val === "1"),
-    enableTooltips:     readStorage("ALEI_ShowTooltips",         false, (val) => val === "1"),
-    showSameParameters: readStorage("ALEI_ShowSameParameters",   true , (val) => val === "1"),
-    rematchUID:         readStorage("ALEI_RemapUID",             false, (val) => val === "1"),
-    showIDs:            readStorage("ALEI_ShowIDs",              false, (val) => val === "1")
+    rightPanelSize:     readStorage("ALEI_RightPanelWidth",   "30vw",  (val) => val            ),
+    triggerEditTextSize:readStorage("ALEI_EditTextSize",      "12px",  (val) => val + "px"     ),
+    starsImage:         readStorage("ALEI_StarImage",    "stars2.jpg", (val) => val            ),
+    logLevel:           readStorage("ALEI_LogLevel",             0,     parseInt               ),
+    showTriggerIDs:     readStorage("ALEI_ShowTriggerIDs",       false, (val) => val === "true"),
+    enableTooltips:     readStorage("ALEI_ShowTooltips",         false, (val) => val === "true"),
+    showSameParameters: readStorage("ALEI_ShowSameParameters",   true , (val) => val === "true"),
+    rematchUID:         readStorage("ALEI_RemapUID",             false, (val) => val === "true"),
+    showIDs:            readStorage("ALEI_ShowIDs",              false, (val) => val === "true")
 }
 window.aleiSettings = aleiSettings;
 
@@ -539,9 +539,7 @@ function updateButtons() {
     topPanel.appendChild(bigPad);
 
     // "Download XML" button.
-    createButton("Download XML", "downloadXMLButton", () => {
-        exportXML();
-    });
+    createButton("Download XML", "downloadXMLButton", exportXML);
     // "Insert XML" button.
     createButton("Insert XML", "insertXMLButton", () => {
         let file = confirm("File (OK) or text (Cancel) ?");
@@ -1379,15 +1377,16 @@ function assignObjectIDs() {
     }
 }
 
-function showSameTypeParameters() {
-    if (!aleiSettings.showSameParameters) return;
-    let oldAni = window.ani;
+function patchANI() {
+    let oldAni = ani;
     window.ani = function() {
         let ngpu = need_GUIParams_update;
         oldAni();
         if (ngpu) {
             assignObjectIDs();
-            setSameParameters();
+            if (aleiSettings.showSameParameters) {
+                setSameParameters();;
+            }
         }
     }
     aleiLog(DEBUG, "Patched ANI");
@@ -1824,12 +1823,169 @@ function patchUpdateGUIParams() {
 
 function patchEvalSet() {
     window.EvalSet = function(key, value) {
-        // No evaling. Death to eval (except for when i want to use it...)!
+        // No evaling. Death to eval! (except for when i want to use it...)
         window[key] = value;
         UpdateTools();
     }
     aleiLog(DEBUG, "Patched EvalSet");
 }
+
+window.ALEI_settingsMenu = undefined;
+
+
+/*
+TODO: Text field for those.
+let aleiSettings = {
+    triggerEditTextSize:readStorage("ALEI_EditTextSize",      "12px",  (val) => val + "px"  ),
+    starsImage:         readStorage("ALEI_StarImage",    "stars2.jpg", (val) => val         ),
+}
+*/
+
+function createALEISettingsMenu() {
+    let mainWindow = document.createElement("div");
+    mainWindow.setAttribute("class", "mrpopup");
+
+    let title = document.createElement("div");
+    title.innerHTML = "ALEI Setting";
+    title.setAttribute("id", "mrtitle"); // Eric, what is this crap ?
+    mainWindow.appendChild(title);
+
+
+    let box = document.createElement("div");
+    box.setAttribute("id", "mrbox");
+    mainWindow.appendChild(box);
+
+    // Style class.
+    let aleiStyles = document.createElement("style");
+    aleiStyles.innerHTML = `
+    .ALEI_settingMenuText {
+        font-size: 14px;
+        width: 150px;
+        height: 20px;
+        background-color: #476082;
+        color: #bfcad9;
+        border-radius: 4px;
+        text-align: center;
+        display: inline-block;
+    }
+    .ALEI_settingsMenuButton {
+        background-color: #26354a;
+        color: #c1c9d3;
+        border-radius: 5px;
+        border: 1px solid #26354a;
+        width: 70px;
+        height: 20px;
+        font-size: 14px;
+        text-align: center;
+        display: inline-block;
+        margin-right: 4px;
+    }
+    .ALEI_settingsMenuButton:hover {
+        background-color: #596a83;
+        color: #f5faff;
+    }
+    .ALEI_settingMenuButtonClicked {
+        background-color: #91a5c1;
+        color: #fbfbfb;
+    }
+    `
+    document.head.appendChild(aleiStyles);
+
+    // Convenience functions.
+    function addText(text) {
+        let div = document.createElement("div");
+        div.innerHTML = text;
+        div.setAttribute("class", "ALEI_settingMenuText");
+        box.innerHTML += "<br>";
+        box.innerHTML += div.outerHTML;
+    }
+    function registerButton(general, values, key) {
+        aleiSettingButtonsMap[general] = [values, key];
+    }
+    function addButton(display, identifier, callback) {
+        aleiButtonClicks["setting_" + identifier] = callback;
+
+        let button = document.createElement("input");
+        button.setAttribute("type", "button");
+        button.setAttribute("id", "ALEI_" + identifier);
+        button.setAttribute("value", display);
+        button.setAttribute("onclick", `aleiButtonClicks['setting_${identifier}'](); ALEI_settingUpdateButtons();`);
+        button.setAttribute("class", "ALEI_settingsMenuButton");
+
+        box.innerHTML += button.outerHTML;
+    }
+    function addBinaryOption(truthyVal, falsyVal, storage, key, internalName) {
+        function _apply(val) {
+            writeStorage(storage, val);
+            aleiSettings[key] = val;
+        }
+        addButton(truthyVal, `${internalName}_true`, () => _apply(true));
+        addButton(falsyVal, `${internalName}_false`, () => _apply(false));
+    }
+
+    // Log level.
+    function logApply(val) {
+        writeStorage("ALEI_LogLevel", val);
+        aleiSettings.logLevel = val;
+    }
+    registerButton("log", [0, 1, 2], "logLevel");
+    addText("Log Level:");
+    addButton("INFO", "log_0", () => logApply(0));
+    addButton("DEBUG", "log_1", () => logApply(1));
+    addButton("DEBUG2", "log_2", () => logApply(2));
+
+    // Action IDs.
+    registerButton("actionid", [true, false], "showTriggerIDs");
+    addText("Action IDs:")
+    addBinaryOption("Show", "Hide", "ALEI_ShowTriggerIDs", "showTriggerIDs", "actionid")
+
+    // Tooltips.
+    registerButton("tooltip", [true, false], "enableTooltips");
+    addText("Tooltips:")
+    addBinaryOption("Show", "Hide", "ALEI_ShowTooltips", "enableTooltips", "tooltip")
+
+    // Object ID.
+    registerButton("showids", [true, false], "showIDs");
+    addText("Object IDs:")
+    addBinaryOption("Show", "Hide", "ALEI_ShowIDs", "showIDs", "showids")
+
+    // Show same parameters.
+    registerButton("sameparams", [true, false], "showSameParameters");
+    addText("Same Parameters:");
+    addBinaryOption("Show", "Hide", "ALEI_ShowSameParameters", "showSameParameters", "sameparams");
+
+    window.ALEI_settingsMenu = mainWindow;
+    document.body.appendChild(mainWindow);
+    ALEI_settingUpdateButtons();
+}
+
+let aleiSettingButtonsMap = {}
+
+window.ALEI_settingUpdateButtons = () => {
+    let defaultClass = "ALEI_settingsMenuButton";
+    let clickedClass = "ALEI_settingsMenuButton ALEI_settingMenuButtonClicked";
+
+    for (let entry of Object.entries(aleiSettingButtonsMap)) {
+        let identity = entry[0];
+        let values = entry[1][0];
+        let key = entry[1][1];
+
+        let currentVal = aleiSettings[key];
+        for (let value of values) {
+            $query(`#ALEI_${identity}_${value}`).setAttribute("class", defaultClass);
+        }
+        $query(`#ALEI_${identity}_${currentVal}`).setAttribute("class", clickedClass);
+    }
+}
+
+
+function showSettings() {
+    if (ALEI_settingsMenu === undefined) createALEISettingsMenu();
+
+    mrdimlights.style.display = 'block';
+    ALEI_settingsMenu.style.display = 'block';
+    dim_undo = "ALEI_settingsMenu.style.display = 'none'";
+};
 
 let ALE_start = (async function() {
     'use strict';
@@ -1857,7 +2013,7 @@ let ALE_start = (async function() {
     // Allowing for spaces in parameters.
     window.UpdatePhysicalParam = UpdatePhysicalParam;
     window.PasteFromClipBoard = PasteFromClipBoard;
-    showSameTypeParameters();
+    patchANI();
     // Tooltip.
     if(aleiSettings.enableTooltips) {
         doTooltip();
