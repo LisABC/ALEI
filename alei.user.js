@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      7.9
+// @version      8.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1780,9 +1780,12 @@ window.eval = function(code) { // Temporarily overriding eval so we can patch Se
 };
 
 function patchUpdateGUIParams() {
-    let origUGP = window.UpdateGUIParams;
+    let _origUGP = window.UpdateGUIParams;
     let origGPV = window.GenParamVal;
+    let origUGP = _origUGP;
+
     window.UpdateGUIParams = function() {
+        origUGP = _origUGP;
         window.GenParamVal = function(base, value) {
             let resp = origGPV(base, value);
 
@@ -1796,6 +1799,10 @@ function patchUpdateGUIParams() {
         let shouldDisplayID = (selected.length == 1) && aleiSettings.showIDs;
 
         if (shouldDisplayID) {
+            origUGP = origUGP.toString();
+            origUGP = origUGP.replace("if ( i >= 4 && (i-4) % 3 == 0 ) {", "if (i >= 5 && (i - 5) % 3 == 0) {")
+            eval(origUGP);
+            origUGP = UpdateGUIParams;
             //selected[0].pm.__id = selected[0].aleiID;
             let entries = Object.entries(selected[0].pm);
             entries.splice(0, 0, ["__id",  selected[0].aleiID ]);
