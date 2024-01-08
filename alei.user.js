@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      8.3
+// @version      8.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -365,8 +365,8 @@ function updateSkins() {
         [209, "Serkova Reinforced Grub"],
         [210, "Serkova Devastator Grub"],
         [211, "XBT-117 Android"],
-        [212, "Teneguilae"]
-        [213, "Walker (by Serpent)"]
+        [212, "Teneguilae"],
+        [213, "Walker (by Serpent)"],
         [214, "Space Grub (by Broforce1)"]
     ]
     for(let li = 0; li < charlists.length; li++) {
