@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      8.4
+// @version      8.5
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -19,6 +19,7 @@ function $query(selector) {
 
 const ROOT_ELEMENT = document.documentElement;
 const stylesheets = document.styleSheets;
+let VAL_TABLE = {}; // Will be filled later.
 
 const INFO = 0;
 const DEBUG = 1;
@@ -106,7 +107,7 @@ function updateParameters() {
 
 function updateSounds() {
     // Adds sounds that exist in game but not in ALE
-    let SVTS = special_values_table["sound"];
+    let SVTS = VAL_TABLE["sound"];
     SVTS['am_base'] = 'Indoor Ambience';
     SVTS['am_wind'] = 'Outdoor Ambience';
     SVTS['android2_die'] = 'DT-148 - Death';
@@ -235,7 +236,7 @@ function updateSounds() {
 
 function updateVoicePresets() {
     // Adds voice presets that exist in game but not in ALE
-    let VP = special_values_table['voice_preset'];
+    let VP = VAL_TABLE['voice_preset'];
     VP['proxy_helmetless'] = 'Proxy (helmetless)';
     VP['silk'] = 'Silk';
     VP['orakin'] = 'Orakin';
@@ -374,7 +375,7 @@ function updateSkins() {
         let paddedCharID = charID.toString().padStart(4, "0")
         let charName = charlists[li][1];
         let src = "https://www.plazmaburst2.com/level_editor/chars_full/char" + paddedCharID + ".png"
-        special_values_table['char'][charID] = '<span style=\'background:url(' + src + '); width: 16px; height: 16px; display: inline-block; background-position: center; background-position-x: 30%; background-position-y: 26%; background-size: 67px;vertical-align: -4px;\'></span> ' + charName;
+        VAL_TABLE['char'][charID] = '<span style=\'background:url(' + src + '); width: 16px; height: 16px; display: inline-block; background-position: center; background-position-x: 30%; background-position-y: 26%; background-size: 67px;vertical-align: -4px;\'></span> ' + charName;
         img_chars_full[charID] = new Image();
         img_chars_full[charID].src = 'chars_full/char' + paddedCharID + '.png';
     }
@@ -415,7 +416,7 @@ function optimize() {
 
 function updateVehicles() {
     // Adding vehicles that exist in game but not in ALE. Currently only veh_hh, which is grabbable ledge.
-    let _SVTV = special_values_table["vehicle_model"];
+    let _SVTV = VAL_TABLE["vehicle_model"];
     let vehicles = [
         ["veh_hh", "Grabbable Ledge", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACLSURBVEhLYxhxgBFE2M3/r/vvH0MQWISGgImJYd2hRMbLIDbYYpu5/+t/MzEEf2diuALi0wJw/mPQYf3HsPZIMmMjiA+3+BMLg/olIYblID4tgN47hki+Pww3YRYzgUUHAIxaTDcwajHdwKjFdAOjFtMNjFpMNzBqMd3AqMV0AwPbrh6InsQAAQYGAA8CLDKAAcpOAAAAAElFTkSuQmCC"]
     ]
@@ -440,7 +441,7 @@ function updateGuns() {
         let gun_model = gun[0];
         let gun_name = gun[1];
         let gun_image = gun[2];
-        special_values_table["gun_model"][gun_model] = `<img src='${gun_image}' border=0 width=80 height=20 style=vertical-align:baseline title='${gun_name}'>`
+        VAL_TABLE["gun_model"][gun_model] = `<img src='${gun_image}' border=0 width=80 height=20 style=vertical-align:baseline title='${gun_name}'>`
         img_guns[gun_model] = new Image();
         img_guns[gun_model].src = gun_image;
     }
@@ -457,7 +458,7 @@ function updateDecors() {
         let decor_model = decor[0];
         let decor_name = decor[1];
         let decor_image = decor[2];
-        special_values_table["decor_model"][decor_model] = decor_name; // Add to known decors.
+        VAL_TABLE["decor_model"][decor_model] = decor_name; // Add to known decors.
         img_decors[decor_model] = new Image();
         img_decors[decor_model].src = decor_image;
         CACHED_DECORS[decor_model] = img_decors[decor_model];
@@ -732,7 +733,7 @@ function addPropertyPanelResize() {
 function addTriggerIDs() {
     if (!aleiSettings.showTriggerIDs) return;
 
-    let SVTTP = special_values_table['trigger_type'];
+    let SVTTP = VAL_TABLE['trigger_type'];
     for (let i in SVTTP) {
         SVTTP[i] = i + " " + SVTTP[i];
     }
@@ -1335,13 +1336,13 @@ const parameterMap = {
 function fixParameterValue(name, value, objectType) {
     let fixedValue;
 
-    if (special_values_table[name]) {
-        fixedValue = special_values_table[name][value];
+    if (VAL_TABLE[name]) {
+        fixedValue = VAL_TABLE[name][value];
     } else {
         if (parameterMap[objectType] && parameterMap[objectType][name]) {
-            fixedValue = special_values_table[ parameterMap[objectType][name] ][value];
+            fixedValue = VAL_TABLE[ parameterMap[objectType][name] ][value];
         }else if (name.slice(0, 8) == "actions_" && name.slice(-5) == "_type") {
-            fixedValue = special_values_table["trigger_type"][value];
+            fixedValue = VAL_TABLE["trigger_type"][value];
         }else {
             fixedValue = value;
         }
@@ -1959,6 +1960,7 @@ function createALEISettingsMenu() {
     window.ALEI_settingsMenu = mainWindow;
     document.body.appendChild(mainWindow);
     ALEI_settingUpdateButtons();
+    aleiLog(DEBUG, "Created settings window.");
 }
 
 let aleiSettingButtonsMap = {}
@@ -1989,8 +1991,25 @@ function showSettings() {
     dim_undo = "ALEI_settingsMenu.style.display = 'none'";
 };
 
+function patchTeamList() {
+    for (let entry of Object.entries(VAL_TABLE["team"])) {
+        let teamID = parseInt(entry[0]);
+        let teamName = entry[1];
+
+        if (teamID < 0) {
+            teamName = teamName.replace("(no friendly fire)", "(No collision, Yes friendly fire)")
+            VAL_TABLE["team"][teamID] = teamName;
+        }
+
+        if (teamID === -1) continue;
+        VAL_TABLE["team+any"][teamID] = teamName;
+    }
+    aleiLog(DEBUG, "Edited team list..");
+}
+
 let ALE_start = (async function() {
     'use strict';
+    VAL_TABLE = special_values_table;
     // Handling rest of things
     addPropertyPanelResize();
     addObjBoxResize();
@@ -2022,6 +2041,7 @@ let ALE_start = (async function() {
     }
     patchServerRequest();
     patchUpdateGUIParams();
+    patchTeamList();
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
 });
