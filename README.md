@@ -41,6 +41,7 @@ Discord server: https://discord.gg/K5jcNEvZ85
 - Opt-in automatic re-references when object gets renamed. (started in v7.3, completed in v7.4), cc: Nightmare
 - Opt-in display in-game ID of objects. (v8.0)
 - Added menu for ALEI-related settings (v8.2)
+- Made negative teams more descriptive about what they do, and made negative teams appear in gun team selection (v8.5), cc: TheRealOne, Silk1
 
 ## How to install ?
 It's recommended to use [tampermonkey](https://www.tampermonkey.net/) as that gives you benefit of auto updating. Once you download tampermonkey, you can click [here](https://github.com/ZenoABC/ALEI/raw/main/alei.user.js), then tampermonkey will ask you whether to install or not, just click "install".
