@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      8.5
+// @version      8.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -495,6 +495,7 @@ function updateTriggers() {
     // This is where we will rename some triggers.
     // For now it's only 378, but we got more triggers like renaming 328
     addTrigger(378, "Gun &#8250; Add hex color 'B' to gun 'A'", "gun", "string");
+    addTrigger(332, "Var &#8250; Set variable 'A' to value 1 if Gun 'B' is in owner's active slot, set to value 0 in else case", "string", "gun");
 }
 
 function updateObjects() {
