@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      8.8
+// @version      8.9
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -326,7 +326,7 @@ function updateSkins() {
 
         [171, "Cyber Grub by S1lk"],
         [172, "Grosk"],
-        [173, "Blue Grub (by Broforce1)"],
+        [173, "Futuristic Knight"],
         [174, "Uncivil Proxy"],
 
         [175, "Serkova Insertion Unit"],
