@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      8.7
+// @version      8.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -339,7 +339,7 @@ function updateSkins() {
         [180, "Phantom (Red)"],
         [181, "Huntsman (Night)"],
         [182, "Huntsman (Swamp)"],
-        [183, "Lt. Ferbo (by Serpent)"],
+        [183, "Lt. Ferro (by Serpent)"],
         [184, "Titan"],
         [185, "Elurra (Masked) (by Lin)"],
         [186, "Drohnen Heavy (by Ark633)"],
