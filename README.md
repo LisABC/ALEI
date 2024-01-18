@@ -42,6 +42,14 @@ Discord server: https://discord.gg/K5jcNEvZ85
 - Opt-in display in-game ID of objects. (v8.0)
 - Added menu for ALEI-related settings (v8.2)
 - Made negative teams more descriptive about what they do, and made negative teams appear in gun team selection (v8.5), cc: TheRealOne, Silk1
+- v9.0 updates: (impl: Nonamne):
+  - All things in triggers that have < and > will be converted to &lt; and &gt; respectively when saving the map
+  - When you create any object, the number after * is guaranteed to BE IN ORDER
+  - Some zoom utilies:
+    - If canvas is focused, and you click Ctrl +, it will zoom in
+    - If canvas is focused, and you click Ctrl -, it will zoom out
+    - If canvas is focused, and you click Ctrl Alt, it will reset the zoom
+  - clicking R on any selected will "rotate" it ? Still waiting from noname about what that is supposed to be doing
 
 ## How to install ?
 It's recommended to use [tampermonkey](https://www.tampermonkey.net/) as that gives you benefit of auto updating. Once you download tampermonkey, you can click [here](https://github.com/ZenoABC/ALEI/raw/main/alei.user.js), then tampermonkey will ask you whether to install or not, just click "install".
