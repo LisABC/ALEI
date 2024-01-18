@@ -1124,17 +1124,11 @@ function findObjects(name) {
 }
 
 function rotateObjects() {
-	let selected = [];
+	let selected = getSelection();
 	let distX = [];
 	let distY = [];
 	let minX;
 	let minY;
-
-	for (let i = 0; i < es.length; i++) {
-		if (es[i].selected && es[i].exists) {
-			selected.push(es[i]);
-		}
-	}
 
 	for (let i = 0; i < selected.length; i++) {
 		if (selected[i].pm.w && selected[i].pm.h) {
