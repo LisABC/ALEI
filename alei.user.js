@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      8.9
+// @version      9.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1191,11 +1191,11 @@ function RandomizeName(oldname) {
     return newname;
 }
 
-function patch_randomize_name() {
+function patchRandomizeName() {
 	window.RandomizeName = RandomizeName;
 }
 
-function patch_allowed_characters() {
+function patchAllowedCharacters() {
 	allowed_string_chars += "<>";
 }
 
@@ -1238,7 +1238,7 @@ function SaveThisMap(temp_to_real_compile_data="", callback=null) {
     }
 }
 
-function patch_save_map() {
+function patchSaveMap() {
 	window.SaveThisMap = SaveThisMap;
 }
 
@@ -2192,9 +2192,9 @@ let ALE_start = (async function() {
     patchServerRequest();
     patchUpdateGUIParams();
     patchTeamList();
-	patch_randomize_name();
-	patch_allowed_characters();
-	patch_save_map();
+	patchRandomizeName();
+	patchAllowedCharacters();
+	patchSaveMap();
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
 });
