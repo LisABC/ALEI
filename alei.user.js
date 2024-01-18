@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      8.9
+// @version      9.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1123,6 +1123,125 @@ function findObjects(name) {
     return notFound;
 }
 
+function rotateObjects() {
+	let selected = getSelection();
+	let distX = [];
+	let distY = [];
+	let minX;
+	let minY;
+
+	for (let i = 0; i < selected.length; i++) {
+		if (selected[i].pm.w && selected[i].pm.h) {
+			let save = selected[i].pm.w;
+
+			selected[i].pm.w = selected[i].pm.h;
+			selected[i].pm.h = save;
+		}
+
+		distX.push(selected[i].pm.x);
+		distY.push(selected[i].pm.y);
+	}
+
+	minX = Math.min(...distX);
+	minY = Math.min(...distY);
+
+	for (let i = 0; i < selected.length; i++) {
+		distX[i] -= minX;
+		distY[i] -= minY;
+
+		selected[i].pm.x = minX + distY[i];
+		selected[i].pm.y = minY + distX[i];
+	}
+}
+
+function RandomizeName(oldname) {
+    var newname = oldname;
+    var phrase = "*";
+    var unoriginal;
+    for (var i = 0; i < es.length; i++)
+        if (es[i].exists)
+            if (es[i].pm.uid != undefined) {
+                if (es[i].pm.uid == newname) {
+                    unoriginal = true;
+                    oldname = newname;
+                }
+            }
+    if (unoriginal) {
+        var takes = 0;
+        do {
+            unoriginal = false;
+            var indof = oldname.lastIndexOf(phrase);
+            var copysuffix = Math.floor(oldname.substring(indof + 1));
+            if (indof == -1 || isNaN(copysuffix)) {
+                newname = oldname + phrase + '1';
+            } else {
+                newname = oldname.substring(0, indof) + phrase + (copysuffix + 1);
+            }
+            takes += 1;
+            for (var i = 0; i < es.length; i++)
+                if (es[i].exists)
+                    if (es[i].pm.uid != undefined) {
+                        if (es[i].pm.uid == newname) {
+                            unoriginal = true;
+                            oldname = newname;
+                        }
+                    }
+        } while (unoriginal);
+    }
+    return newname;
+}
+
+function patchRandomizeName() {
+	window.RandomizeName = RandomizeName;
+}
+
+function patchAllowedCharacters() {
+	allowed_string_chars += "<>";
+}
+
+function SaveThisMap(temp_to_real_compile_data="", callback=null) {
+	for (let i = 0; i < es.length; i++) {
+		let keys = Object.keys(es[i].pm);
+
+		for (let j = 0; j < keys.length; j++) {
+			if (typeof es[i].pm[keys[j]] == "string") {
+				es[i].pm[keys[j]] = es[i].pm[keys[j]].replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+			}
+		}
+	}
+
+    if (mapid != "") {
+        if (!PrepareCustomImages()) {
+            NewNote("Delaying save operation - still retrieving custom image size info (" + last_awaiting_images + ")...", note_neutral);
+            setTimeout(function() {
+                SaveThisMap(temp_to_real_compile_data, callback);
+            }, 1000);
+            return;
+        }
+        var compiled = "";
+        if (temp_to_real_compile_data == "") {
+            for (var i = 0; i < known_class_savepriorities.length; i++)
+                compiled += lcc_(known_class_savepriorities[i]);
+            if (compiled == "")
+                compiled = "*empty*";
+            try {
+                localStorage.setItem("pb2_map_" + mapid + "::" + (new Date().getTime()), compiled);
+            } catch (e) {
+                NewNote("Could not find localStorage support in your browser in order to create backup version of map.", note_bad);
+            }
+        } else
+            compiled = temp_to_real_compile_data;
+        last_save_time = getTimer();
+        ServerRequest("r=" + mapid + "&a=save" + "&d=" + encodeURIComponent(compiled), "save", callback);
+    } else {
+        SaveThisMapAs();
+    }
+}
+
+function patchSaveMap() {
+	window.SaveThisMap = SaveThisMap;
+}
+
 document.addEventListener("keydown", e => {
     if (e.ctrlKey && e.code == "KeyS") {
         e.preventDefault();
@@ -1142,6 +1261,34 @@ document.addEventListener("keydown", e => {
             }
         }
     }
+
+	if (e.code == "KeyR" && canvas_focus) {
+		rotateObjects();
+	}
+
+	if ((e.code == "Minus" || e.code == "NumpadSubtract") && e.ctrlKey && canvas_focus) {
+		e.preventDefault();
+
+		zoom *= 2;
+		zoom_validate();
+		need_redraw = 1;
+	}
+
+	if ((e.code == "Equal" || e.code == "NumpadAdd") && e.ctrlKey && canvas_focus) {
+		e.preventDefault();
+
+		zoom *= 0.5;
+		zoom_validate();
+		need_redraw = 1;
+	}
+
+	if (e.ctrlKey && e.altKey) {
+		e.preventDefault();
+
+		zoom = 1;
+		zoom_validate();
+		need_redraw = 1;
+	}
 });
 
 function doTooltip() {
@@ -2045,6 +2192,9 @@ let ALE_start = (async function() {
     patchServerRequest();
     patchUpdateGUIParams();
     patchTeamList();
+	patchRandomizeName();
+	patchAllowedCharacters();
+	patchSaveMap();
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
 });
