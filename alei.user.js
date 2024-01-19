@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      9.0
+// @version      9.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1201,6 +1201,7 @@ function patchAllowedCharacters() {
 
 function SaveThisMap(temp_to_real_compile_data="", callback=null) {
 	for (let i = 0; i < es.length; i++) {
+        if (!es.exists) continue;
 		let keys = Object.keys(es[i].pm);
 
 		for (let j = 0; j < keys.length; j++) {
