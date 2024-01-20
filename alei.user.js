@@ -5,9 +5,9 @@
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
 // @run-at       document-start
-// @icon         https://github.com/ZenoABC/ALEI/blob/main/icon.png?raw=true
-// @updateURL    https://github.com/ZenoABC/ALEI/raw/main/alei.user.js
-// @downloadURL  https://github.com/ZenoABC/ALEI/raw/main/alei.user.js
+// @icon         https://github.com/LisABC/ALEI/blob/main/icon.png?raw=true
+// @updateURL    https://github.com/LisABC/ALEI/raw/main/alei.user.js
+// @downloadURL  https://github.com/LisABC/ALEI/raw/main/alei.user.js
 // @grant        none
 // ==/UserScript==
 
