@@ -16,7 +16,7 @@ You can also copy the script itself and paste in JS console & execute manually.
 **NOTE:** Tampermonkey is the only natively supported userscript manager, you might have issues if you use others (Such as GreaseMonkey).
 
 # Thanks to
-- Lisa/ZenoABC (Repository Maintainer)
+- Lisa/LisABC (Repository Maintainer)
 - Prosu/pr0suWANTED (Repository Collaborator)
 - Noname/User475186 (Contributor)
 - Longbow/BlueBolt5000 (Contributor)
