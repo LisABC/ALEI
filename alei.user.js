@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      9.1
+// @version      9.2
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -19,8 +19,8 @@ function $query(selector) {
     return document.querySelector(selector);
 }
 
-const ROOT_ELEMENT = document.documentElement;
-const stylesheets = document.styleSheets;
+let ROOT_ELEMENT = document.documentElement;
+let stylesheets = document.styleSheets;
 let VAL_TABLE = {}; // Will be filled later.
 
 const INFO = 0;
@@ -2161,6 +2161,8 @@ function patchTeamList() {
 let ALE_start = (async function() {
     'use strict';
     VAL_TABLE = special_values_table;
+    ROOT_ELEMENT = document.documentElement;
+    stylesheets = document.styleSheets;
     // Handling rest of things
     addPropertyPanelResize();
     addObjBoxResize();
