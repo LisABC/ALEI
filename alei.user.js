@@ -1324,7 +1324,7 @@ function setStyle(selector, style, value) {
 }
 
 function blackTheme() {
-	ThemeSet(1);
+	ThemeSet(0);
 
 	THEME = 4;
 
