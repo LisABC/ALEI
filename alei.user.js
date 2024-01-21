@@ -829,8 +829,9 @@ function addSnappingOptions_helper() {
 
     let newHTML = ""
     let snappingOptions = [
-        1,  5, 10,
-        40, 50, 100
+        1, 2, 5,
+		10, 20, 40,
+		50, 100, "C"
     ];
 
     for (let snappingIndex in snappingOptions) {
@@ -843,14 +844,37 @@ function addSnappingOptions_helper() {
 
         let element = document.createElement("a");
         // Set relevant attributes.
-        element.innerHTML = snapping / 10;
+
+		if (snapping != "C") {
+			element.innerHTML = snapping / 10;
+		} else {
+			element.innerHTML = "C";
+		}
+
         let toolClass = "tool_btn";
         if (GRID_SNAPPING == snapping) {
             toolClass = "tool_btn2";
         }
+
+		if (!snappingOptions.includes(GRID_SNAPPING) && snapping == "C") {
+			toolClass = "tool_btn2";
+		}
+
         element.setAttribute("class", `${toolClass} tool_wid`);
         element.setAttribute("style", "width: 21px;");
-        element.setAttribute("onmousedown", `GridSnappingSet(${snapping})`);
+
+		if (snapping != "C") {
+			element.setAttribute("onmousedown", `GridSnappingSet(${snapping})`);
+		} else {
+			element.setAttribute("onmousedown", `
+				let snapping = prompt("Enter snapping:", "");
+
+				if (snapping) {
+					GridSnappingSet(Math.round(snapping * 10));
+				}
+			`);
+		}
+
         newHTML += element.outerHTML;
         // Add to main HTML.
     }
