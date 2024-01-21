@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      9.2
+// @version      9.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -221,17 +221,72 @@ function updateSounds() {
     SVTS['xin_death'] = 'Xin - Death';
     SVTS['xin_enemy_spotted'] = 'Xin - Alerted';
     SVTS['xin_hit'] = 'Xin - Hurt';
-    let groskVoices = [
-        ["death", "Death", 2],
-        ["dying", "Dying", 2],
-        ["edown", "Celebrating", 3],
-        ["welcome", "Alerted", 5],
-        ["hurt", "Hurt", 3]
-    ];
-    for (let i = 0; i < groskVoices.length; i++) {
-        let voice = groskVoices[i];
-        for (let j = 1; j <= voice[2]; j++) {
-            SVTS["Grosk_" + voice[0] + j] = "Grosk - " + voice[1] + " " + j;
+    let voices = {
+        Grosk: [
+            "Grosk",
+            ["death", "Death", 2],
+            ["dying", "Dying", 2],
+            ["edown", "Celebrating", 3],
+            ["welcome", "Alerted", 5],
+            ["hurt", "Hurt", 3]
+        ],
+        drohnentroop: [
+            "Drohnen Trooper",
+            ["welcome", "Alerted", 3],
+            ["hurt", "Hurt", 3],
+            ["edown", "Celebrating", 3],
+            ["dying", "Dying", 1],
+            ["death", "Death", 3]
+        ],
+        drohnenfem: [
+            "Drohnen Female",
+            ["welcome", "Alerted", 3],
+            ["hurt", "Hurt", 3],
+            ["edown", "Celebrating", 3],
+            ["dying", "Dying", 1],
+            ["death", "Death", 3]
+        ],
+        elurra: [
+            "Elurra",
+            ["welcome", "Alerted", 3],
+            ["hurt", "Hurt", 2],
+            ["edown", "Celebrating", 2],
+            ["dying", "Dying", 1],
+            ["death", "Death", 1]
+        ],
+        ferro: [
+            "Lt. Ferro",
+            ["welcome", "Alerted", 3],
+            ["hurt", "Hurt", 2],
+            ["edown", "Celebrating", 3],
+            ["death", "Death", 2]
+        ],
+        serkova: [
+            "Serkova",
+            ["welcome", "Alerted", 3],
+            ["hurt", "Hurt", 1],
+            ["edown", "Celebrating", 2],
+            ["death", "Death", 1]
+        ],
+        oldproxy: [
+            "Classic Proxy",
+            ["welcome", "Alerted", 3],
+            ["hurt", "Hurt", 3],
+            ["edown", "Celebrating", 3],
+            ["dying", "Dying", 1],
+            ["death", "Death", 1]
+        ]
+    };
+    for (let entry of Object.entries(voices)) {
+        let character = entry[0];
+        let charVoices = entry[1];
+        let charName = charVoices[0];
+
+        for (let i = 1; i < charVoices.length; i++) {
+            let voice = charVoices[i];
+            for (let j = 1; j <= voice[2]; j++) {
+                SVTS[`${character}_${voice[0]}${j}`] = `${charName} - ${voice[1]} ${j}`
+            }
         }
     }
 }
@@ -248,6 +303,13 @@ function updateVoicePresets() {
     VP['crossfire_sentinel'] = 'Crossfire Sentinel';
     VP['xin'] = 'Xin';
     VP["grosk"] = "Grosk";
+
+    VP["oldproxy"] = "Classic Proxy";
+    VP["elurra"] = "Elurra";
+    VP["drohnenfem"] = "Drohnen Female";
+    VP["serkova"] = "Serkova";
+    VP["ferro"] = "Lt. Ferro";
+    VP["drohnentroop"] = "Drohnen Trooper";
 }
 
 function updateStyles() {
@@ -346,7 +408,7 @@ function updateSkins() {
         [187, "Cromastakan"],
         [188, "Sgt. Davais"],
         [189, "Maroon (by Francis localhost)"],
-        [190, "Red Civil Security Heavy"],
+        [190, "Drohnen Skirmisher (by Ark633)"],
         [191, "Serkova Recon Unit"],
         [192, "Drohnen Drifter (by Ark633)"],
         [193, "Moon Captain"],
@@ -355,7 +417,7 @@ function updateSkins() {
         [196, "Serkova Armored Unit"],
         [197, "Phantom"],
         [198, "Blue Civil Security Heavy"],
-        [199, "Drohnen Skirmisher (by Ark633)"],
+        [199, "Red Civil Security Heavy"],
         [200, "Moon Scout"],
         [201, "Moon Marine"],
         [202, "Serkova Assault Unit"],
