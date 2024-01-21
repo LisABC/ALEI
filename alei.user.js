@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      9.3
+// @version      9.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -56,7 +56,8 @@ let aleiSettings = {
     enableTooltips:     readStorage("ALEI_ShowTooltips",         false, (val) => val === "true"),
     showSameParameters: readStorage("ALEI_ShowSameParameters",   true , (val) => val === "true"),
     rematchUID:         readStorage("ALEI_RemapUID",             false, (val) => val === "true"),
-    showIDs:            readStorage("ALEI_ShowIDs",              false, (val) => val === "true")
+    showIDs:            readStorage("ALEI_ShowIDs",              false, (val) => val === "true"),
+    blackTheme:         readStorage("ALEI_BlackTheme",           false, (val) => val === "true")
 }
 window.aleiSettings = aleiSettings;
 
@@ -1308,13 +1309,13 @@ function patchSaveMap() {
 function getRuleBySelector(selector) {
 	let rules = document.styleSheets[0].rules;
 	let rule;
-	
+
 	for (let i = 0; i < rules.length; i++) {
 		if (rules[i].selectorText == selector) {
 			rule = rules[i];
 		}
 	}
-	
+
 	return rule;
 }
 
@@ -1324,9 +1325,9 @@ function setStyle(selector, style, value) {
 
 function blackTheme() {
 	ThemeSet(0);
-	
+
 	THEME = 4;
-	
+
 	setStyle(".topui", "backgroundSize", "0px");
 	setStyle(".leftui", "backgroundSize", "0px");
 	setStyle(".rightui", "backgroundSize", "0px");
@@ -2198,9 +2199,12 @@ function createALEISettingsMenu() {
     document.head.appendChild(aleiStyles);
 
     // Convenience functions.
-    function addText(text) {
+    function addText(text, requiresRestart = false) {
         let div = document.createElement("div");
         div.innerHTML = text;
+        if (requiresRestart) {
+            div.style.setProperty("color", "#FFFF00");
+        }
         div.setAttribute("class", "ALEI_settingMenuText");
         box.innerHTML += "<br>";
         box.innerHTML += div.outerHTML;
@@ -2234,6 +2238,7 @@ function createALEISettingsMenu() {
         writeStorage("ALEI_LogLevel", val);
         aleiSettings.logLevel = val;
     }
+    box.innerHTML += "NOTE: Settings in yellow text requires page refresh to be applied.";
     registerButton("log", [0, 1, 2], "logLevel");
     addText("Log Level:");
     addButton("INFO", "log_0", () => logApply(0));
@@ -2242,7 +2247,7 @@ function createALEISettingsMenu() {
 
     // Action IDs.
     registerButton("actionid", [true, false], "showTriggerIDs");
-    addText("Action IDs:")
+    addText("Action IDs:", true)
     addBinaryOption("Show", "Hide", "ALEI_ShowTriggerIDs", "showTriggerIDs", "actionid")
 
     // Tooltips.
@@ -2259,6 +2264,10 @@ function createALEISettingsMenu() {
     registerButton("sameparams", [true, false], "showSameParameters");
     addText("Same Parameters:");
     addBinaryOption("Show", "Hide", "ALEI_ShowSameParameters", "showSameParameters", "sameparams");
+
+    registerButton("blackTheme", [true, false], "blackTheme");
+    addText("Black theme:", true)
+    addBinaryOption("Yes", "No", "ALEI_BlackTheme", "blackTheme", "blackTheme");
 
     window.ALEI_settingsMenu = mainWindow;
     document.body.appendChild(mainWindow);
@@ -2352,11 +2361,9 @@ let ALE_start = (async function() {
 	patchSaveMap();
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
-	
 	if (aleiSettings.blackTheme) {
 		blackTheme();
 	}
-	
 	UpdateTools();
 });
 
