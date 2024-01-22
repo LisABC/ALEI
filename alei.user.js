@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      9.5
+// @version      9.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1480,25 +1480,16 @@ document.addEventListener("keydown", e => {
     if (e.code == "KeyH" && e.ctrlKey) {
         e.preventDefault();
 
-        if (targetElement.id == "editablef" || targetElement.id == "opcode_field") {
-            let str1;
-            let str2;
-
+        if (targetElement.id === "opcode_field") {
             let value = targetElement.value;
 
-            str1 = prompt("Enter string 1:", "");
+            let str1 = prompt("Enter string to replace from:", "");
+            if (!str1) return;
 
-            if (str1) {
-                str2 = prompt("Enter string 2:", str1);
-            }
+            let str2 = prompt("Enter string to replace to:", str1);
+            if (!str2) return;
 
-            if (str2) {
-                setTimeout(() => {
-                    targetElement.value = value.replaceAll(str1, str2);
-
-                    targetElement = "";
-                }, 100);
-            }
+            targetElement.value = value.replaceAll(str1, str2);
         }
     }
 });
