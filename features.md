@@ -33,6 +33,7 @@ This part includes changes to adds new things to ALE.
 - Made negative teams appear in gun team list.
 - PB3's LE inspired dark theme. (By poll)
 - Arbitrary snappings
+- Trigger code replacement (Ctrl+H)
 
 # Fixes
 This part includes changes that are meant to fix issues (It doesn't have to be code issue, it can be any issue, ambiguity issues, etc.)
