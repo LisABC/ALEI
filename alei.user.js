@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      9.5
+// @version      9.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1418,9 +1418,16 @@ function blackTheme() {
     setStyle(".img_option_selected", "backgroundColor", "#444");
     setStyle(".rightui", "borderLeft", "");
     setStyle("::-webkit-scrollbar-thumb", "backgroundColor", "#888");
+    setStyle(".leftui", "borderRight", "");
     setStyle("#tools_box", "overflow-y", "hidden");
     setStyle("#tools_box", "overflow-y", "auto");
 }
+
+let targetElement;
+
+document.addEventListener("mousedown", e => {
+    targetElement = e.target;
+});
 
 document.addEventListener("keydown", e => {
     if (e.ctrlKey && e.code == "KeyS") {
@@ -1468,6 +1475,22 @@ document.addEventListener("keydown", e => {
         zoom = 1;
         zoom_validate();
         need_redraw = 1;
+    }
+
+    if (e.code == "KeyH" && e.ctrlKey) {
+        e.preventDefault();
+
+        if (targetElement.id === "opcode_field") {
+            let value = targetElement.value;
+
+            let str1 = prompt("Enter string to replace from:", "");
+            if (!str1) return;
+
+            let str2 = prompt("Enter string to replace to:", str1);
+            if (!str2) return;
+
+            targetElement.value = value.replaceAll(str1, str2);
+        }
     }
 });
 
