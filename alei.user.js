@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      9.4
+// @version      9.5
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -822,6 +822,14 @@ function patchShowHideButton() {
     ShowHideObjectBox(); // Hacky way to fix bug
 }
 
+window.ALEI_CustomSnapping = () => {
+    let snapping = prompt("Enter snapping:", "");
+
+    if (snapping) {
+        GridSnappingSet(Math.round(snapping * 10));
+    }
+}
+
 function addSnappingOptions_helper() {
     // Remove default snapping options except for "1", we will replace it them later
     $query(`a[onmousedown="GridSnappingSet(50);"]`).remove();
@@ -830,8 +838,8 @@ function addSnappingOptions_helper() {
     let newHTML = ""
     let snappingOptions = [
         1, 2, 5,
-		10, 20, 40,
-		50, 100, "C"
+        10, 20, 40,
+        50, 100, "C"
     ];
 
     for (let snappingIndex in snappingOptions) {
@@ -845,35 +853,29 @@ function addSnappingOptions_helper() {
         let element = document.createElement("a");
         // Set relevant attributes.
 
-		if (snapping != "C") {
-			element.innerHTML = snapping / 10;
-		} else {
-			element.innerHTML = "C";
-		}
+        if (snapping != "C") {
+            element.innerHTML = snapping / 10;
+        } else {
+            element.innerHTML = "C";
+        }
 
         let toolClass = "tool_btn";
         if (GRID_SNAPPING == snapping) {
             toolClass = "tool_btn2";
         }
 
-		if (!snappingOptions.includes(GRID_SNAPPING) && snapping == "C") {
-			toolClass = "tool_btn2";
-		}
+        if (!snappingOptions.includes(GRID_SNAPPING) && snapping == "C") {
+            toolClass = "tool_btn2";
+        }
 
         element.setAttribute("class", `${toolClass} tool_wid`);
         element.setAttribute("style", "width: 21px;");
 
-		if (snapping != "C") {
-			element.setAttribute("onmousedown", `GridSnappingSet(${snapping})`);
-		} else {
-			element.setAttribute("onmousedown", `
-				let snapping = prompt("Enter snapping:", "");
-
-				if (snapping) {
-					GridSnappingSet(Math.round(snapping * 10));
-				}
-			`);
-		}
+        if (snapping != "C") {
+            element.setAttribute("onmousedown", `GridSnappingSet(${snapping})`);
+        } else {
+            element.setAttribute("onmousedown", "ALEI_CustomSnapping()");
+        }
 
         newHTML += element.outerHTML;
         // Add to main HTML.
@@ -1211,34 +1213,34 @@ function findObjects(name) {
 }
 
 function rotateObjects() {
-	let selected = getSelection();
-	let distX = [];
-	let distY = [];
-	let minX;
-	let minY;
+    let selected = getSelection();
+    let distX = [];
+    let distY = [];
+    let minX;
+    let minY;
 
-	for (let i = 0; i < selected.length; i++) {
-		if (selected[i].pm.w && selected[i].pm.h) {
-			let save = selected[i].pm.w;
+    for (let i = 0; i < selected.length; i++) {
+        if (selected[i].pm.w && selected[i].pm.h) {
+            let save = selected[i].pm.w;
 
-			selected[i].pm.w = selected[i].pm.h;
-			selected[i].pm.h = save;
-		}
+            selected[i].pm.w = selected[i].pm.h;
+            selected[i].pm.h = save;
+        }
 
-		distX.push(selected[i].pm.x);
-		distY.push(selected[i].pm.y);
-	}
+        distX.push(selected[i].pm.x);
+        distY.push(selected[i].pm.y);
+    }
 
-	minX = Math.min(...distX);
-	minY = Math.min(...distY);
+    minX = Math.min(...distX);
+    minY = Math.min(...distY);
 
-	for (let i = 0; i < selected.length; i++) {
-		distX[i] -= minX;
-		distY[i] -= minY;
+    for (let i = 0; i < selected.length; i++) {
+        distX[i] -= minX;
+        distY[i] -= minY;
 
-		selected[i].pm.x = minX + distY[i];
-		selected[i].pm.y = minY + distX[i];
-	}
+        selected[i].pm.x = minX + distY[i];
+        selected[i].pm.y = minY + distX[i];
+    }
 }
 
 function RandomizeName(oldname) {
@@ -1279,24 +1281,24 @@ function RandomizeName(oldname) {
 }
 
 function patchRandomizeName() {
-	window.RandomizeName = RandomizeName;
+    window.RandomizeName = RandomizeName;
 }
 
 function patchAllowedCharacters() {
-	allowed_string_chars += "<>";
+    allowed_string_chars += "<>";
 }
 
 function SaveThisMap(temp_to_real_compile_data="", callback=null) {
-	for (let i = 0; i < es.length; i++) {
+    for (let i = 0; i < es.length; i++) {
         if (!es.exists) continue;
-		let keys = Object.keys(es[i].pm);
+        let keys = Object.keys(es[i].pm);
 
-		for (let j = 0; j < keys.length; j++) {
-			if (typeof es[i].pm[keys[j]] == "string") {
-				es[i].pm[keys[j]] = es[i].pm[keys[j]].replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-			}
-		}
-	}
+        for (let j = 0; j < keys.length; j++) {
+            if (typeof es[i].pm[keys[j]] == "string") {
+                es[i].pm[keys[j]] = es[i].pm[keys[j]].replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+            }
+        }
+    }
 
     if (mapid != "") {
         if (!PrepareCustomImages()) {
@@ -1327,97 +1329,97 @@ function SaveThisMap(temp_to_real_compile_data="", callback=null) {
 }
 
 function patchSaveMap() {
-	window.SaveThisMap = SaveThisMap;
+    window.SaveThisMap = SaveThisMap;
 }
 
 function getRuleBySelector(selector) {
-	let rules = document.styleSheets[0].rules;
-	let rule;
+    let rules = document.styleSheets[0].rules;
+    let rule;
 
-	for (let i = 0; i < rules.length; i++) {
-		if (rules[i].selectorText == selector) {
-			rule = rules[i];
-		}
-	}
+    for (let i = 0; i < rules.length; i++) {
+        if (rules[i].selectorText == selector) {
+            rule = rules[i];
+        }
+    }
 
-	return rule;
+    return rule;
 }
 
 function setStyle(selector, style, value) {
-	getRuleBySelector(selector).style[style] = value;
+    getRuleBySelector(selector).style[style] = value;
 }
 
 function blackTheme() {
-	ThemeSet(0);
+    ThemeSet(0);
 
-	THEME = 4;
+    THEME = 4;
 
-	setStyle(".topui", "backgroundSize", "0px");
-	setStyle(".leftui", "backgroundSize", "0px");
-	setStyle(".rightui", "backgroundSize", "0px");
-	setStyle(".topui", "backgroundColor", "#101010");
-	setStyle(".leftui", "backgroundColor", "#101010");
-	setStyle(".rightui", "backgroundColor", "#101010");
-	setStyle(".field_btn", "backgroundColor", "#202020");
-	setStyle(".tool_btn", "backgroundColor", "#202020");
-	setStyle(".tool_btn", "border", "");
-	setStyle(".tool_btn2", "backgroundColor", "#333");
-	setStyle(".tool_btn2", "border", "1px solid #888");
-	setStyle(".field_btn", "color", "#CCC");
-	setStyle(".tool_btn", "color", "#CCC");
-	setStyle(".tool_btn2", "color", "#CCC");
-	setStyle(".gui_sel_info", "color", "#CCC");
-	setStyle(".c", "color", "#CCC");
-	setStyle(".pa1", "color", "#CCC");
-	setStyle(".pa2", "color", "#CCC");
-	setStyle(".field_dis_left", "color", "#CCC");
-	setStyle(".field_dis_right", "color", "#CCC");
-	setStyle(".p_u1", "border", "");
-	setStyle(".p_u2", "border", "");
-	setStyle(".pa1", "backgroundColor", "#202020");
-	setStyle(".pa2", "backgroundColor", "#000000");
-	setStyle(".objbox", "backgroundColor", "#000000");
-	setStyle(".field_dis_left", "backgroundColor", "#202020");
-	setStyle(".field_dis_right", "backgroundColor", "#000000");
-	setStyle(".selline1", "backgroundColor", "#202020");
-	setStyle(".tool_btn:hover", "backgroundColor", "#202020");
-	setStyle(".tool_btn:hover", "border", "1px solid #888");
-	setStyle(".tool_btn:hover", "color", "#CCC");
-	setStyle(".tool_btn2:hover", "backgroundColor", "#333");
-	setStyle(".tool_btn2:hover", "border", "1px solid #888");
-	setStyle(".tool_btn2:hover", "color", "#CCC");
-	setStyle(".field_btn:hover", "backgroundColor", "#333");
-	setStyle(".field_btn:hover", "color", "#CCC");
-	setStyle(".tool_btn:active", "backgroundColor", "#202020");
-	setStyle(".tool_btn:active", "border", "1px solid #888");
-	setStyle(".tool_btn:active", "color", "#CCC");
-	setStyle(".tool_btn2:active", "backgroundColor", "#333");
-	setStyle(".tool_btn2:active", "border", "1px solid #888");
-	setStyle(".tool_btn2:active", "color", "#CCC");
-	setStyle(".field_btn:active", "backgroundColor", "#333");
-	setStyle(".field_btn:active", "color", "#CCC");
-	setStyle("#mrtitle", "backgroundColor", "#202020");
-	setStyle("#mrbox", "backgroundColor", "#101010");
-	setStyle(".field_input", "backgroundColor", "#000");
-	setStyle(".field_input", "color", "#CCC");
-	setStyle(".btn", "backgroundColor", "#202020");
-	setStyle(".btn", "color", "#CCC");
-	setStyle(".btn:hover", "backgroundColor", "#333");
-	setStyle(".btn:hover", "color", "#CCC");
-	setStyle(".btn:active", "backgroundColor", "#333");
-	setStyle(".btn:active", "color", "#CCC");
-	setStyle("closebox", "backgroundColor", "#101010");
-	setStyle("closebox", "color", "#CCC");
-	setStyle(".list_group", "backgroundColor", "#202020");
-	setStyle(".list_group", "borderBottom", "");
-	setStyle(".list_group:hover", "backgroundColor", "#333");
-	setStyle(".list_group:active", "backgroundColor", "#333");
-	setStyle(".image_list_collapsable", "backgroundColor", "#101010");
-	setStyle(".img_option_selected", "backgroundColor", "#444");
-	setStyle(".rightui", "borderLeft", "");
-	setStyle("::-webkit-scrollbar-thumb", "backgroundColor", "#888");
-	setStyle("#tools_box", "overflow-y", "hidden");
-	setStyle("#tools_box", "overflow-y", "auto");
+    setStyle(".topui", "backgroundSize", "0px");
+    setStyle(".leftui", "backgroundSize", "0px");
+    setStyle(".rightui", "backgroundSize", "0px");
+    setStyle(".topui", "backgroundColor", "#101010");
+    setStyle(".leftui", "backgroundColor", "#101010");
+    setStyle(".rightui", "backgroundColor", "#101010");
+    setStyle(".field_btn", "backgroundColor", "#202020");
+    setStyle(".tool_btn", "backgroundColor", "#202020");
+    setStyle(".tool_btn", "border", "");
+    setStyle(".tool_btn2", "backgroundColor", "#333");
+    setStyle(".tool_btn2", "border", "1px solid #888");
+    setStyle(".field_btn", "color", "#CCC");
+    setStyle(".tool_btn", "color", "#CCC");
+    setStyle(".tool_btn2", "color", "#CCC");
+    setStyle(".gui_sel_info", "color", "#CCC");
+    setStyle(".c", "color", "#CCC");
+    setStyle(".pa1", "color", "#CCC");
+    setStyle(".pa2", "color", "#CCC");
+    setStyle(".field_dis_left", "color", "#CCC");
+    setStyle(".field_dis_right", "color", "#CCC");
+    setStyle(".p_u1", "border", "");
+    setStyle(".p_u2", "border", "");
+    setStyle(".pa1", "backgroundColor", "#202020");
+    setStyle(".pa2", "backgroundColor", "#000000");
+    setStyle(".objbox", "backgroundColor", "#000000");
+    setStyle(".field_dis_left", "backgroundColor", "#202020");
+    setStyle(".field_dis_right", "backgroundColor", "#000000");
+    setStyle(".selline1", "backgroundColor", "#202020");
+    setStyle(".tool_btn:hover", "backgroundColor", "#202020");
+    setStyle(".tool_btn:hover", "border", "1px solid #888");
+    setStyle(".tool_btn:hover", "color", "#CCC");
+    setStyle(".tool_btn2:hover", "backgroundColor", "#333");
+    setStyle(".tool_btn2:hover", "border", "1px solid #888");
+    setStyle(".tool_btn2:hover", "color", "#CCC");
+    setStyle(".field_btn:hover", "backgroundColor", "#333");
+    setStyle(".field_btn:hover", "color", "#CCC");
+    setStyle(".tool_btn:active", "backgroundColor", "#202020");
+    setStyle(".tool_btn:active", "border", "1px solid #888");
+    setStyle(".tool_btn:active", "color", "#CCC");
+    setStyle(".tool_btn2:active", "backgroundColor", "#333");
+    setStyle(".tool_btn2:active", "border", "1px solid #888");
+    setStyle(".tool_btn2:active", "color", "#CCC");
+    setStyle(".field_btn:active", "backgroundColor", "#333");
+    setStyle(".field_btn:active", "color", "#CCC");
+    setStyle("#mrtitle", "backgroundColor", "#202020");
+    setStyle("#mrbox", "backgroundColor", "#101010");
+    setStyle(".field_input", "backgroundColor", "#000");
+    setStyle(".field_input", "color", "#CCC");
+    setStyle(".btn", "backgroundColor", "#202020");
+    setStyle(".btn", "color", "#CCC");
+    setStyle(".btn:hover", "backgroundColor", "#333");
+    setStyle(".btn:hover", "color", "#CCC");
+    setStyle(".btn:active", "backgroundColor", "#333");
+    setStyle(".btn:active", "color", "#CCC");
+    setStyle("closebox", "backgroundColor", "#101010");
+    setStyle("closebox", "color", "#CCC");
+    setStyle(".list_group", "backgroundColor", "#202020");
+    setStyle(".list_group", "borderBottom", "");
+    setStyle(".list_group:hover", "backgroundColor", "#333");
+    setStyle(".list_group:active", "backgroundColor", "#333");
+    setStyle(".image_list_collapsable", "backgroundColor", "#101010");
+    setStyle(".img_option_selected", "backgroundColor", "#444");
+    setStyle(".rightui", "borderLeft", "");
+    setStyle("::-webkit-scrollbar-thumb", "backgroundColor", "#888");
+    setStyle("#tools_box", "overflow-y", "hidden");
+    setStyle("#tools_box", "overflow-y", "auto");
 }
 
 document.addEventListener("keydown", e => {
@@ -1440,33 +1442,33 @@ document.addEventListener("keydown", e => {
         }
     }
 
-	if (e.code == "KeyR" && canvas_focus) {
-		rotateObjects();
-	}
+    if (e.code == "KeyR" && canvas_focus) {
+        rotateObjects();
+    }
 
-	if ((e.code == "Minus" || e.code == "NumpadSubtract") && e.ctrlKey && canvas_focus) {
-		e.preventDefault();
+    if ((e.code == "Minus" || e.code == "NumpadSubtract") && e.ctrlKey && canvas_focus) {
+        e.preventDefault();
 
-		zoom *= 2;
-		zoom_validate();
-		need_redraw = 1;
-	}
+        zoom *= 2;
+        zoom_validate();
+        need_redraw = 1;
+    }
 
-	if ((e.code == "Equal" || e.code == "NumpadAdd") && e.ctrlKey && canvas_focus) {
-		e.preventDefault();
+    if ((e.code == "Equal" || e.code == "NumpadAdd") && e.ctrlKey && canvas_focus) {
+        e.preventDefault();
 
-		zoom *= 0.5;
-		zoom_validate();
-		need_redraw = 1;
-	}
+        zoom *= 0.5;
+        zoom_validate();
+        need_redraw = 1;
+    }
 
-	if (e.ctrlKey && e.altKey) {
-		e.preventDefault();
+    if (e.ctrlKey && e.altKey) {
+        e.preventDefault();
 
-		zoom = 1;
-		zoom_validate();
-		need_redraw = 1;
-	}
+        zoom = 1;
+        zoom_validate();
+        need_redraw = 1;
+    }
 });
 
 function doTooltip() {
@@ -2380,15 +2382,15 @@ let ALE_start = (async function() {
     patchServerRequest();
     patchUpdateGUIParams();
     patchTeamList();
-	patchRandomizeName();
-	patchAllowedCharacters();
-	patchSaveMap();
+    patchRandomizeName();
+    patchAllowedCharacters();
+    patchSaveMap();
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
-	if (aleiSettings.blackTheme) {
-		blackTheme();
-	}
-	UpdateTools();
+    if (aleiSettings.blackTheme) {
+        blackTheme();
+    }
+    UpdateTools();
 });
 
 document.addEventListener("DOMContentLoaded", () => ALE_start());
