@@ -2391,7 +2391,7 @@ function addProjectileModels() {
         18: "https://static.miraheze.org/plazmaburstwiki/8/89/Lazer_18.png",
         19: "https://static.miraheze.org/plazmaburstwiki/f/fe/Lazer_19.png",
         20: "https://static.miraheze.org/plazmaburstwiki/1/1a/Lazer_20.png",
-        21: "https://static.miraheze.org/plazmaburstwiki/thumb/4/42/Lazer_21.png",
+        21: "https://static.miraheze.org/plazmaburstwiki/4/42/Lazer_21.png",
         22: "https://static.miraheze.org/plazmaburstwiki/c/c0/Lazer_22.png",
         23: "https://static.miraheze.org/plazmaburstwiki/d/d9/Lazer_23.png",
         24: "https://static.miraheze.org/plazmaburstwiki/f/f5/Lazer_24.png",
