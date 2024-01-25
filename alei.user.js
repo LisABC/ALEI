@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      9.6
+// @version      9.7
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -559,6 +559,7 @@ function updateOffsets() {
 function updateTriggers() {
     // This is where we will rename some triggers.
     // For now it's only 378, but we got more triggers like renaming 328
+    addTrigger(175, "Gun &#8250; Change gun 'A' projectile model to 'B'", "gun", "ALEI_projectileModels");
     addTrigger(378, "Gun &#8250; Add hex color 'B' to gun 'A'", "gun", "string");
     addTrigger(332, "Var &#8250; Set variable 'A' to value 1 if Gun 'B' is in owner's active slot, set to value 0 in else case", "string", "gun");
 }
@@ -2368,6 +2369,82 @@ function patchTeamList() {
     aleiLog(DEBUG, "Edited team list..");
 }
 
+function addProjectileModels() {
+    let projectileModels = VAL_TABLE["ALEI_projectileModels"] = {
+        1: "https://static.miraheze.org/plazmaburstwiki/6/6a/Lazer_1.png",
+        2: "https://static.miraheze.org/plazmaburstwiki/a/ae/Lazer_2.png",
+        3: "https://static.miraheze.org/plazmaburstwiki/0/06/Lazer_3.png",
+        4: "https://static.miraheze.org/plazmaburstwiki/d/de/Lazer_4.png",
+        5: "https://static.miraheze.org/plazmaburstwiki/8/8f/Lazer_5.png",
+        6: "https://static.miraheze.org/plazmaburstwiki/a/a0/Lazer_6.png",
+        7: "https://static.miraheze.org/plazmaburstwiki/7/71/Lazer_7.png",
+        8: "https://static.miraheze.org/plazmaburstwiki/c/c6/Lazer_8.png",
+        9: "https://static.miraheze.org/plazmaburstwiki/d/d2/Lazer_9.png",
+        10: "https://static.miraheze.org/plazmaburstwiki/5/5b/Lazer_10.png",
+        11: "https://static.miraheze.org/plazmaburstwiki/d/d2/Lazer_11.png",
+        12: "https://static.miraheze.org/plazmaburstwiki/2/2d/Lazer_12.png",
+        13: "https://static.miraheze.org/plazmaburstwiki/b/be/Lazer_13.png",
+        14: "https://static.miraheze.org/plazmaburstwiki/1/14/Lazer_14.png",
+        15: "", // Empty projectile.
+        16: "https://static.miraheze.org/plazmaburstwiki/7/7f/Lazer_16.png",
+        17: "https://static.miraheze.org/plazmaburstwiki/3/31/Lazer_17.png",
+        18: "https://static.miraheze.org/plazmaburstwiki/8/89/Lazer_18.png",
+        19: "https://static.miraheze.org/plazmaburstwiki/f/fe/Lazer_19.png",
+        20: "https://static.miraheze.org/plazmaburstwiki/1/1a/Lazer_20.png",
+        21: "https://static.miraheze.org/plazmaburstwiki/thumb/4/42/Lazer_21.png",
+        22: "https://static.miraheze.org/plazmaburstwiki/c/c0/Lazer_22.png",
+        23: "https://static.miraheze.org/plazmaburstwiki/d/d9/Lazer_23.png",
+        24: "https://static.miraheze.org/plazmaburstwiki/f/f5/Lazer_24.png",
+        25: "https://static.miraheze.org/plazmaburstwiki/7/7c/Lazer_25.png",
+        26: "https://static.miraheze.org/plazmaburstwiki/a/a7/Lazer_26.png",
+        27: "https://static.miraheze.org/plazmaburstwiki/3/30/Lazer_27.png",
+        28: "https://static.miraheze.org/plazmaburstwiki/3/3a/Lazer_28.png",
+        29: "https://static.miraheze.org/plazmaburstwiki/9/90/Lazer_29.png",
+        30: "https://static.miraheze.org/plazmaburstwiki/2/23/Lazer_30.png",
+        31: "https://static.miraheze.org/plazmaburstwiki/3/3a/Lazer_31.png",
+        32: "https://static.miraheze.org/plazmaburstwiki/f/f0/Lazer_32.png",
+        33: "https://static.miraheze.org/plazmaburstwiki/0/0d/Lazer_33.png",
+        34: "https://static.miraheze.org/plazmaburstwiki/c/c8/Lazer_34.png",
+        35: "https://static.miraheze.org/plazmaburstwiki/3/38/Lazer_35.png",
+        36: "https://static.miraheze.org/plazmaburstwiki/6/6d/Lazer_36.png",
+        37: "https://static.miraheze.org/plazmaburstwiki/a/a9/Lazer_37.png",
+        38: "https://static.miraheze.org/plazmaburstwiki/e/e7/Lazer_38.png",
+        39: "https://static.miraheze.org/plazmaburstwiki/6/6c/Lazer_39.png",
+        40: "https://static.miraheze.org/plazmaburstwiki/d/d4/Lazer_40.png",
+        41: "https://static.miraheze.org/plazmaburstwiki/5/5d/Lazer_41.png",
+        42: "https://static.miraheze.org/plazmaburstwiki/9/9d/Lazer_42.png",
+        43: "https://static.miraheze.org/plazmaburstwiki/7/79/Lazer_43.png",
+        44: "https://static.miraheze.org/plazmaburstwiki/6/6d/Lazer_44.png",
+        45: "https://static.miraheze.org/plazmaburstwiki/4/44/Lazer_45.png",
+        46: "https://static.miraheze.org/plazmaburstwiki/3/3b/Lazer_46.png",
+        47: "https://static.miraheze.org/plazmaburstwiki/8/84/Lazer_47.png",
+        48: "https://static.miraheze.org/plazmaburstwiki/7/75/Lazer_48.png",
+        49: "https://static.miraheze.org/plazmaburstwiki/0/08/Lazer_49.png",
+        50: "https://static.miraheze.org/plazmaburstwiki/4/41/Lazer_50.png",
+        51: "https://static.miraheze.org/plazmaburstwiki/9/92/Lazer_51.png",
+        52: "https://static.miraheze.org/plazmaburstwiki/9/92/Lazer_52.png",
+        53: "https://static.miraheze.org/plazmaburstwiki/7/70/Lazer_53.png",
+        54: "https://static.miraheze.org/plazmaburstwiki/e/ee/Lazer_54.png",
+        55: "https://static.miraheze.org/plazmaburstwiki/d/d1/Lazer_55.png"
+    };
+    for (let i = 1; i < 56; i++) {
+        projectileModels[i] = `<img src=\'${projectileModels[i]}\' style=\'width: 60px; height: 20px\'/>`;
+    }
+    aleiLog(DEBUG, "Loaded projectile models.");
+}
+
+function patchSpecialValue() {
+    let _OG = window.special_value;
+    window.special_value = (base, value) => {
+        if (["ALEI_projectileModels"].indexOf(base) !== -1) {
+            let returning = VAL_TABLE[base][value];
+            if (returning === undefined) return ERROR_VALUE;
+            else return returning;
+        } else return _OG(base, value);
+    }
+    aleilog(DEBUG, "Patched SpecialValue");
+}
+
 let ALE_start = (async function() {
     'use strict';
     VAL_TABLE = special_values_table;
@@ -2386,7 +2463,7 @@ let ALE_start = (async function() {
     updateObjects();
     updateButtons();
     patch_m_down();
-    await addSessionSync();
+    addSessionSync();
     addTriggerIDs();
     patchShowHideButton();
     optimize();
@@ -2413,6 +2490,8 @@ let ALE_start = (async function() {
     if (aleiSettings.blackTheme) {
         blackTheme();
     }
+    addProjectileModels();
+    patchSpecialValue();
     UpdateTools();
 });
 
