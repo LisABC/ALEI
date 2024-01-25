@@ -6,6 +6,7 @@ This part includes changes that was done because game has it but ALE doesnt.
 - Added "Hand Holder" to vehicle list.
 - Added missing voice presets.
 - Added NARL weapon and Hakase decor.
+- Projectile models.
 
 # Features
 This part includes changes to adds new things to ALE.
