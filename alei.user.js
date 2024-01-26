@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      9.7
+// @version      9.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1097,7 +1097,7 @@ function UpdatePhysicalParam(paramname, chvalue) {
                     } else if (typeof(chvalue) == 'string') {
                         lnd('es[' + elems + '].pm[' + lup + '] = "' + es[elems].pm[paramname] + '";');
                         ldn('es[' + elems + '].pm[' + lup + '] = "' + chvalue + '";');
-                        es[elems].pm[paramname] = chvalue;
+                        es[elems].pm[paramname] = chvalue.replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
                     } else {
                         alert('Unknown value type: ' + typeof(chvalue));
                     }
@@ -1287,50 +1287,6 @@ function patchRandomizeName() {
 
 function patchAllowedCharacters() {
     allowed_string_chars += "<>";
-}
-
-function SaveThisMap(temp_to_real_compile_data="", callback=null) {
-    for (let i = 0; i < es.length; i++) {
-        if (!es.exists) continue;
-        let keys = Object.keys(es[i].pm);
-
-        for (let j = 0; j < keys.length; j++) {
-            if (typeof es[i].pm[keys[j]] == "string") {
-                es[i].pm[keys[j]] = es[i].pm[keys[j]].replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-            }
-        }
-    }
-
-    if (mapid != "") {
-        if (!PrepareCustomImages()) {
-            NewNote("Delaying save operation - still retrieving custom image size info (" + last_awaiting_images + ")...", note_neutral);
-            setTimeout(function() {
-                SaveThisMap(temp_to_real_compile_data, callback);
-            }, 1000);
-            return;
-        }
-        var compiled = "";
-        if (temp_to_real_compile_data == "") {
-            for (var i = 0; i < known_class_savepriorities.length; i++)
-                compiled += lcc_(known_class_savepriorities[i]);
-            if (compiled == "")
-                compiled = "*empty*";
-            try {
-                localStorage.setItem("pb2_map_" + mapid + "::" + (new Date().getTime()), compiled);
-            } catch (e) {
-                NewNote("Could not find localStorage support in your browser in order to create backup version of map.", note_bad);
-            }
-        } else
-            compiled = temp_to_real_compile_data;
-        last_save_time = getTimer();
-        ServerRequest("r=" + mapid + "&a=save" + "&d=" + encodeURIComponent(compiled), "save", callback);
-    } else {
-        SaveThisMapAs();
-    }
-}
-
-function patchSaveMap() {
-    window.SaveThisMap = SaveThisMap;
 }
 
 function getRuleBySelector(selector) {
@@ -2484,7 +2440,6 @@ let ALE_start = (async function() {
     patchTeamList();
     patchRandomizeName();
     patchAllowedCharacters();
-    patchSaveMap();
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, "Welcome!")
     if (aleiSettings.blackTheme) {
