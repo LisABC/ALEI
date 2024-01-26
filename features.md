@@ -20,7 +20,7 @@ This part includes changes to adds new things to ALE.
 - Allows for inserting XML.
 - Caches custom images, allowing for faster loading
 - Shows parameter values if all selected objects have it same.
-- Allows putting spaces, < and > in trigger values.
+- Allows putting spaces, <, > and " in trigger values.
 - Makes server requests asynchronous, allowing for smoother experience.
 - Opt-in automatic re-references for object UIDs when they are renamed.
 - Opt-in displaying object's in-game ID.
