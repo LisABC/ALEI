@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      9.8
+// @version      9.9
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1374,8 +1374,10 @@ function blackTheme() {
     setStyle(".image_list_collapsable", "backgroundColor", "#101010");
     setStyle(".img_option_selected", "backgroundColor", "#444");
     setStyle(".rightui", "borderLeft", "");
-    setStyle("::-webkit-scrollbar-thumb", "backgroundColor", "#888");
     setStyle(".leftui", "borderRight", "");
+    setStyle("::-webkit-scrollbar-thumb", "backgroundColor", "#888");
+    setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarColor", "");
+    setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarWidth", "");
     setStyle("#tools_box", "overflow-y", "hidden");
     setStyle("#tools_box", "overflow-y", "auto");
 }
@@ -2398,7 +2400,7 @@ function patchSpecialValue() {
             else return returning;
         } else return _OG(base, value);
     }
-    aleilog(DEBUG, "Patched SpecialValue");
+    aleiLog(DEBUG, "Patched SpecialValue");
 }
 
 let ALE_start = (async function() {
