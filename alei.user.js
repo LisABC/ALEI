@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      9.9
+// @version      10.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -268,14 +268,6 @@ function updateSounds() {
             ["hurt", "Hurt", 1],
             ["edown", "Celebrating", 2],
             ["death", "Death", 1]
-        ],
-        oldproxy: [
-            "Classic Proxy",
-            ["welcome", "Alerted", 3],
-            ["hurt", "Hurt", 3],
-            ["edown", "Celebrating", 3],
-            ["dying", "Dying", 1],
-            ["death", "Death", 1]
         ]
     };
     for (let entry of Object.entries(voices)) {
@@ -305,7 +297,6 @@ function updateVoicePresets() {
     VP['xin'] = 'Xin';
     VP["grosk"] = "Grosk";
 
-    VP["oldproxy"] = "Classic Proxy";
     VP["elurra"] = "Elurra";
     VP["drohnenfem"] = "Drohnen Female";
     VP["serkova"] = "Serkova";
@@ -1374,12 +1365,12 @@ function blackTheme() {
     setStyle(".image_list_collapsable", "backgroundColor", "#101010");
     setStyle(".img_option_selected", "backgroundColor", "#444");
     setStyle(".rightui", "borderLeft", "");
-    setStyle(".leftui", "borderRight", "");
-    setStyle("::-webkit-scrollbar-thumb", "backgroundColor", "#888");
-    setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarColor", "");
-    setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarWidth", "");
-    setStyle("#tools_box", "overflow-y", "hidden");
-    setStyle("#tools_box", "overflow-y", "auto");
+	setStyle(".leftui", "borderRight", "");
+	setStyle("::-webkit-scrollbar-thumb", "backgroundColor", "#888");
+	setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarColor", "");
+	setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarWidth", "");
+	setStyle("#tools_box", "overflow-y", "hidden");
+	setStyle("#tools_box", "overflow-y", "auto");
 }
 
 let targetElement;
