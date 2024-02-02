@@ -1904,7 +1904,6 @@ function ServerRequest_handleMapData(mapCode) {
     // Branch of patchServerRequest
     // Made to deal with map source related things.
     aleiLog(DEBUG, "Parsing map source now.");
-    console.log(mapCode);
 
     const objectKeyValueRegex = /(\w+)=((-?\d+(\.\d+)?)|(("|')[ -~]*("|'))|true|false)/;
     const objectCreationRegex = /q=es\[\d+\]=new E\(("|')(\w+)("|')\)/;
@@ -1953,7 +1952,6 @@ function ServerRequest_handleMapData(mapCode) {
         // Key value
         // In format of q.(___)=(___);
         let matchKeyValue = objectKeyValueRegex.exec(expression);
-        console.log(expression, matchKeyValue);
 
         if (matchKeyValue === null) {
             aleiLog(WARN, `Unable to figure out what kind of code is "${expression}", you MIGHT have issues.`);
