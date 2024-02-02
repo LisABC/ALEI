@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      10.0
+// @version      10.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -8,8 +8,12 @@
 // @icon         https://github.com/LisABC/ALEI/blob/main/icon.png?raw=true
 // @updateURL    https://github.com/LisABC/ALEI/raw/main/alei.user.js
 // @downloadURL  https://github.com/LisABC/ALEI/raw/main/alei.user.js
-// @grant        none
+// @connect      github.com
+// @connect      githubusercontent.com
+// @grant        GM.xmlHttpRequest
 // ==/UserScript==
+
+let window = unsafeWindow;
 
 // Shorthand things
 function $id(id) {
@@ -2394,6 +2398,44 @@ function patchSpecialValue() {
     aleiLog(DEBUG, "Patched SpecialValue");
 }
 
+function notifyUpdate(version) {
+    aleiLog(INFO, `New update: ${version}`);
+    NewNote(`ALEI: There is update: ${version}.`, "#FFFFFF");
+}
+
+function notifyIfTheresUpdate(script) {
+    let lines = script.split("\n");
+    let version;
+    for(let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+        if(line.indexOf("@version") == -1) continue;
+
+        let parts = line.split(" ");
+        version = parts[parts.length - 1];
+        break;
+    }
+
+    let verParts = version.split(".");
+    let currentVerParts = GM_info.script.version.split(".");
+
+    // x.y.z > x.y(.0)
+    if(verParts.length > currentVerParts.length) return notifyUpdate(version);
+
+    let smallestLength = Math.min(verParts.length , currentVerParts.length)
+    for (let i = 0; i < smallestLength; i++) {
+        let verPart = parseInt(verParts[i]);
+        let currentVerPart = parseInt(currentVerParts[i]);
+
+        if(verPart > currentVerPart) return notifyUpdate(version);
+    }
+    aleiLog(INFO, "No update detected.");
+}
+
+async function checkForUpdates() {
+    let resp = await GM.xmlHttpRequest({  url: GM_info.script.updateURL  }).catch(e => console.error(e));
+    notifyIfTheresUpdate(resp.responseText);
+}
+
 let ALE_start = (async function() {
     'use strict';
     VAL_TABLE = special_values_table;
@@ -2433,14 +2475,17 @@ let ALE_start = (async function() {
     patchTeamList();
     patchRandomizeName();
     patchAllowedCharacters();
-    NewNote("ALEI: Welcome!", "#7777FF");
-    aleiLog(INFO, "Welcome!")
     if (aleiSettings.blackTheme) {
         blackTheme();
     }
     addProjectileModels();
     patchSpecialValue();
     UpdateTools();
+
+    checkForUpdates();
+
+    NewNote("ALEI: Welcome!", "#7777FF");
+    aleiLog(INFO, `Welcome! TamperMonkey Version: ${GM_info.version} ALEI Version: ${GM_info.script.version}`);
 });
 
 document.addEventListener("DOMContentLoaded", () => ALE_start());
