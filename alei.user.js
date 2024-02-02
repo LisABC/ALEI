@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      10.2
+// @version      10.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1905,8 +1905,8 @@ function ServerRequest_handleMapData(mapCode) {
     // Made to deal with map source related things.
     aleiLog(DEBUG, "Parsing map source now.");
 
-    const objectKeyValueRegex = /(\w+)=((-?\d+(\.\d+)?)|(("|')[ -~]*("|'))|true|false)/;
-    const objectCreationRegex = /q=es\[\d+\]=new E\(("|')(\w+)("|')\)/;
+    const objectKeyValueRegex = /(\w+)=((-?\d+(\.\d+)?)|("[ -~]*")|true|false)/;
+    const objectCreationRegex = /q=es\[\d+\]=new E\("(\w+)"\)/;
 
     let expressions = mapCode.split(";\n");
 
@@ -1936,7 +1936,7 @@ function ServerRequest_handleMapData(mapCode) {
         // Actual mapdata.
         if(expression.indexOf(";q=q.pm;") != -1) { // Creation which is q=es[...]=new E(...);q=q.pm;q.(...)=(...);
             let creation = objectCreationRegex.exec(expression);
-            currentElement = new E(creation[2]);
+            currentElement = new E(creation[1]);
             es[es.length] = currentElement;
 
             let splt = expression.split(";");
@@ -1959,7 +1959,7 @@ function ServerRequest_handleMapData(mapCode) {
         }
         let key = matchKeyValue[1];
         let value = matchKeyValue[2];
-        if (value[0] != "'") { // Not a string.
+        if (value[0] != '"') { // Not a string.
             if (value == "true") value = true;
             else if(value == "false") value = false;
             else if(value.indexOf(".") != -1) value = parseFloat(value);
