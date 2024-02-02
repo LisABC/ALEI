@@ -2400,7 +2400,7 @@ function patchSpecialValue() {
 
 function notifyUpdate(version) {
     aleiLog(INFO, `New update: ${version}`);
-    NewNote(`ALEI: There is update: ${version}.`, "#FFFFFF");
+    NewNote(`ALEI: There is new update: ${version}, you are currently in ${GM_info.script.version}`, "#FFFFFF");
 }
 
 function notifyIfTheresUpdate(script) {
