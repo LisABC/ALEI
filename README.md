@@ -9,9 +9,7 @@ Discord server: https://discord.gg/K5jcNEvZ85
 Features are listed in [features.md](/features.md)
 
 ## How to install ?
-It's recommended to use [tampermonkey](https://www.tampermonkey.net/) as that gives you benefit of auto updating. Once you download tampermonkey, you can click [here](https://github.com/ZenoABC/ALEI/raw/main/alei.user.js), then tampermonkey will ask you whether to install or not, just click "install".
-
-You can also copy the script itself and paste in JS console & execute manually.
+Easiest way to install ALEI is to use it inside Tampermonkey. You can download Tampermonkey from [here](https://www.tampermonkey.net/), then once you have installed Tampermonkey, you can download ALEI by clicking [here](https://github.com/LisABC/ALEI/raw/main/alei.user.js)
 
 **NOTE:** Tampermonkey is the only natively supported userscript manager, you might have issues if you use others (Such as GreaseMonkey).
 
