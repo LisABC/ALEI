@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      10.3
+// @version      10.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1958,7 +1958,7 @@ function ServerRequest_handleMapData(mapCode) {
             continue;
         }
         let key = matchKeyValue[1];
-        let value = matchKeyValue[2];
+        let value = matchKeyValue[2].replaceAll("\\/", "/");
         if (value[0] != '"') { // Not a string.
             if (value == "true") value = true;
             else if(value == "false") value = false;
