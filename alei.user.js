@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      10.4
+// @version      10.5
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -394,7 +394,7 @@ function updateSkins() {
 
         [178, "Newgen Marine"],
         [179, "Elurra (by Lin)"],
-        [180, "Phantom (Red)"],
+        [180, "Phantom Proxy (Unofficial Name)"],
         [181, "Huntsman (Night)"],
         [182, "Huntsman (Swamp)"],
         [183, "Lt. Ferro (by Serpent)"],
@@ -408,7 +408,7 @@ function updateSkins() {
         [191, "Serkova Recon Unit"],
         [192, "Drohnen Drifter (by Ark633)"],
         [193, "Moon Captain"],
-        [194, "Phantom (Blue)"],
+        [194, "Phantom Android SLC-56 (Unofficial Name)"],
         [195, "Wraith (by Ark633)"],
         [196, "Serkova Armored Unit"],
         [197, "Phantom"],
@@ -428,7 +428,9 @@ function updateSkins() {
         [211, "XBT-117 Android"],
         [212, "Teneguilae"],
         [213, "Walker (by Serpent)"],
-        [214, "Space Grub (by Broforce1)"]
+        [214, "Space Grub (by Broforce1)"],
+        [215, "Phantom (Blue)"],
+        [216, "Phantom (Red)"]
     ]
     for(let li = 0; li < charlists.length; li++) {
         let charID = charlists[li][0];
