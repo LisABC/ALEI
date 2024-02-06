@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      10.6
+// @version      10.7
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -2481,6 +2481,58 @@ async function checkForUpdates() {
     notifyIfTheresUpdate(resp.responseText);
 }
 
+function ALEI_DoWorldScale() {
+    var newscale = prompt('Multiply selection size by % (percents)', 100);
+    if (newscale == null || newscale == 100) {} else {
+        var factor = Math.floor(newscale) / 100;
+        {
+            let snappingScript = `/GRID_SNAPPING)*GRID_SNAPPING;`
+            var roundwell = true;
+            lcz();
+            for (i = 0; i < es.length; i++)
+                if (es[i].exists)
+                    if (es[i].selected)
+                        if (MatchLayer(es[i])) {
+                            if (es[i].pm.w != undefined) {
+                                ldn('es[' + i + '].pm.w=Math.round(es[' + i + '].pm.w*' + factor + snappingScript);
+                                lnd('es[' + i + '].pm.w=' + es[i].pm.w + ';');
+                                if (es[i].pm.w * factor != Math.round(es[i].pm.w * factor / GRID_SNAPPING) * GRID_SNAPPING)
+                                    roundwell = false;
+                            }
+                            if (es[i].pm.h != undefined) {
+                                ldn('es[' + i + '].pm.h=Math.round(es[' + i + '].pm.h*' + factor + snappingScript);
+                                lnd('es[' + i + '].pm.h=' + es[i].pm.h + ';');
+                                if (es[i].pm.h * factor != Math.round(es[i].pm.h * factor / GRID_SNAPPING) * GRID_SNAPPING)
+                                    roundwell = false;
+                            }
+                            if (es[i].pm.x != undefined) {
+                                ldn('es[' + i + '].pm.x=Math.round(es[' + i + '].pm.x*' + factor + snappingScript);
+                                lnd('es[' + i + '].pm.x=' + es[i].pm.x + ';');
+                                if (es[i].pm.x * factor != Math.round(es[i].pm.x * factor / GRID_SNAPPING) * GRID_SNAPPING)
+                                    roundwell = false;
+                            }
+                            if (es[i].pm.y != undefined) {
+                                ldn('es[' + i + '].pm.y=Math.round(es[' + i + '].pm.y*' + factor + snappingScript);
+                                lnd('es[' + i + '].pm.y=' + es[i].pm.y + ';');
+                                if (es[i].pm.y * factor != Math.round(es[i].pm.y * factor / GRID_SNAPPING) * GRID_SNAPPING)
+                                    roundwell = false;
+                            }
+                        }
+            lfz(true);
+            NewNote('Operation complete:<br><br>Selected objects scaled by ' + factor + ' (' + newscale + '% of original size)', note_passive);
+            if (!roundwell)
+                NewNote('Note: Position and/or dimensions of some objects were not scaled properly due to Level Editor rounding rules', note_neutral);
+            need_GUIParams_update = true;
+            need_redraw = true;
+            UpdateTools();
+        }
+    }
+}
+function patchPercentageTool() {
+    window.DoWorldScale = ALEI_DoWorldScale;
+    aleiLog(DEBUG, "Patched percentage tool");
+}
+
 let ALE_start = (async function() {
     'use strict';
     VAL_TABLE = special_values_table;
@@ -2526,6 +2578,7 @@ let ALE_start = (async function() {
     addProjectileModels();
     patchSpecialValue();
     UpdateTools();
+    patchPercentageTool();
 
     checkForUpdates();
 
