@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      10.5
+// @version      10.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -437,9 +437,52 @@ function updateSkins() {
         let paddedCharID = charID.toString().padStart(4, "0")
         let charName = charlists[li][1];
         let src = "https://www.plazmaburst2.com/level_editor/chars_full/char" + paddedCharID + ".png"
-        VAL_TABLE['char'][charID] = '<span style=\'background:url(' + src + '); width: 16px; height: 16px; display: inline-block; background-position: center; background-position-x: 30%; background-position-y: 26%; background-size: 67px;vertical-align: -4px;\'></span> ' + charName;
+        VAL_TABLE['char'][charID] = _turnLinkIntoSkinSpan(src, charName);
         img_chars_full[charID] = new Image();
         img_chars_full[charID].src = 'chars_full/char' + paddedCharID + '.png';
+    }
+
+    let ids = Object.keys(VAL_TABLE["char"]);
+    ids = ids.map(str => parseInt(str));
+    let fromID = Math.max(...ids) + 1;
+    fetchSkinsFrom(fromID);
+}
+
+function _turnLinkIntoSkinSpan(src, charName) {
+    return '<span style=\'background:url(' + src + '); width: 16px; height: 16px; display: inline-block; background-position: center; background-position-x: 30%; background-position-y: 26%; background-size: 67px;vertical-align: -4px;\'></span> ' + charName;
+}
+
+async function fetchSkinsFrom(startingID) {
+    const requestsAtOnce = 5;
+    let requestsRunning = true;
+    let skinsAdded = [];
+
+    async function requestSkin(id) {
+        let paddedCharID = id.toString().padStart(4, "0");
+        let src = "https://www.plazmaburst2.com/level_editor/chars_full/char" + paddedCharID + ".png"
+        let response = await GM.xmlHttpRequest({ url: src }).catch(e => console.error(e));
+        if(response.status == 404) {
+            requestsRunning = false;
+            return;
+        }
+        VAL_TABLE["char"][id] = _turnLinkIntoSkinSpan(src, `Unknown Skin #${id}`);
+        skinsAdded.push(id);
+    }
+    async function requestBatch(id) {
+        let promises = [];
+        for (let i = 0; i < requestsAtOnce; i++) {
+            promises.push(requestSkin(id + i));
+        }
+        await Promise.all(promises);
+    }
+    let fromID = startingID;
+    while(requestsRunning) {
+        await requestBatch(fromID);
+        fromID += requestsAtOnce;
+    }
+    if(skinsAdded.length > 0) {
+        NewNote(`ALEI: There are ${skinsAdded.length} unregistered skins, please inform ALEI developer(s) about this. Check logs for more information`, `#00FFFF`);
+        aleiLog(INFO, `Unregistered skins: ${skinsAdded}`);
     }
 }
 
