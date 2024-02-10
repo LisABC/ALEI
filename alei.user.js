@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      10.7
+// @version      10.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1137,7 +1137,7 @@ function UpdatePhysicalParam(paramname, chvalue) {
                     } else if (typeof(chvalue) == 'string') {
                         lnd('es[' + elems + '].pm[' + lup + '] = "' + es[elems].pm[paramname] + '";');
                         ldn('es[' + elems + '].pm[' + lup + '] = "' + chvalue + '";');
-                        es[elems].pm[paramname] = chvalue;
+                        es[elems].pm[paramname] = _encodeXMLChars(chvalue);
                     } else {
                         alert('Unknown value type: ' + typeof(chvalue));
                     }
@@ -1414,12 +1414,12 @@ function blackTheme() {
     setStyle(".image_list_collapsable", "backgroundColor", "#101010");
     setStyle(".img_option_selected", "backgroundColor", "#444");
     setStyle(".rightui", "borderLeft", "");
-	setStyle(".leftui", "borderRight", "");
-	setStyle("::-webkit-scrollbar-thumb", "backgroundColor", "#888");
-	setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarColor", "");
-	setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarWidth", "");
-	setStyle("#tools_box", "overflow-y", "hidden");
-	setStyle("#tools_box", "overflow-y", "auto");
+    setStyle(".leftui", "borderRight", "");
+    setStyle("::-webkit-scrollbar-thumb", "backgroundColor", "#888");
+    setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarColor", "");
+    setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarWidth", "");
+    setStyle("#tools_box", "overflow-y", "hidden");
+    setStyle("#tools_box", "overflow-y", "auto");
 }
 
 let targetElement;
@@ -2030,7 +2030,7 @@ function handleServerRequestResponse(request, operation, response) {
     }else {
         aleiLog(DEBUG2, `Evaling for request ${ANSI_YELLOW}"${request}"${ANSI_RESET} with operation of ${ANSI_YELLOW}"${operation}"${ANSI_RESET}: ${response}`)
         try {JS_eval(response);}
-        catch(e) {NewNote("Eval error!", note_bad); console.error(e);}
+        catch(e) {NewNote("Eval error!", note_bad); console.error(e); aleiLog(INFO, `Eval Error from ${request}, for op ${operation} whose response is ${response}`)}
     };
 }
 
@@ -2172,17 +2172,6 @@ function patchUpdateGUIParams() {
         origUGP();
         if (shouldDisplayID) delete selected[0].pm.__id;
         window.GenParamVal = origGPV;
-		
-		for (let i = 0; i < selected.length; i++) {
-			let obj = selected[i];
-			let keys = Object.keys(obj.pm);
-			
-			for (let j = 0; j < keys.length; j++) {
-				if (typeof obj.pm[keys[j]] == "string") {
-					obj.pm[keys[j]] = obj.pm[keys[j]].replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
-				}
-			}
-		}
     }
     aleiLog(DEBUG, "Patched UpdateGUIParams");
 }
@@ -2544,6 +2533,30 @@ function patchPercentageTool() {
     aleiLog(DEBUG, "Patched percentage tool");
 }
 
+function _encodeXMLChars(value) {
+    return value.replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;")
+}
+
+function patchCompileTrigger() {
+    let _og = window.CompileTrigger;
+    window.CompileTrigger = () => {
+        let result = _og();
+        let selected = getSelection();
+        for (let i = 0; i < selected.length; i++) {
+            let obj = selected[i];
+            let keys = Object.keys(obj.pm);
+
+            for (let j = 0; j < keys.length; j++) {
+                if (typeof obj.pm[keys[j]] == "string") {
+                    obj.pm[keys[j]] = _encodeXMLChars(obj.pm[keys[j]]);
+                }
+            }
+        }
+        return result;
+    }
+    aleiLog(DEBUG, "Patched CompileTrigger");
+}
+
 let ALE_start = (async function() {
     'use strict';
     VAL_TABLE = special_values_table;
@@ -2590,6 +2603,7 @@ let ALE_start = (async function() {
     patchSpecialValue();
     UpdateTools();
     patchPercentageTool();
+    patchCompileTrigger();
 
     checkForUpdates();
 
