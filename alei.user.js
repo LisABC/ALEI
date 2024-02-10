@@ -1137,7 +1137,7 @@ function UpdatePhysicalParam(paramname, chvalue) {
                     } else if (typeof(chvalue) == 'string') {
                         lnd('es[' + elems + '].pm[' + lup + '] = "' + es[elems].pm[paramname] + '";');
                         ldn('es[' + elems + '].pm[' + lup + '] = "' + chvalue + '";');
-                        es[elems].pm[paramname] = chvalue.replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+                        es[elems].pm[paramname] = chvalue;
                     } else {
                         alert('Unknown value type: ' + typeof(chvalue));
                     }
@@ -2172,6 +2172,17 @@ function patchUpdateGUIParams() {
         origUGP();
         if (shouldDisplayID) delete selected[0].pm.__id;
         window.GenParamVal = origGPV;
+		
+		for (let i = 0; i < selected.length; i++) {
+			let obj = selected[i];
+			let keys = Object.keys(obj.pm);
+			
+			for (let j = 0; j < keys.length; j++) {
+				if (typeof obj.pm[keys[j]] == "string") {
+					obj.pm[keys[j]] = obj.pm[keys[j]].replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+				}
+			}
+		}
     }
     aleiLog(DEBUG, "Patched UpdateGUIParams");
 }
