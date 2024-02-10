@@ -1422,6 +1422,108 @@ function blackTheme() {
 	setStyle("#tools_box", "overflow-y", "auto");
 }
 
+function CompileTrigger() {
+    var opcode_field = document.getElementById(licGiCDil);
+    var code = opcode_field.value;
+    var code_lines = code.split(llCGlCGIl);
+    var new_trigger_actions = [];
+    var direct_update_params = [];
+    var direct_update_values = [];
+    function ScheduleParamSet(a, b) {
+        direct_update_params.push(a);
+        direct_update_values.push(b);
+    }
+    function getAllIndexes(arr, val) {
+        var indexes = []
+          , i = -1;
+        while ((i = arr.indexOf(val, i + 1)) != -1) {
+            indexes.push(i);
+        }
+        return indexes;
+    }
+    for (var i = 0; i < code_lines.length; i++) {
+        var line = code_lines[i];
+        var paramA_start = line.indexOf(lICDIcDil);
+        var separator = line.indexOf(llcOlOOIl);
+        var end = line.indexOf(llOOIcOil);
+        var semicolon = line.indexOf(llCDlOGll);
+        if (paramA_start != -1 && separator != -1 && end != -1) {
+            var first_c = line.indexOf(licGiOOll);
+            var opcode = line.substring(0, first_c);
+            var action_type = -1;
+            if (opcode.substring(0, 2) == llcGlCGll && !isNaN(opcode.slice(2)))
+                action_type = parseInt(opcode.slice(2));
+            else {
+                action_type = trigger_opcode_aliases.indexOf(opcode);
+                if (action_type == -1) {
+                    NewNote(lICGiCGil + opcode + llCDlOGil, note_neutral);
+                    return;
+                }
+            }
+            var valueA = lICGICl;
+            var valueB = lICGICl;
+            if (action_type != -1) {
+                valueA = line.substring(paramA_start + 3, separator);
+                valueB = line.substring(separator + 4, end);
+            }
+            if (new_trigger_actions.length < 10)
+                new_trigger_actions.push([action_type, valueA, valueB]);
+            else {
+                NewNote(llCGlCOll, note_neutral);
+                return;
+            }
+        } else if (semicolon != -1) {
+            var left_part = line.substring(0, semicolon);
+            var right_part = line.slice(semicolon + 1);
+            while (left_part.charAt(0) == liOOlCl)
+                left_part = left_part.slice(1);
+            while (left_part.charAt(left_part.length - 1) == liOOlCl)
+                left_part = left_part.slice(0, -1);
+            while (right_part.charAt(0) == liOOlCl)
+                right_part = right_part.slice(1);
+            while (right_part.charAt(right_part.length - 1) == liOOlCl)
+                right_part = right_part.slice(0, -1);
+            if (left_part == liCOICl || left_part == lIOOlCl || left_part == licDlcl)
+                ScheduleParamSet(left_part, right_part);
+            else
+                NewNote(lICGiCGil + left_part + liCGiODll, note_neutral);
+        } else if (line != lICGICl) {
+            NewNote(licOiCOIl + line + llcOICGil, note_neutral);
+            return;
+        }
+    }
+    var action = 1;
+    for (var i = 0; i < new_trigger_actions.length; i++) {
+        ScheduleParamSet(lICDlCDl + action + liOOicDl, new_trigger_actions[i][0]);
+        ScheduleParamSet(lICDlCDl + action + llOGICDl, new_trigger_actions[i][1]);
+        ScheduleParamSet(lICDlCDl + action + licOiCGl, new_trigger_actions[i][2]);
+        action++;
+    }
+    var last_action = 10;
+    while (action <= last_action) {
+        ScheduleParamSet(lICDlCDl + action + liOOicDl, -1);
+        ScheduleParamSet(lICDlCDl + action + llOGICDl, lICGICl);
+        ScheduleParamSet(lICDlCDl + action + licOiCGl, lICGICl);
+        action++;
+    }
+    UpdatePhysicalParams(direct_update_params, direct_update_values, false);
+	
+	let trigger = getSelection()[0];
+	let keys = Object.keys(trigger.pm);
+	
+	for (let i = 0; i < keys.length; i++) {
+		if (typeof trigger.pm[keys[i]] == "string") {
+			trigger.pm[keys[i]] = trigger.pm[keys[i]].replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+		}
+	}
+	
+    return true;
+}
+
+function patchCompileTrigger() {
+	window.CompileTrigger = CompileTrigger;
+}
+
 let targetElement;
 
 document.addEventListener("mousedown", e => {
@@ -2579,6 +2681,7 @@ let ALE_start = (async function() {
     patchSpecialValue();
     UpdateTools();
     patchPercentageTool();
+	patchCompileTrigger();
 
     checkForUpdates();
 
