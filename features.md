@@ -36,6 +36,7 @@ This part includes changes to adds new things to ALE.
 - Arbitrary snappings
 - Trigger code replacement (Ctrl+H)
 - Automatic skin addition even if they are not published to game.
+- Small "script language" to act on parameter for multiple objects at once. [More detail here](/alescript.md)
 
 # Fixes
 This part includes changes that are meant to fix issues (It doesn't have to be code issue, it can be any issue, ambiguity issues, etc.)
