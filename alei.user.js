@@ -1433,7 +1433,7 @@ function isNumber(str) {
 }
 
 function isOperator(str) {
-    return "+-*/^SCA".includes(str);
+    return "+-*/%^SCA".includes(str);
 }
 
 function isGroup(str) {
@@ -1502,7 +1502,7 @@ function operatorOrder(str) {
         order = 1;
     }
 
-    if ("*/".includes(str)) {
+    if ("*/%".includes(str)) {
         order = 2;
     }
 
@@ -1607,6 +1607,10 @@ function calc(x, y, z) {
 
     if (y == "/") {
         result = x / z;
+    }
+	
+	if (y == "%") {
+        result = x % z;
     }
 
     if (y == "^") {
