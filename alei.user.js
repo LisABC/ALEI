@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      10.9
+// @version      11
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -2720,7 +2720,7 @@ function createALEISettingsMenu() {
     function registerButton(general, values, key) {
         aleiSettingButtonsMap[general] = [values, key];
     }
-    function addButton(display, identifier, callback) {
+    function addButton(display, identifier, callback, style = "") {
         aleiButtonClicks["setting_" + identifier] = callback;
 
         let button = document.createElement("input");
@@ -2729,6 +2729,7 @@ function createALEISettingsMenu() {
         button.setAttribute("value", display);
         button.setAttribute("onclick", `aleiButtonClicks['setting_${identifier}'](); ALEI_settingUpdateButtons();`);
         button.setAttribute("class", "ALEI_settingsMenuButton");
+        button.setAttribute("style", style);
 
         box.innerHTML += button.outerHTML;
     }
@@ -2746,7 +2747,19 @@ function createALEISettingsMenu() {
         writeStorage("ALEI_LogLevel", val);
         aleiSettings.logLevel = val;
     }
-    box.innerHTML += "NOTE: Settings in yellow text requires page refresh to be applied.";
+    box.innerHTML += "NOTE: Settings in yellow text requires page refresh to be applied.<br>";
+    addButton("Clear Backup", "clearMapBackups", () => {
+        let removed = [];
+        for (let key of Object.keys(localStorage)) {
+            if(!(key.slice(0, "pb2_map".length) == "pb2_map")) continue;
+            removed.push(key);
+            localStorage.removeItem(key);
+        }
+        NewNote(`ALEI: Cleared backup, removed total ${removed.length} backups.`, "#00FFFF");
+        aleiLog(DEBUG2, `Removed backup of: ${removed}`);
+    }, "width: 100px");
+    box.innerHTML += "<br>";
+
     registerButton("log", [0, 1, 2], "logLevel");
     addText("Log Level:");
     addButton("INFO", "log_0", () => logApply(0));
