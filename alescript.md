@@ -28,3 +28,7 @@ And even functions are operation, worst design choice ever, t = theta, m = multi
 t S m - Sine<br>
 t C m - Cosine<br>
 y A x - Atan2<br>
+
+y N x - This generates random number up to y, x is whether it should be whole number or float number is okay.
+y F m - Floor, m is for snapping
+y R m - Round, m is for snapping
