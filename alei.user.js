@@ -1497,19 +1497,19 @@ function removeGroupChars(str) {
 
 function operatorOrder(str) {
 	let order = 0;
-	
+
 	if ("+-".includes(str)) {
 		order = 1;
 	}
-	
+
 	if ("*/%".includes(str)) {
 		order = 2;
 	}
-	
+
 	if ("^SCANRF".includes(str)) {
 		order = 3;
 	}
-	
+
 	return order;
 }
 
@@ -1589,46 +1589,46 @@ function replaceOrders(str) {
 
 function calc(x, y, z) {
 	let result;
-	
+
 	x = Number(x);
 	z = Number(z);
-	
+
 	if (y == "+") {
 		result = x + z;
 	}
-	
+
 	if (y == "-") {
 		result = x - z;
 	}
-	
+
 	if (y == "*") {
 		result = x * z;
 	}
-	
+
 	if (y == "/") {
 		result = x / z;
 	}
-	
+
 	if (y == "%") {
 		result = x % z;
 	}
-	
+
 	if (y == "^") {
 		result = x ** z;
 	}
-	
+
 	if (y == "S") {
 		result = Math.sin(x) * z;
 	}
-	
+
 	if (y == "C") {
 		result = Math.cos(x) * z;
 	}
-	
+
 	if (y == "A") {
 		result = Math.atan2(x, z);
 	}
-	
+
 	if (y == "N") {
 		if (z) {
 			result = Math.floor(Math.random() * x);
@@ -1636,16 +1636,28 @@ function calc(x, y, z) {
 			result = Math.random() * x;
 		}
 	}
-	
+
 	if (y == "R") {
 		result = Math.round(x / z) * z;
 	}
-	
+
 	if (y == "F") {
 		result = Math.floor(x / z) * z;
 	}
-	
+
 	return result;
+}
+
+function getMaxOrder(str) {
+	let order = 0;
+
+	for (let i = 0; i < str.length; i++) {
+		if (str[i].order > order) {
+			order = str[i].order;
+		}
+	}
+
+	return order;
 }
 
 function exec(str) {
