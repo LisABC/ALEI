@@ -1897,7 +1897,7 @@ function getSelectionImage() {
     arr3.push(dis_to_y);
     arr3.push(dis_from_x);
     arr3.push(dis_from_y);
-    arr3.push(dis_from_y);
+	arr3.push(JSON.stringify(ConsoleTraceMessages));
 
     THEME = 4;
     GRID_ALPHA = 0;
@@ -1912,7 +1912,9 @@ function getSelectionImage() {
     dis_from_y = minY - 10;
     dis_to_x = minX + sw - 10;
     dis_to_y = minY + sh - 10;
-
+	
+	ConsoleTraceMessages = [];
+	
     Render();
 
     for (let i = 0; i < es.length; i++) {
@@ -1930,6 +1932,7 @@ function getSelectionImage() {
     dis_to_y = arr3[4];
     dis_from_x = arr3[5];
     dis_from_y = arr3[6];
+	ConsoleTraceMessages = JSON.parse(arr3[7]);
 
     let w = maxX - minX + 20;
     let h = maxY - minY + 20;
