@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      11.3
+// @version      11.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1845,9 +1845,9 @@ function getObjectBox(obj) {
 
 function getSelectionImage() {
     let selection = getSelection();
+    let originalES = es;
     let arr1 = [];
     let arr2 = [];
-    let arr3 = [];
     let minX = +Infinity;
     let minY = +Infinity;
     let maxX = -Infinity;
@@ -1877,27 +1877,24 @@ function getSelectionImage() {
         }
     }
 
-    for (let i = 0; i < es.length; i++) {
-        arr1.push(es[i].exists);
-        arr2.push(es[i].pm.uid);
-
-        if (!selection.includes(es[i])) {
-            es[i].exists = 0;
-        } else {
-            if (es[i].pm.uid !== undefined) {
-                es[i].pm.uid = "";
-            }
-        }
+    window.es = [];
+    for (let e of selection) {
+        es.push(e);
     }
 
-    arr3.push(THEME);
-    arr3.push(GRID_ALPHA);
-    arr3.push(SHOW_CONNECTIONS);
-    arr3.push(dis_to_x);
-    arr3.push(dis_to_y);
-    arr3.push(dis_from_x);
-    arr3.push(dis_from_y);
-    arr3.push(dis_from_y);
+    let cs = {} // CS: Current Settings, because we will change settings for rendering images
+    cs.theme = THEME;
+    cs.grid_opacity = GRID_ALPHA;
+    cs.showConnections = SHOW_CONNECTIONS;
+    //
+    cs.dtx = dis_to_x;
+    cs.dty = dis_to_y;
+    //
+    cs.dfx = dis_from_x;
+    cs.dfy = dis_from_y;
+    //
+    cs.ctm = ConsoleTraceMessages;
+    cs.zoom = zoom;
 
     THEME = 4;
     GRID_ALPHA = 0;
@@ -1913,23 +1910,21 @@ function getSelectionImage() {
     dis_to_x = minX + sw - 10;
     dis_to_y = minY + sh - 10;
 
+	ConsoleTraceMessages = [];
+
     Render();
 
-    for (let i = 0; i < es.length; i++) {
-        es[i].exists = arr1[i];
-
-        if (es[i].pm.uid !== undefined) {
-            es[i].pm.uid = arr2[i];
-        }
-    }
-
-    THEME = arr3[0];
-    GRID_ALPHA = arr3[1];
-    SHOW_CONNECTIONS = arr3[2];
-    dis_to_x = arr3[3];
-    dis_to_y = arr3[4];
-    dis_from_x = arr3[5];
-    dis_from_y = arr3[6];
+    window.es = originalES;
+    THEME = cs.theme;
+    GRID_ALPHA = cs.grid_opacity;
+    SHOW_CONNECTIONS = cs.showConnections;
+    dis_to_x = cs.dtx;
+    dis_to_y = cs.dty;
+    dis_from_x = cs.dfx;
+    dis_from_y = cs.dfy;
+	ConsoleTraceMessages = cs.ctm;
+    zoom = cs.zoom;
+    zoom_validate();
 
     let w = maxX - minX + 20;
     let h = maxY - minY + 20;
@@ -2052,16 +2047,25 @@ function updateClipboardDiv() {
 		<div id="mrbox" class="objbox" style="height: calc(100% - 32px); box-sizing: border-box;">
 	`;
 
+    let originalES = window.es;
+    window.es = [];
     for (let i = 0; i < items.length; i++) {
+        __pasteObjectClipboard(items[i]);
         html += `
 			<div class="img_option" style="width: auto;" oncontextmenu="clipboardItemAction(` + i + `)" onclick="pasteFromPermanentClipboard(` + i + `);">
-				<img src="` + items[i].url + `" style="max-width: 100px; max-height: 100px;">
+				<img src="` + getSelectionImage() + `" style="max-width: 100px; max-height: 100px;">
 				<div>` + items[i].name + `</div>
 			</div>
 		`;
     }
 
     clipboardDiv.innerHTML = html + "</div>";
+    window.es = originalES;
+}
+
+function __pasteObjectClipboard(item) {
+   sessionStorage.permanent_clipboard = item.data;
+   PasteFromClipBoard("permanent_clipboard");
 }
 
 function pasteFromPermanentClipboard(i) {
@@ -2091,7 +2095,6 @@ function copyToPermanentClipboard() {
 
             items.push({
                 name: "Selection",
-                url: getSelectionImage(),
                 data: sessionStorage.permanent_clipboard
             });
 
@@ -2102,7 +2105,8 @@ function copyToPermanentClipboard() {
             updateClipboardDiv();
         }
     } catch (err) {
-        NewNote("Can't copy objects to permanent clipboard.<br>Reason: localStorage error.", note_bad);
+        console.error(err);
+        NewNote("Can't copy objects to permanent clipboard.<br>LocalStorage error?", note_bad);
     }
 }
 
