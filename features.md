@@ -38,6 +38,7 @@ This part includes changes to adds new things to ALE.
 - Automatic skin addition even if they are not published to game.
 - Small "script language" to act on parameter for multiple objects at once. [More detail here](/alescript.md)
 - Ability to manually clear backups
+- Object clipboard. (Ctrl+P selected objects to save into clipboard, get out of focus and Ctrl+P to open object clipboard list)
 
 # Fixes
 This part includes changes that are meant to fix issues (It doesn't have to be code issue, it can be any issue, ambiguity issues, etc.)
