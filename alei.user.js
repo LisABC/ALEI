@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      11.2
+// @version      11.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1017,6 +1017,7 @@ function exportXML() {
     }
 
     if (exportSelection) {
+        if(!confirm("Only selection will be exported.")) return;
         for (let i = 0; i < es.length; i++) {
             if (es[i].selected) {
                 newstr += compi_obj(i);
@@ -1044,7 +1045,9 @@ function exportXML() {
 
     download.href = "data:text," + escape(newstr);
 
-    if (newstr) {
+    if (newstr != "") {
+        download.href = "data:text," + escape(newstr);
+
         download.click();
     } else {
         alert("Map is empty.");
@@ -1433,7 +1436,7 @@ function isNumber(str) {
 }
 
 function isOperator(str) {
-	return "+-*/%^SCANRF".includes(str);
+    return "+-*/%^SCANRF".includes(str);
 }
 
 function isGroup(str) {
@@ -1496,21 +1499,21 @@ function removeGroupChars(str) {
 }
 
 function operatorOrder(str) {
-	let order = 0;
+    let order = 0;
 
-	if ("+-".includes(str)) {
-		order = 1;
-	}
+    if ("+-".includes(str)) {
+        order = 1;
+    }
 
-	if ("*/%".includes(str)) {
-		order = 2;
-	}
+    if ("*/%".includes(str)) {
+        order = 2;
+    }
 
-	if ("^SCANRF".includes(str)) {
-		order = 3;
-	}
+    if ("^SCANRF".includes(str)) {
+        order = 3;
+    }
 
-	return order;
+    return order;
 }
 
 function createOperatorOrders(str) {
@@ -1588,76 +1591,76 @@ function replaceOrders(str) {
 }
 
 function calc(x, y, z) {
-	let result;
+    let result;
 
-	x = Number(x);
-	z = Number(z);
+    x = Number(x);
+    z = Number(z);
 
-	if (y == "+") {
-		result = x + z;
-	}
+    if (y == "+") {
+        result = x + z;
+    }
 
-	if (y == "-") {
-		result = x - z;
-	}
+    if (y == "-") {
+        result = x - z;
+    }
 
-	if (y == "*") {
-		result = x * z;
-	}
+    if (y == "*") {
+        result = x * z;
+    }
 
-	if (y == "/") {
-		result = x / z;
-	}
+    if (y == "/") {
+        result = x / z;
+    }
 
-	if (y == "%") {
-		result = x % z;
-	}
+    if (y == "%") {
+        result = x % z;
+    }
 
-	if (y == "^") {
-		result = x ** z;
-	}
+    if (y == "^") {
+        result = x ** z;
+    }
 
-	if (y == "S") {
-		result = Math.sin(x) * z;
-	}
+    if (y == "S") {
+        result = Math.sin(x) * z;
+    }
 
-	if (y == "C") {
-		result = Math.cos(x) * z;
-	}
+    if (y == "C") {
+        result = Math.cos(x) * z;
+    }
 
-	if (y == "A") {
-		result = Math.atan2(x, z);
-	}
+    if (y == "A") {
+        result = Math.atan2(x, z);
+    }
 
-	if (y == "N") {
-		if (z) {
-			result = Math.floor(Math.random() * x);
-		} else {
-			result = Math.random() * x;
-		}
-	}
+    if (y == "N") {
+        if (z) {
+            result = Math.floor(Math.random() * x);
+        } else {
+            result = Math.random() * x;
+        }
+    }
 
-	if (y == "R") {
-		result = Math.round(x / z) * z;
-	}
+    if (y == "R") {
+        result = Math.round(x / z) * z;
+    }
 
-	if (y == "F") {
-		result = Math.floor(x / z) * z;
-	}
+    if (y == "F") {
+        result = Math.floor(x / z) * z;
+    }
 
-	return result;
+    return result;
 }
 
 function getMaxOrder(str) {
-	let order = 0;
+    let order = 0;
 
-	for (let i = 0; i < str.length; i++) {
-		if (str[i].order > order) {
-			order = str[i].order;
-		}
-	}
+    for (let i = 0; i < str.length; i++) {
+        if (str[i].order > order) {
+            order = str[i].order;
+        }
+    }
 
-	return order;
+    return order;
 }
 
 function exec(str) {
@@ -1796,6 +1799,311 @@ function parse(str, vars) {
     }
 
     return Number(Number(str[0].chr).toFixed(10));
+}
+
+function getObjectBox(obj) {
+    let x = 0;
+    let y = 0;
+    let w = obj.pm.w;
+    let h = obj.pm.h;
+
+    if (!"box door region pushf bg water".includes(obj._class)) {
+        x = bo_x[obj._class];
+        y = bo_y[obj._class];
+        w = bo_w[obj._class];
+        h = bo_h[obj._class];
+    }
+
+    if ("player enemy".includes(obj._class)) {
+        x = -15;
+        y = -81;
+        w = 30;
+        h = 80;
+    }
+
+    if (obj._class == "vehicle") {
+        x = bo_x["vehicle_" + obj.pm.model];
+        y = bo_y["vehicle_" + obj.pm.model];
+        w = bo_w["vehicle_" + obj.pm.model];
+        h = bo_h["vehicle_" + obj.pm.model];
+
+        if (obj.pm.model == "veh_hh") {
+            x = lo_x["alei_veh_hh"];
+            y = lo_y["alei_veh_hh"];
+            w = lo_w["alei_veh_hh"];
+            h = lo_h["alei_veh_hh"];
+        }
+    }
+
+    return {
+        x: x,
+        y: y,
+        w: w,
+        h: h
+    }
+}
+
+function getSelectionImage() {
+    let selection = getSelection();
+    let arr1 = [];
+    let arr2 = [];
+    let arr3 = [];
+    let minX = +Infinity;
+    let minY = +Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (let i = 0; i < selection.length; i++) {
+        let box = getObjectBox(selection[i]);
+        let x = selection[i].pm.x + box.x;
+        let y = selection[i].pm.y + box.y;
+        let w = box.w;
+        let h = box.h;
+
+        if (x < minX) {
+            minX = x;
+        }
+
+        if (x + w > maxX) {
+            maxX = x + w;
+        }
+
+        if (y < minY) {
+            minY = y;
+        }
+
+        if (y + h > maxY) {
+            maxY = y + h;
+        }
+    }
+
+    for (let i = 0; i < es.length; i++) {
+        arr1.push(es[i].exists);
+        arr2.push(es[i].pm.uid);
+
+        if (!selection.includes(es[i])) {
+            es[i].exists = 0;
+        } else {
+            if (es[i].pm.uid !== undefined) {
+                es[i].pm.uid = "";
+            }
+        }
+    }
+
+    arr3.push(THEME);
+    arr3.push(GRID_ALPHA);
+    arr3.push(SHOW_CONNECTIONS);
+    arr3.push(dis_to_x);
+    arr3.push(dis_to_y);
+    arr3.push(dis_from_x);
+    arr3.push(dis_from_y);
+    arr3.push(dis_from_y);
+
+    THEME = 4;
+    GRID_ALPHA = 0;
+    SHOW_CONNECTIONS = 0;
+    zoom = 1;
+    zoom_validate();
+
+    let sw = dis_to_x - dis_from_x;
+    let sh = dis_to_y - dis_from_y;
+
+    dis_from_x = minX - 10;
+    dis_from_y = minY - 10;
+    dis_to_x = minX + sw - 10;
+    dis_to_y = minY + sh - 10;
+
+    Render();
+
+    for (let i = 0; i < es.length; i++) {
+        es[i].exists = arr1[i];
+
+        if (es[i].pm.uid !== undefined) {
+            es[i].pm.uid = arr2[i];
+        }
+    }
+
+    THEME = arr3[0];
+    GRID_ALPHA = arr3[1];
+    SHOW_CONNECTIONS = arr3[2];
+    dis_to_x = arr3[3];
+    dis_to_y = arr3[4];
+    dis_from_x = arr3[5];
+    dis_from_y = arr3[6];
+
+    let w = maxX - minX + 20;
+    let h = maxY - minY + 20;
+
+    let data = ctx.getImageData(0, 0, w, h);
+
+    let canvas = document.createElement("canvas");
+    let ctx2 = canvas.getContext("2d");
+
+    let canvas2 = document.createElement("canvas");
+    let ctx3 = canvas2.getContext("2d");
+
+    canvas.width = w;
+    canvas.height = h;
+
+    ctx2.beginPath();
+    ctx2.putImageData(data, 0, 0);
+    ctx2.closePath();
+
+    let prevW = w;
+    let prevH = h;
+
+    if (w > 100 || h > 100) {
+        let divide = w / h;
+
+        if (divide >= 1) {
+            w = 100;
+            h = w / divide;
+        } else {
+            h = 100;
+            w = h * divide;
+        }
+    }
+
+    need_redraw = 1;
+
+    canvas2.width = w;
+    canvas2.height = h;
+
+    ctx3.beginPath();
+    ctx3.scale(w / prevW, h / prevH);
+    ctx3.drawImage(canvas, 0, 0);
+    ctx3.closePath();
+
+    let result = canvas2.toDataURL();
+
+    canvas.remove();
+    canvas = undefined;
+
+    return result;
+}
+
+function createClipboardDiv() {
+    let clipboardDiv = document.createElement("div");
+    let mrdimlights = document.getElementById("mrdimlights");
+
+    clipboardDiv.id = "clipboardDiv";
+    clipboardDiv.className = "mrpopup";
+    clipboardDiv.style = "width: calc(100% - 280px); height: 100%; margin: 0px; padding: 0px; top: 50%; transform: translate(0px, -50%); display: none;";
+
+    clipboardDiv.addEventListener("contextmenu", e => {
+        e.preventDefault();
+    });
+
+    mrdimlights.addEventListener("click", e => {
+        clipboardDiv.style.display = "none";
+    });
+
+    document.body.append(clipboardDiv);
+}
+
+function clipboardItemAction(i) {
+    let items = JSON.parse(localStorage.clipboardItems);
+    let action = confirm("Rename (OK) or delete (Cancel) ?");
+
+    if (action) {
+        let name = prompt("Enter name:", items[i].name);
+
+        if (name) {
+            items[i].name = name;
+
+            localStorage.clipboardItems = JSON.stringify(items);
+
+            updateClipboardDiv();
+        }
+    } else {
+        if (confirm("Are you sure you want to delete?")) {
+            items.splice(i, 1);
+
+            localStorage.clipboardItems = JSON.stringify(items);
+
+            updateClipboardDiv();
+        }
+    }
+}
+
+function registerClipboardItemAction() {
+    window.clipboardItemAction = clipboardItemAction;
+    aleiLog(DEBUG, "Registered Clipboard Item Action");
+}
+
+function updateClipboardDiv() {
+    if (!localStorage.clipboardItems) {
+        localStorage.clipboardItems = '[{"name": "Sample Item", "url": ""}]';
+    }
+
+    let items = JSON.parse(localStorage.clipboardItems);
+    let clipboardDiv = document.getElementById("clipboardDiv");
+    let mrdimlights = document.getElementById("mrdimlights");
+
+    clipboardDiv.style.display = "block";
+    mrdimlights.style.display = "block";
+
+    let html = `
+		<div id="mrtitle">
+			<span>Object clipboard</span>
+			<closebox onclick="document.getElementById('clipboardDiv').style.display = 'none'; document.getElementById('mrdimlights').style.display = 'none';">x</closebox>
+		</div>
+
+		<div id="mrbox" style="height: calc(100% - 32px); box-sizing: border-box;">
+	`;
+
+    for (let i = 0; i < items.length; i++) {
+        html += `
+			<div class="img_option" style="width: auto;" oncontextmenu="clipboardItemAction(` + i + `)" onclick="pasteFromPermanentClipboard(` + i + `);">
+				<img src="` + items[i].url + `" style="max-width: 100px; max-height: 100px;">
+				<div>` + items[i].name + `</div>
+			</div>
+		`;
+    }
+
+    clipboardDiv.innerHTML = html + "</div>";
+}
+
+function pasteFromPermanentClipboard(i) {
+    let items = JSON.parse(localStorage.clipboardItems);
+
+    sessionStorage.permanent_clipboard = items[i].data;
+
+    PasteFromClipBoard("permanent_clipboard");
+
+    let clipboardDiv = document.getElementById("clipboardDiv");
+    let mrdimlights = document.getElementById("mrdimlights");
+
+    clipboardDiv.style.display = "none";
+    mrdimlights.style.display = "none";
+
+    NewNote("Objects pasted from permanent clipboard.", note_passive);
+}
+
+function copyToPermanentClipboard() {
+    try {
+        let selection = getSelection();
+
+        if (selection.length != 0) {
+            CopyToClipBoard("permanent_clipboard");
+
+            let items = JSON.parse(localStorage.clipboardItems);
+
+            items.push({
+                name: "Selection",
+                url: getSelectionImage(),
+                data: sessionStorage.permanent_clipboard
+            });
+
+            localStorage.clipboardItems = JSON.stringify(items);
+
+            NewNote("Objects copied to permanent clipboard.", note_passive);
+        } else {
+            updateClipboardDiv();
+        }
+    } catch (err) {
+        NewNote("Can't copy objects to permanent clipboard.<br>Reason: localStorage error.", note_bad);
+    }
 }
 
 let targetElement;
@@ -1962,6 +2270,12 @@ document.addEventListener("keydown", e => {
                 targetElement.value = parsed;
             }
         }
+    }
+
+    if (e.ctrlKey && e.code == "KeyP") {
+        e.preventDefault();
+
+        copyToPermanentClipboard();
     }
 });
 
@@ -3042,6 +3356,10 @@ function patchCompileTrigger() {
     aleiLog(DEBUG, "Patched CompileTrigger");
 }
 
+function addPasteFromPermanentClipboard() {
+    window.pasteFromPermanentClipboard = pasteFromPermanentClipboard;
+}
+
 let ALE_start = (async function() {
     'use strict';
     VAL_TABLE = special_values_table;
@@ -3089,6 +3407,9 @@ let ALE_start = (async function() {
     UpdateTools();
     patchPercentageTool();
     patchCompileTrigger();
+    createClipboardDiv();
+    addPasteFromPermanentClipboard();
+    registerClipboardItemAction();
 
     checkForUpdates();
 
@@ -3097,3 +3418,4 @@ let ALE_start = (async function() {
 });
 
 document.addEventListener("DOMContentLoaded", () => ALE_start());
+
