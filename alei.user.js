@@ -2033,7 +2033,7 @@ function registerClipboardItemAction() {
 
 function updateClipboardDiv() {
     if (!localStorage.clipboardItems) {
-        localStorage.clipboardItems = '[{"name": "Sample Item", "url": ""}]';
+        localStorage.clipboardItems = "[]";
     }
 
     let items = JSON.parse(localStorage.clipboardItems);
@@ -2049,7 +2049,7 @@ function updateClipboardDiv() {
 			<closebox onclick="document.getElementById('clipboardDiv').style.display = 'none'; document.getElementById('mrdimlights').style.display = 'none';">x</closebox>
 		</div>
 
-		<div id="mrbox" style="height: calc(100% - 32px); box-sizing: border-box;">
+		<div id="mrbox" class="objbox" style="height: calc(100% - 32px); box-sizing: border-box;">
 	`;
 
     for (let i = 0; i < items.length; i++) {
@@ -3418,4 +3418,3 @@ let ALE_start = (async function() {
 });
 
 document.addEventListener("DOMContentLoaded", () => ALE_start());
-
