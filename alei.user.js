@@ -2116,6 +2116,351 @@ document.addEventListener("mousedown", e => {
     targetElement = e.target;
 });
 
+let selectedTriggerActions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+let triggerActionsClipboard = "";
+
+function triggerActionClick(i) {
+	let elems = document.getElementsByClassName("p_i");
+	let elem1 = elems[i + 0].childNodes[0];
+	let elem2 = elems[i + 1].childNodes[0];
+	let elem3 = elems[i + 2].childNodes[0];
+	
+	if (elem1.style.backgroundColor != "rgb(17, 68, 17)") {
+		elem1.style.backgroundColor = "#141";
+		elem2.style.backgroundColor = "#141";
+		elem3.style.backgroundColor = "#141";
+		
+		selectedTriggerActions[Math.floor((i - 5) / 3)] = 1;
+	} else {
+		elem1.style.backgroundColor = "";
+		elem2.style.backgroundColor = "";
+		elem3.style.backgroundColor = "";
+		
+		selectedTriggerActions[Math.floor((i - 5) / 3)] = 0;
+	}
+}
+
+function triggerActionHover(i) {
+	let elems = document.getElementsByClassName("p_i");
+	let elem1 = elems[i + 0].childNodes[0];
+	let elem2 = elems[i + 1].childNodes[0];
+	let elem3 = elems[i + 2].childNodes[0];
+	
+	if (elem1.style.backgroundColor != "rgb(17, 68, 17)") {
+		elem1.style.backgroundColor = "#121";
+		elem2.style.backgroundColor = "#121";
+		elem3.style.backgroundColor = "#121";
+	}
+	
+}
+
+function triggerActionMouseOut(i) {
+	let elems = document.getElementsByClassName("p_i");
+	let elem1 = elems[i + 0].childNodes[0];
+	let elem2 = elems[i + 1].childNodes[0];
+	let elem3 = elems[i + 2].childNodes[0];
+	
+	if (elem1.style.backgroundColor != "rgb(17, 68, 17)") {
+		elem1.style.backgroundColor = "";
+		elem2.style.backgroundColor = "";
+		elem3.style.backgroundColor = "";
+	}
+}
+
+function updateSelectedTriggerActions() {
+	let elems = document.getElementsByClassName("p_i");
+	
+	for (let i = 5; i < elems.length; i += 3) {
+		let elem1 = elems[i + 0].childNodes[0];
+		let elem2 = elems[i + 1].childNodes[0];
+		let elem3 = elems[i + 2].childNodes[0];
+		
+		if (selectedTriggerActions[Math.floor((i - 5) / 3)]) {
+			elem1.style.backgroundColor = "#141";
+			elem2.style.backgroundColor = "#141";
+			elem3.style.backgroundColor = "#141";
+		} else {
+			elem1.style.backgroundColor = "";
+			elem2.style.backgroundColor = "";
+			elem3.style.backgroundColor = "";
+		}
+	}
+}
+
+function addEventListeners() {
+	let elems = document.getElementsByClassName("p_i");
+	
+	for (let i = 5; i < elems.length; i += 3) {
+		elems[i + 0].childNodes[0].onclick = function() { triggerActionClick(i); }
+		elems[i + 1].childNodes[0].onclick = function() { triggerActionClick(i); }
+		elems[i + 2].childNodes[0].onclick = function() { triggerActionClick(i); }
+		
+		elems[i + 0].childNodes[0].onmouseover = function() { triggerActionHover(i); }
+		elems[i + 1].childNodes[0].onmouseover = function() { triggerActionHover(i); }
+		elems[i + 2].childNodes[0].onmouseover = function() { triggerActionHover(i); }
+		
+		elems[i + 0].childNodes[0].onmouseout = function() { triggerActionMouseOut(i); }
+		elems[i + 1].childNodes[0].onmouseout = function() { triggerActionMouseOut(i); }
+		elems[i + 2].childNodes[0].onmouseout = function() { triggerActionMouseOut(i); }
+	}
+}
+
+function triggerActionsCopy() {
+	let selection = getSelection();
+	
+	triggerActionsClipboard = "";
+	
+	if (selection.length == 1 && !edit_triggers_as_text) {
+		if (selection[0]._class == "trigger") {
+			edit_triggers_as_text = 1;
+			
+			UpdateGUIParams();
+			
+			let textarea = document.getElementById("opcode_field");
+			let str = textarea.value.split("\n");
+			
+			while (str.length < 14) {
+				str.push("");
+			}
+			
+			for (let i = 4; i < str.length; i++) {
+				if (selectedTriggerActions[i - 4]) {
+					triggerActionsClipboard += str[i];
+					triggerActionsClipboard += "\n";
+				}
+			}
+			
+			edit_triggers_as_text = 0;
+			
+			UpdateGUIParams();
+		}
+	}
+}
+
+function triggerActionsPaste() {
+	let selection = getSelection();
+	let cantPaste = 0;
+	
+	if (selection.length == 1 && !edit_triggers_as_text) {
+		if (selection[0]._class == "trigger") {
+			edit_triggers_as_text = 1;
+			
+			UpdateGUIParams();
+			
+			let textarea = document.getElementById("opcode_field");
+			let str = textarea.value.split("\n");
+			
+			while (str.length < 14) {
+				str.push("");
+			}
+			
+			if (selectedTriggerActions.indexOf(1) == -1) {
+				str[str.length - 1] = str[str.length - 1] + "\n" + triggerActionsClipboard;
+			} else if (selectedTriggerActions.indexOf(1) == selectedTriggerActions.lastIndexOf(1)) {
+				str[selectedTriggerActions.indexOf(1) + 4] = triggerActionsClipboard + str[selectedTriggerActions.indexOf(1) + 4];
+			} else {
+				cantPaste = 1;
+			}
+			
+			for (let i = 4; i < str.length; i++) {
+				if (str[i] == "") {
+					str.splice(i, 1);
+					
+					i--;
+				}
+			}
+			
+			textarea.value = str.join("\n");
+			
+			CompileTrigger();
+			
+			edit_triggers_as_text = 0;
+			
+			UpdateGUIParams();
+			
+			selectedTriggerActions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+			
+			updateSelectedTriggerActions();
+			
+			if (cantPaste) {
+				NewNote("Can't paste trigger action(s) because more than one trigger action is selected.", note_neutral);
+			}
+		}
+	}
+}
+
+function triggerActionsDelete() {
+	let selection = getSelection();
+	
+	if (selection.length == 1 && !edit_triggers_as_text) {
+		if (selection[0]._class == "trigger") {
+			edit_triggers_as_text = 1;
+			
+			UpdateGUIParams();
+			
+			let textarea = document.getElementById("opcode_field");
+			let str = textarea.value.split("\n");
+			
+			while (str.length < 14) {
+				str.push("");
+			}
+			
+			for (let i = 4; i < str.length; i++) {
+				if (selectedTriggerActions[i - 4]) {
+					str[i] = "";
+				}
+			}
+			
+			for (let i = 4; i < str.length; i++) {
+				if (str[i] == "") {
+					str.splice(i, 1);
+					
+					i--;
+				}
+			}
+			
+			textarea.value = str.join("\n");
+			
+			CompileTrigger();
+			
+			edit_triggers_as_text = 0;
+			
+			UpdateGUIParams();
+			
+			selectedTriggerActions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+			
+			updateSelectedTriggerActions();
+		}
+	}
+}
+
+function triggerActionsReverse() {
+	let selection = getSelection();
+	
+	if (selection.length == 1 && !edit_triggers_as_text) {
+		if (selection[0]._class == "trigger") {
+			edit_triggers_as_text = 1;
+			
+			UpdateGUIParams();
+			
+			let textarea = document.getElementById("opcode_field");
+			let str = textarea.value.split("\n");
+			
+			while (str.length < 14) {
+				str.push("");
+			}
+			
+			let arrStr = [];
+			let arrIndex = [];
+			
+			for (let i = 4; i < str.length; i++) {
+				if (selectedTriggerActions[i - 4]) {
+					arrStr.push(str[i]);
+					arrIndex.push(i);
+				}
+			}
+			
+			arrStr.reverse();
+			
+			for (let i = 0; i < arrStr.length; i++) {
+				let part = arrStr[i];
+				let index = arrIndex[i];
+				
+				str[index] = part;
+			}
+			
+			for (let i = 4; i < str.length; i++) {
+				if (str[i] == "") {
+					str.splice(i, 1);
+					
+					i--;
+				}
+			}
+			
+			textarea.value = str.join("\n");
+			
+			CompileTrigger();
+			
+			edit_triggers_as_text = 0;
+			
+			UpdateGUIParams();
+		}
+	}
+}
+
+function DO_UNDO() {
+	try {
+		if (ActionCurrent < ActionArray.length) {
+			eval(ActionArray[ActionCurrent].undo);
+			ActionCurrent++;
+			history_runer_timer = 1;
+			need_redraw = true;
+			need_GUIParams_update = true;
+			NewNote(llOOIOOil, note_passive);
+		} else
+			NewNote(lIcOicOil, note_passive);
+	} catch (err) {
+		NewNote("Can't undo action.", note_bad);
+	}
+}
+
+function DO_REDO() {
+	try {
+		if (ActionCurrent > 0) {
+			ActionCurrent--;
+			eval(ActionArray[ActionCurrent].redo);
+			history_runer_timer = 1;
+			need_redraw = true;
+			need_GUIParams_update = true;
+			NewNote(licGiOGIl, note_passive);
+		} else
+			NewNote(lIOGIcDll, note_passive);
+	} catch (err) {
+		NewNote("Can't redo action.", note_bad);
+	}
+}
+
+function patchFunctions() {
+	let oldFunction1 = UpdateGUIParams;
+	let oldFunction2 = CopyToClipBoard;
+	let oldFunction3 = PasteFromClipBoard;
+	let oldFunction4 = DeleteSelection;
+	
+	window.UpdateGUIParams = function() {
+		oldFunction1();
+		
+		let selection = getSelection();
+		
+		if (!edit_triggers_as_text && selection.length == 1 && selection[0]._class == "trigger") {
+			addEventListeners();
+			updateSelectedTriggerActions();
+		}
+	}
+	
+	window.CopyToClipBoard = function(param) {
+		if (canvas_focus) {
+			oldFunction2(param);
+		}
+	}
+	
+	window.PasteFromClipBoard = function(param) {
+		if (canvas_focus) {
+			oldFunction3(param);
+		}
+	}
+	
+	window.DeleteSelection = function() {
+		if (canvas_focus) {
+			oldFunction4();
+		}
+	}
+}
+
+function patchUndoRedo() {
+	window.DO_UNDO = DO_UNDO;
+	window.DO_REDO = DO_REDO;
+}
+
 document.addEventListener("keydown", e => {
     if (e.ctrlKey && e.code == "KeyS") {
         e.preventDefault();
@@ -2281,6 +2626,36 @@ document.addEventListener("keydown", e => {
 
         copyToPermanentClipboard();
     }
+	
+	if (e.ctrlKey && e.code == "KeyC" && !canvas_focus && targetElement != "[object HTMLInputElement]" && !targetElement.id.includes("pm_actions") && targetElement != "[object HTMLUnknownElement]") {
+		triggerActionsCopy();
+	}
+	
+	if (e.ctrlKey && e.code == "KeyV" && !canvas_focus && targetElement != "[object HTMLInputElement]" && !targetElement.id.includes("pm_actions") && targetElement != "[object HTMLUnknownElement]") {
+		triggerActionsPaste();
+	}
+	
+	if ((e.code == "Backspace" || e.code == "Delete") && !canvas_focus && targetElement != "[object HTMLInputElement]" && !targetElement.id.includes("pm_actions") && targetElement != "[object HTMLUnknownElement]") {
+		triggerActionsDelete();
+	}
+	
+	if (e.ctrlKey && e.code == "KeyR" && !canvas_focus) {
+		e.preventDefault();
+		
+		triggerActionsReverse();
+	}
+	
+	if (e.code == "KeyE" && !canvas_focus && targetElement != "[object HTMLInputElement]" && !targetElement.id.includes("pm_actions") && targetElement != "[object HTMLUnknownElement]") {
+		selectedTriggerActions = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+		
+		updateSelectedTriggerActions();
+	}
+	
+	if (e.code == "KeyT" && !canvas_focus && targetElement != "[object HTMLInputElement]" && !targetElement.id.includes("pm_actions") && targetElement != "[object HTMLUnknownElement]") {
+		selectedTriggerActions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+		
+		updateSelectedTriggerActions();
+	}
 });
 
 function doTooltip() {
@@ -3419,6 +3794,9 @@ let ALE_start = (async function() {
 
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, `Welcome! TamperMonkey Version: ${GM_info.version} ALEI Version: ${GM_info.script.version}`);
+	
+	patchFunctions();
+	patchUndoRedo();
 });
 
 document.addEventListener("DOMContentLoaded", () => ALE_start());
