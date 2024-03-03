@@ -2306,6 +2306,14 @@ document.addEventListener("keydown", e => {
 
         copyToPermanentClipboard();
     }
+	
+	if (e.ctrlKey && e.code == "KeyE") {
+		e.preventDefault();
+		
+		if (textEditorLoaded) {
+			openTextEditor();
+		}
+	}
 });
 
 function doTooltip() {
@@ -3712,6 +3720,135 @@ function patchDrawGrid() {
         }
     }
     aleiLog(DEBUG, "Patched LG");
+}
+
+let textEditorWindow = {
+	closed: 1
+}
+
+let textEditorHTML = "";
+let textEditorLoaded = 0;
+
+function openTextEditor() {
+	if (!textEditorWindow.closed) {
+		textEditorWindow.focus();
+		
+		return;
+	}
+	
+	textEditorWindow = window.open("about:blank");
+	
+	textEditorWindow.document.write(textEditorHTML);
+	
+	let textarea = textEditorWindow.document.getElementById("textarea");
+	let button = textEditorWindow.document.getElementById("button");
+	
+	textEditorWindow.onfocus = function() {
+		textarea.value = mapToText();
+	}
+	
+	textarea.addEventListener("keydown", e => {
+		if (e.code == "Tab") {
+			e.preventDefault();
+			
+			if (textarea.selectionStart == textarea.selectionEnd) {
+				let str = textarea.value;
+				let i = textarea.selectionStart;
+				
+				let part1 = str.slice(0, i);
+				let part2 = str.slice(i);
+				
+				let newstr = part1 + "\t" + part2;
+				
+				textarea.value = newstr;
+				
+				textarea.selectionStart = i + 1;
+				textarea.selectionEnd = i + 1;
+			}
+		}
+	});
+	
+	button.onclick = function() {
+		textToMap(textarea.value);
+		
+		need_redraw = 1;
+		need_GUIParams_update = 1;
+	}
+}
+
+function objectToJSON(obj) {
+	let str = '{\n\t"_class": "' + obj._class + '",\n\t\n\t"pm": {\n\t\t';
+	
+	let keys = Object.keys(obj.pm);
+	
+	for (let i = 0; i < keys.length; i++) {
+		let name = keys[i];
+		let value = obj.pm[keys[i]];
+		
+		if (typeof value == "string") {
+			if (i != keys.length - 1) {
+				if (name.includes("_type")) {
+					str += "\n\t\t";
+				}
+				
+				str = str + '"' + name + '": "' + value + '",\n\t\t';
+			} else {
+				str = str + '"' + name + '": "' + value + '"\n\t\t';
+			}
+		} else {
+			if (i != keys.length - 1) {
+				if (name.includes("_type")) {
+					str += "\n\t\t";
+				}
+				
+				str = str + '"' + name + '": ' + value + ",\n\t\t";
+			} else {
+				str = str + '"' + name + '": ' + value + "\n\t\t";
+			}
+		}
+	}
+	
+	return str.slice(0, -1) + "}\n}";
+}
+
+function mapToText() {
+	let objects = [];
+	let str = "[\n\n\n";
+	
+	for (let i = 0; i < es.length; i++) {
+		if (es[i].exists) {
+			objects.push(es[i]);
+		}
+	}
+	
+	for (let i = 0; i < objects.length; i++) {
+		if (i != objects.length - 1) {
+			str = str + objectToJSON(objects[i]) + ",\n\n";
+		} else {
+			str = str + objectToJSON(objects[i]) + "\n\n";
+		}
+	}
+	
+	return str + "\n]";
+}
+
+function textToMap(str) {
+	try {
+		let arr = JSON.parse(str.replaceAll("\n", "").replaceAll("\t", ""));
+		
+		es = [];
+		
+		for (let i = 0; i < arr.length; i++) {
+			let obj;
+			
+			obj = new E(arr[i]._class);
+			obj.pm = arr[i].pm;
+			
+			es.push(obj);
+		}
+	} catch (err) {
+		alert("Invalid JSON.");
+	}
 }
 
 
