@@ -2136,9 +2136,20 @@ document.addEventListener("keydown", e => {
         }
     }
 
-    if (e.code == "KeyR" && canvas_focus) {
-        rotateObjects();
+    if (e.code == "KeyR" && targetElement != "[object HTMLInputElement]" && targetElement.id != "opcode_field") {
+		if (!isOnlyTriggerSelected()) {
+			rotateObjects();
+		}
     }
+	
+	if (e.ctrlKey && e.code == "KeyR") {
+		if (isOnlyTriggerSelected() && !isNothingSelected()) {
+			e.preventDefault();
+			
+			reverseTriggerActions();
+			unselectTriggerActions();
+		}
+	}
 
     if ((e.code == "Minus" || e.code == "NumpadSubtract") && e.ctrlKey && canvas_focus) {
         e.preventDefault();
@@ -3057,7 +3068,7 @@ function createALEISettingsMenu() {
         button.setAttribute("type", "button");
         button.setAttribute("id", "ALEI_" + identifier);
         button.setAttribute("value", display);
-        button.setAttribute("onclick", `aleiButtonClicks['setting_${identifier}'](); ALEI_settingUpdateButtons();`);
+        button.setAttribute("onclick", `aleiButtonClicks['setting_${identifier}'](); ALEI_settingUpdateButtons(); triggerActionsPreventError();`);
         button.setAttribute("class", "ALEI_settingsMenuButton");
         button.setAttribute("style", style);
 
@@ -3364,6 +3375,310 @@ function addPasteFromPermanentClipboard() {
     window.pasteFromPermanentClipboard = pasteFromPermanentClipboard;
 }
 
+let selectedTriggerActions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+let hoveredTriggerAction = -1;
+let triggerActionsClipboard = [];
+
+function getTriggerActionElements() {
+	let arr = [];
+	let elems = document.getElementsByClassName("p_i");
+	let i = 5;
+	
+	if (aleiSettings.showIDs) {
+		i = 6;
+	}
+	
+	for (; i < elems.length; i++) {
+		arr.push(elems[i].childNodes[0]);
+	}
+	
+	return arr;
+}
+
+function addEventListeners() {
+	let elems = getTriggerActionElements();
+	
+	for (let i = 0; i < elems.length; i++) {
+		let elem = elems[i];
+		
+		elem.onmousedown = function() {
+			selectedTriggerActions[Math.floor(i / 3)] ^= 1;
+			updateTriggerActionElements();
+		}
+		
+		elem.onmouseenter = function() {
+			hoveredTriggerAction = Math.floor(i / 3);
+			updateTriggerActionElements();
+		}
+		
+		elem.onmouseleave = function() {
+			hoveredTriggerAction = -1;
+			updateTriggerActionElements();
+		}
+	}
+}
+
+function updateTriggerActionElements() {
+	let elems = getTriggerActionElements();
+	
+	for (let i = 0; i < 10; i++) {
+		let color = "";
+		
+		if (selectedTriggerActions[i]) {
+			if (THEME != 0) {
+				color = "#141";
+			} else {
+				color = "#234";
+			}
+		}
+		
+		elems[i * 3 + 0].style.backgroundColor = color;
+		elems[i * 3 + 1].style.backgroundColor = color;
+		elems[i * 3 + 2].style.backgroundColor = color;
+	}
+	
+	if (hoveredTriggerAction != -1) {
+		if (!selectedTriggerActions[hoveredTriggerAction]) {
+			let color = "#121";
+			
+			if (THEME == 0) {
+				color = "#345";
+			}
+			
+			elems[hoveredTriggerAction * 3 + 0].style.backgroundColor = color;
+			elems[hoveredTriggerAction * 3 + 1].style.backgroundColor = color;
+			elems[hoveredTriggerAction * 3 + 2].style.backgroundColor = color;
+		}
+	}
+}
+
+function isOnlyTriggerSelected() {
+	let result = 0;
+	let selection = getSelection();
+	
+	if (selection.length == 1 && selection[0]._class == "trigger") {
+		result = 1;
+	}
+	
+	return result;
+}
+
+function getTriggerActions() {
+	edit_triggers_as_text = 1;
+	
+	UpdateGUIParams();
+	
+	let textarea = document.getElementById("opcode_field");
+	let arr = textarea.value.split("\n").slice(4);
+	
+	while (arr.length < 10) {
+		arr.push("");
+	}
+	
+	edit_triggers_as_text = 0;
+	UpdateGUIParams();
+	
+	return arr;
+}
+
+function copyTriggerActions() {
+	let actions = getTriggerActions();
+	
+	triggerActionsClipboard = [];
+	
+	for (let i = 0; i < 10; i++) {
+		if (selectedTriggerActions[i]) {
+			triggerActionsClipboard.push(actions[i]);
+		}
+	}
+}
+
+function isNothingSelected() {
+	return !selectedTriggerActions.includes(1);
+}
+
+function isOnlyOneTriggerActionSelected() {
+	return selectedTriggerActions.indexOf(1) == selectedTriggerActions.lastIndexOf(1) && !isNothingSelected();
+}
+
+function getSelectedTriggerAction() {
+	return selectedTriggerActions.indexOf(1);
+}
+
+function getTriggerInfo() {
+	edit_triggers_as_text = 1;
+	UpdateGUIParams();
+	
+	let textarea = document.getElementById("opcode_field");
+	let arr = textarea.value.split("\n").slice(0, 3);
+	
+	return arr;
+}
+
+function pasteTriggerActions() {
+	let actions = getTriggerActions();
+	let index = getSelectedTriggerAction();
+	let clipboard = triggerActionsClipboard.join("\n");
+	let info = getTriggerInfo();
+	
+	edit_triggers_as_text = 1;
+	UpdateGUIParams();
+	
+	if (isNothingSelected()) {
+		index = actions.length - 1;
+		actions[index] = actions[index] + "\n" + clipboard;
+	}
+	
+	if (isOnlyOneTriggerActionSelected()) {
+		actions[index] = clipboard + "\n" + actions[index];
+	}
+	
+	let textarea = document.getElementById("opcode_field");
+	
+	textarea.value = info.concat(actions).join("\n");
+	
+	CompileTrigger();
+	
+	edit_triggers_as_text = 0;
+	UpdateGUIParams();
+}
+
+function deleteTriggerActions() {
+	let actions = getTriggerActions();
+	let info = getTriggerInfo();
+	
+	edit_triggers_as_text = 1;
+	UpdateGUIParams();
+	
+	for (let i = 0; i < 10; i++) {
+		if (selectedTriggerActions[i]) {
+			actions[i] = "";
+		}
+	}
+	
+	let textarea = document.getElementById("opcode_field");
+	
+	textarea.value = info.concat(actions).join("\n");
+	
+	CompileTrigger();
+	
+	edit_triggers_as_text = 0;
+	UpdateGUIParams();
+}
+
+function reverseTriggerActions() {
+	let actions1 = getTriggerActions();
+	let actions2 = [];
+	let indexes = [];
+	let info = getTriggerInfo();
+	
+	edit_triggers_as_text = 1;
+	UpdateGUIParams();
+	
+	for (let i = 0; i < 10; i++) {
+		if (selectedTriggerActions[i]) {
+			actions2.push(actions1[i]);
+			indexes.push(i);
+		}
+	}
+	
+	indexes.reverse();
+	
+	for (let i = 0; i < actions2.length; i++) {
+		let index = indexes[i];
+		let action = actions2[i];
+		
+		actions1[index] = action;
+	}
+	
+	let textarea = document.getElementById("opcode_field");
+	
+	textarea.value = info.concat(actions1).join("\n");
+	
+	CompileTrigger();
+	
+	edit_triggers_as_text = 0;
+	UpdateGUIParams();
+}
+
+function unselectTriggerActions() {
+	selectedTriggerActions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	hoveredTriggerAction = -1;
+	updateTriggerActionElements();
+}
+
+function triggerActionsPreventError() {
+	selectedTriggerActions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	hoveredTriggerAction = -1;
+	UpdateGUIParams();
+}
+
+function patchFunctions() {
+	let old_CopyToClipBoard = CopyToClipBoard;
+	let old_PasteFromClipBoard = PasteFromClipBoard;
+	let old_DeleteSelection = DeleteSelection;
+	let old_UpdateGUIParams = UpdateGUIParams;
+	let old_DO_UNDO = DO_UNDO;
+	let old_DO_REDO = DO_REDO;
+
+	window.CopyToClipBoard = function(param) {
+		if (isNothingSelected() || !isOnlyTriggerSelected()) {
+			old_CopyToClipBoard(param);
+		} else {
+			copyTriggerActions();
+			unselectTriggerActions();
+		}
+	}
+
+	window.PasteFromClipBoard = function(param) {
+		if (!isOnlyTriggerSelected()) {
+			old_PasteFromClipBoard(param);
+		} else {
+			pasteTriggerActions();
+			unselectTriggerActions();
+		}
+	}
+
+	window.DeleteSelection = function() {
+		if (isNothingSelected() || !isOnlyTriggerSelected()) {
+			old_DeleteSelection();
+		} else {
+			deleteTriggerActions();
+			unselectTriggerActions();
+		}
+	}
+
+	window.UpdateGUIParams = function() {
+		old_UpdateGUIParams();
+		
+		if (!isOnlyTriggerSelected()) {
+			selectedTriggerActions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+			hoveredTriggerAction = -1;
+		} else if (!edit_triggers_as_text) {
+			addEventListeners();
+			updateTriggerActionElements();
+		}
+	}
+	
+	window.DO_UNDO = function() {
+		try {
+			old_DO_UNDO();
+		} catch (err) {
+			NewNote("Can't undo action.", note_bad);
+		}
+	}
+	
+	window.DO_REDO = function() {
+		try {
+			old_DO_REDO();
+		} catch (err) {
+			NewNote("Can't redo action.", note_bad);
+		}
+	}
+	
+	window.triggerActionsPreventError = triggerActionsPreventError;
+}
+
 let ALE_start = (async function() {
     'use strict';
     VAL_TABLE = special_values_table;
@@ -3414,6 +3729,7 @@ let ALE_start = (async function() {
     createClipboardDiv();
     addPasteFromPermanentClipboard();
     registerClipboardItemAction();
+	patchFunctions();
 
     checkForUpdates();
 
