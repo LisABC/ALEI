@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<title>Text Editor</title>
+		
+		<style>
+			* {
+				margin: 0px;
+				padding: 0px;
+			}
+			
+			body {
+				background-color: #111;
+			}
+
+			textarea {
+				display: block;
+				width: calc(100% - 360px);
+				height: 100vh;
+				padding: 8px;
+				box-sizing: border-box;
+				color: #EEE;
+				background-color: #111;
+				font-size: 22px;
+				border: none;
+				border-right: 2px solid #333;
+				outline: none;
+				resize: none;
+				tab-size: 4;
+			}
+
+			button {
+				display: block;
+				position: absolute;
+				top: 0px;
+				right: 0px;
+				margin: 8px;
+				padding: 4px;
+				font-size: 22px;
+				outline: none;
+			}
+		</style>
+	</head>
+	
+	<body>
+		<textarea id="textarea" spellcheck="false"></textarea>
+		<button id="button">Update map</button>
+	</body>
+</html>
