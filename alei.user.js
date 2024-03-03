@@ -61,7 +61,8 @@ let aleiSettings = {
     showSameParameters: readStorage("ALEI_ShowSameParameters",   true , (val) => val === "true"),
     rematchUID:         readStorage("ALEI_RemapUID",             false, (val) => val === "true"),
     showIDs:            readStorage("ALEI_ShowIDs",              false, (val) => val === "true"),
-    blackTheme:         readStorage("ALEI_BlackTheme",           false, (val) => val === "true")
+    blackTheme:         readStorage("ALEI_BlackTheme",           false, (val) => val === "true"),
+    gridBasedOnSnapping:readStorage("ALEI_gridBasedOnSnapping",  true,  (val) => val === "true")
 }
 window.aleiSettings = aleiSettings;
 
@@ -866,25 +867,22 @@ function patchShowHideButton() {
 window.ALEI_CustomSnapping = () => {
     let snapping = prompt("Enter snapping:", "");
 
-    if (snapping) {
-        if (!isNaN(Number(snapping))) {
-            if (snapping < 0.1) {
-                snapping = 0.1;
+    if(!snapping) return;
+    if(isNaN(Number(snapping))) {NewNote("Invalid snapping.", "#FF0000"); return};
 
-                alert("Snapping can't be less than 0.1");
-            }
-
-            if (snapping > 100) {
-                snapping = 100;
-
-                alert("Snapping can't be greater than 100");
-            }
-
-            GridSnappingSet(Math.round(snapping * 10));
-        } else {
-            alert("Invalid snapping.");
-        }
+    if (snapping < 0.1) {
+        snapping = 0.1;
+        NewNote("ALEI: Snapping can't be less than 0.1", "#FF0000");
+        return;
     }
+
+    if (snapping > 100) {
+        snapping = 100;
+        NewNote("ALEI: Snapping can't be greater than 100", "#FF0000");
+        return;
+    }
+
+    GridSnappingSet(Math.round(snapping * 10));
 }
 
 function addSnappingOptions_helper() {
@@ -3147,6 +3145,11 @@ function createALEISettingsMenu() {
     addText("Black theme:", true)
     addBinaryOption("Yes", "No", "ALEI_BlackTheme", "blackTheme", "blackTheme");
 
+    registerButton("changeGridBasedOnSnapping", [true, false], "gridBasedOnSnapping");
+    addText("Grid by Snap:")
+    addBinaryOption("Yes", "No", "ALEI_gridBasedOnSnapping", "gridBasedOnSnapping", "changeGridBasedOnSnapping");
+    // TODO: Shorten those...
+
     window.ALEI_settingsMenu = mainWindow;
     document.body.appendChild(mainWindow);
     ALEI_settingUpdateButtons();
@@ -3702,7 +3705,11 @@ function patchDrawGrid() {
     let old_lg = lg;
 
     window.lg = function(param1, param2) {
-        old_lg(param1 * (GRID_SNAPPING / 10), Math.min(param2 * Math.max(GRID_SNAPPING / 10, 1), 1));
+        if(aleiSettings.gridBasedOnSnapping) {
+            old_lg(param1 * (GRID_SNAPPING / 10), Math.min(param2 * Math.max(GRID_SNAPPING / 10, 1), 1));
+        } else {
+            old_lg(param1, param2)
+        }
     }
     aleiLog(DEBUG, "Patched LG");
 }
