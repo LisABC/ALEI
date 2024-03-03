@@ -39,6 +39,11 @@ This part includes changes to adds new things to ALE.
 - Small "script language" to act on parameter for multiple objects at once. [More detail here](/alescript.md)
 - Ability to manually clear backups
 - Object clipboard. (Ctrl+P selected objects to save into clipboard, get out of focus and Ctrl+P to open object clipboard list)
+- Action Uilities:
+  - Select action(s)
+  - Ctrl + C to copy them
+  - Ctrl + V to paste them (If no action is selected, it'll paste at end, if it is, it will paste before that action)
+  - Ctrl + R selected actions to reverse them
 
 # Fixes
 This part includes changes that are meant to fix issues (It doesn't have to be code issue, it can be any issue, ambiguity issues, etc.)
