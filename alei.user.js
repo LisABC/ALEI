@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      11.5
+// @version      11.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -3634,8 +3634,6 @@ function triggerActionsPreventError() {
     UpdateGUIParams();
 }
 
-let shouldPasteObjects;
-
 function patchClipboardFunctions() {
     let old_CopyToClipBoard = CopyToClipBoard;
     let old_PasteFromClipBoard = PasteFromClipBoard;
@@ -3645,29 +3643,29 @@ function patchClipboardFunctions() {
     let old_DO_REDO = DO_REDO;
 
     window.CopyToClipBoard = function(param) {
-        if (isNothingSelected() || !isOnlyTriggerSelected()) {
-            old_CopyToClipBoard(param);
-			
-			shouldPasteObjects = true;
+        if (isNothingSelected()) {
+            let result = old_CopyToClipBoard(param);
+			triggerActionsClipboard = [];
+            return result;
         } else {
             copyTriggerActions();
             unselectTriggerActions();
-			
-			shouldPasteObjects = false;
+            return true;
         }
     }
 
     window.PasteFromClipBoard = function(param) {
-        if (!isOnlyTriggerSelected() || shouldPasteObjects) {
-            old_PasteFromClipBoard(param);
+        if (triggerActionsClipboard.length == 0) {
+            return old_PasteFromClipBoard(param);
         } else {
             pasteTriggerActions();
             unselectTriggerActions();
+            return true;
         }
     }
 
     window.DeleteSelection = function() {
-        if (isNothingSelected() || !isOnlyTriggerSelected()) {
+        if (isNothingSelected()) {
             old_DeleteSelection();
         } else {
             deleteTriggerActions();
