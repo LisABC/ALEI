@@ -2126,6 +2126,8 @@ function copyToPermanentClipboard() {
 
 let targetElement;
 
+let normalPaste = 1;
+
 document.addEventListener("mousedown", e => {
     targetElement = e.target;
 });
@@ -2306,6 +2308,18 @@ document.addEventListener("keydown", e => {
 
         copyToPermanentClipboard();
     }
+	
+	if (e.code == "Tab") {
+		e.preventDefault();
+		
+		normalPaste ^= 1;
+		
+		if (normalPaste) {
+			NewNote("Clipboard paste mode: objects", note_passive);
+		} else {
+			NewNote("Clipboard paste mode: trigger actions", note_passive);
+		}
+	}
 });
 
 function doTooltip() {
@@ -3652,7 +3666,7 @@ function patchClipboardFunctions() {
     }
 
     window.PasteFromClipBoard = function(param) {
-        if (!isOnlyTriggerSelected()) {
+        if (!isOnlyTriggerSelected() || normalPaste) {
             old_PasteFromClipBoard(param);
         } else {
             pasteTriggerActions();
