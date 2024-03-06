@@ -3645,7 +3645,7 @@ function patchClipboardFunctions() {
     window.CopyToClipBoard = function(param) {
         if (isNothingSelected()) {
             let result = old_CopyToClipBoard(param);
-			triggerActionsClipboard = [];
+            triggerActionsClipboard = [];
             return result;
         } else {
             copyTriggerActions();
