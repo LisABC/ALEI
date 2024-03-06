@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      11.5
+// @version      11.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -26,6 +26,7 @@ function $query(selector) {
 let ROOT_ELEMENT = document.documentElement;
 let stylesheets = document.styleSheets;
 let VAL_TABLE = {}; // Will be filled later.
+let displayOperationCompleteNotes = true;
 
 const INFO = 0;
 const DEBUG = 1;
@@ -3616,7 +3617,10 @@ function reverseTriggerActions() {
 
     textarea.value = info.concat(actions1).join("\n");
 
+    displayOperationCompleteNotes = false;
     CompileTrigger();
+    displayOperationCompleteNotes = true;
+    NewNote("Reversed actions.", "#FFFFFF");
 
     edit_triggers_as_text = 0;
     UpdateGUIParams();
@@ -3643,29 +3647,40 @@ function patchClipboardFunctions() {
     let old_DO_REDO = DO_REDO;
 
     window.CopyToClipBoard = function(param) {
-        if (isNothingSelected() || !isOnlyTriggerSelected()) {
-            old_CopyToClipBoard(param);
+        if (isNothingSelected()) {
+            let result = old_CopyToClipBoard(param);
+            triggerActionsClipboard = [];
+            return result;
         } else {
             copyTriggerActions();
             unselectTriggerActions();
+            return true;
         }
     }
 
     window.PasteFromClipBoard = function(param) {
-        if (!isOnlyTriggerSelected()) {
-            old_PasteFromClipBoard(param);
+        if (triggerActionsClipboard.length == 0) {
+            let result = old_PasteFromClipBoard(param);
+            UpdateGUIParams();
+            return result;
         } else {
+            displayOperationCompleteNotes = false;
             pasteTriggerActions();
             unselectTriggerActions();
+            displayOperationCompleteNotes = true;
+            return true;
         }
     }
 
     window.DeleteSelection = function() {
-        if (isNothingSelected() || !isOnlyTriggerSelected()) {
+        if (isNothingSelected()) {
             old_DeleteSelection();
         } else {
+            displayOperationCompleteNotes = false;
             deleteTriggerActions();
             unselectTriggerActions();
+            NewNote("Deleted trigger actions.", "#FFFFFF");
+            displayOperationCompleteNotes = true;
         }
     }
 
@@ -3714,6 +3729,14 @@ function patchDrawGrid() {
     aleiLog(DEBUG, "Patched LG");
 }
 
+function patchNewNote() {
+    let old = NewNote;
+    window.NewNote = (text, color) => {
+        if (displayOperationCompleteNotes) return old(text, color);
+        if (text.slice(0, "Operation complete:<br><br>".length) != "Operation complete:<br><br>") return old(text, color);
+    }
+}
+
 
 let ALE_start = (async function() {
     'use strict';
@@ -3740,6 +3763,7 @@ let ALE_start = (async function() {
     patchUpdateTools();
     patchDecorUpload();
     patchEntityClass();
+    patchNewNote();
     patchEvalSet();
     // Allowing for spaces in parameters.
     window.UpdatePhysicalParam = UpdatePhysicalParam;
