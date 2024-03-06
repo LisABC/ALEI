@@ -26,6 +26,7 @@ function $query(selector) {
 let ROOT_ELEMENT = document.documentElement;
 let stylesheets = document.styleSheets;
 let VAL_TABLE = {}; // Will be filled later.
+let displayOperationCompleteNotes = true;
 
 const INFO = 0;
 const DEBUG = 1;
@@ -3616,7 +3617,10 @@ function reverseTriggerActions() {
 
     textarea.value = info.concat(actions1).join("\n");
 
+    displayOperationCompleteNotes = false;
     CompileTrigger();
+    displayOperationCompleteNotes = true;
+    NewNote("Reversed actions.", "#FFFFFF");
 
     edit_triggers_as_text = 0;
     UpdateGUIParams();
@@ -3656,10 +3660,14 @@ function patchClipboardFunctions() {
 
     window.PasteFromClipBoard = function(param) {
         if (triggerActionsClipboard.length == 0) {
-            return old_PasteFromClipBoard(param);
+            let result = old_PasteFromClipBoard(param);
+            UpdateGUIParams();
+            return result;
         } else {
+            displayOperationCompleteNotes = false;
             pasteTriggerActions();
             unselectTriggerActions();
+            displayOperationCompleteNotes = true;
             return true;
         }
     }
@@ -3668,8 +3676,11 @@ function patchClipboardFunctions() {
         if (isNothingSelected()) {
             old_DeleteSelection();
         } else {
+            displayOperationCompleteNotes = false;
             deleteTriggerActions();
             unselectTriggerActions();
+            NewNote("Deleted trigger actions.", "#FFFFFF");
+            displayOperationCompleteNotes = true;
         }
     }
 
@@ -3718,6 +3729,14 @@ function patchDrawGrid() {
     aleiLog(DEBUG, "Patched LG");
 }
 
+function patchNewNote() {
+    let old = NewNote;
+    window.NewNote = (text, color) => {
+        if (displayOperationCompleteNotes) return old(text, color);
+        if (text.slice(0, "Operation complete:<br><br>".length) != "Operation complete:<br><br>") return old(text, color);
+    }
+}
+
 
 let ALE_start = (async function() {
     'use strict';
@@ -3744,6 +3763,7 @@ let ALE_start = (async function() {
     patchUpdateTools();
     patchDecorUpload();
     patchEntityClass();
+    patchNewNote();
     patchEvalSet();
     // Allowing for spaces in parameters.
     window.UpdatePhysicalParam = UpdatePhysicalParam;
