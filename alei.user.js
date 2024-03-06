@@ -3648,12 +3648,12 @@ function patchClipboardFunctions() {
         if (isNothingSelected() || !isOnlyTriggerSelected()) {
             old_CopyToClipBoard(param);
 			
-			shouldPasteObjects = 1;
+			shouldPasteObjects = true;
         } else {
             copyTriggerActions();
             unselectTriggerActions();
 			
-			shouldPasteObjects = 0;
+			shouldPasteObjects = false;
         }
     }
 
