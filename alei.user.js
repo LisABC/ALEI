@@ -2307,6 +2307,12 @@ document.addEventListener("keydown", e => {
 
         copyToPermanentClipboard();
     }
+	
+	if (e.ctrlKey && e.code == "KeyE") {
+		e.preventDefault();
+		
+		openTextEditor();
+	}
 });
 
 function doTooltip() {
@@ -3735,6 +3741,261 @@ function patchNewNote() {
         if (displayOperationCompleteNotes) return old(text, color);
         if (text.slice(0, "Operation complete:<br><br>".length) != "Operation complete:<br><br>") return old(text, color);
     }
+}
+
+let textEditorWindow = {
+	closed: true
+}
+
+let mainWindowFocused = 1;
+
+function addQuotes(str) {
+	return '"' + str + '"';
+}
+
+function isNumber(x) {
+	return (!isNaN(Number(x)) && !x.toString().includes(" ") && x.toString() !== "Infinity" && x.toString() !== "-Infinity" && x !== "") || (x === "true" || x === "false");
+}
+
+function getMaxLength(arr) {
+	let length = 0;
+	
+	for (let i = 0; i < arr.length; i++) {
+		if (arr[i].length > length) {
+			length = arr[i].length;
+		}
+	}
+	
+	return length;
+}
+
+function objectToText(obj) {
+	let str = '{\n\t"_class": "' + obj._class + '",\n\t\n\t"pm": {';
+	let params = obj.pm;
+	let keys = Object.keys(params);
+	let maxLength = getMaxLength(keys);
+	
+	for (let i = 0; i < keys.length; i++) {
+		let key = keys[i];
+		let value = params[key];
+		let length = key.length;
+		
+		if (!isNumber(value)) {
+			value = addQuotes(value.toString().replaceAll("\\", "\\\\").replaceAll('"', '\\"'));
+		}
+		
+		if (i != 0) {
+			str = str + ",";
+		}
+		
+		str = str + "\n\t\t";
+		
+		if (key.includes("_type")) {
+			str = str + "\n\t\t";
+		}
+		
+		str = str + addQuotes(key) + ":   " + "".padEnd(maxLength - length, " ") + value;
+	}
+	
+	return str + "\n\t}\n}";
+}
+
+function mapToText() {
+	let str = "[\n\n\n";
+	let objects = [];
+	
+	for (let i = 0; i < es.length; i++) {
+		if (es[i].exists) {
+			objects.push(es[i]);
+		}
+	}
+	
+	for (let i = 0; i < objects.length; i++) {
+		if (i != 0) {
+			str = str + ",\n\n";
+		}
+		
+		str = str + objectToText(objects[i]);
+	}
+	
+	return str + "\n\n\n]";
+}
+
+function textToMap(str) {
+	let arr = JSON.parse(str);
+	
+	es = [];
+	
+	for (let i = 0; i < arr.length; i++) {
+		let obj;
+		
+		obj = new E(arr[i]._class);
+		obj.pm = arr[i].pm;
+		
+		es.push(obj);
+	}
+}
+
+function openTextEditor() {
+	if (textEditorWindow.closed) {
+		textEditorWindow = window.open("about:blank");
+		
+		textEditorWindow.document.write(`
+			<!DOCTYPE html>
+			
+			<html>
+				<head>
+					<title>Text Editor</title>
+					
+					<style>
+						* {
+							margin: 0px;
+							padding: 0px;
+						}
+
+						body {
+							background-color: #222;
+						}
+
+						h1 {
+							color: #EEE;
+							font-size: 24px;
+							font-family: verdana;
+						}
+
+						button {
+							width: 84px;
+							height: 38px;
+							margin: 6px;
+							float: right;
+							font-size: 22px;
+						}
+
+						textarea {
+							display: block;
+							width: 100%;
+							height: 100%;
+							padding: 8px;
+							box-sizing: border-box;
+							color: #EEE;
+							font-size: 22px;
+							background-color: #111;
+							border: none;
+							outline: none;
+							resize: none;
+							white-space: nowrap;
+							overflow: scroll;
+							tab-size: 4;
+						}
+
+						.update-button-container {
+							height: 50px;
+						}
+
+						.header {
+							float: left;
+							margin-left: 12px;
+							line-height: 50px;
+						}
+
+						.textarea-container {
+							height: calc(100vh - 50px);
+						}
+					</style>
+				</head>
+				
+				<body>
+					<div class="update-button-container">
+						<div class="header">
+							<h1>Text Editor</h1>
+						</div>
+						
+						<div class="update-button">
+							<button id="button">Update</button>
+						</div>
+					</div>
+					
+					<div class="textarea-container">
+						<textarea id="textarea" spellcheck="false"></textarea>
+					</div>
+				</body>
+			</html>
+		`);
+		
+		let button = textEditorWindow.document.getElementById("button");
+		let textarea = textEditorWindow.document.getElementById("textarea");
+		
+		button.onclick = function() {
+			try {
+				textToMap(textarea.value);
+			} catch (err) {
+				alert("Invalid JSON.");
+			}
+		}
+		
+		textarea.addEventListener("keydown", e => {
+			if (e.code == "Tab") {
+				e.preventDefault();
+				
+				if (textarea.selectionStart == textarea.selectionEnd) {
+					let str = textarea.value;
+					let index = textarea.selectionStart;
+					let part1 = str.slice(0, index);
+					let part2 = str.slice(index);
+					
+					textarea.value = part1 + "\t" + part2;
+					
+					textarea.selectionStart = index + 1;
+					textarea.selectionEnd = index + 1;
+				}
+			}
+			
+			if (e.code == "Enter") {
+				e.preventDefault();
+				
+				let str = textarea.value;
+				let index = textarea.selectionStart;
+				let part1 = str.slice(0, index);
+				let part2 = str.slice(index);
+				let currentLineIndex = str.slice(0, index).split("\n").length - 1;
+				let currentLine = str.split("\n")[currentLineIndex];
+				let tabsCount = currentLine.split("\t").length - 1;
+				
+				textarea.value = part1 + "\n" + "".padEnd(tabsCount, "\t") + part2;
+				
+				textarea.selectionStart = index + tabsCount + 1;
+				textarea.selectionEnd = index + tabsCount + 1;
+			}
+		});
+		
+		textEditorWindow.onfocus = function() {
+			if (mainWindowFocused) {
+				mainWindowFocused = 0;
+				
+				textarea.value = mapToText();
+				
+				for (let i = 0; i < es.length; i++) {
+					es[i].selected = false;
+				}
+				
+				Render();
+				UpdateGUIParams();
+				UpdateGUIObjectsList();
+			}
+		}
+		
+		window.onfocus = function() {
+			mainWindowFocused = 1;
+			
+			Render();
+			UpdateGUIParams();
+			UpdateGUIObjectsList();
+		}
+	} else {
+		mainWindowFocused = 1;
+		
+		textEditorWindow.focus();
+	}
 }
 
 
