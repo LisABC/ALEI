@@ -3824,7 +3824,7 @@ function mapToText() {
 }
 
 function textToMap(str) {
-	let arr = JSON.parse(str);
+	let arr = JSON.parse(str.replaceAll("<", "&lt;").replaceAll(">", "&gt;"));
 	
 	es = [];
 	
