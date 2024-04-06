@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      11.7
+// @version      11.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -2143,6 +2143,8 @@ function sortObjects() {
 	es.sort((a, b) => a.pm.__zIndex - b.pm.__zIndex);
 }
 
+let newUpdate = 0;
+
 let targetElement;
 
 document.addEventListener("mousedown", e => {
@@ -2325,6 +2327,25 @@ document.addEventListener("keydown", e => {
 
         copyToPermanentClipboard();
     }
+	
+	if (e.ctrlKey && e.shiftKey) {
+		if (newUpdate) {
+			let wnd = new Object();
+			
+			window.onblur = function() {
+				setTimeout(() => {
+					wnd.close();
+				}, 1000);
+			}
+			
+			window.onfocus = function() {
+				location.reload();
+			}
+			
+			wnd = window.open("https://github.com/LisABC/ALEI/raw/main/alei.user.js");
+			wnd.focus();
+		}
+	}
 });
 
 function doTooltip() {
@@ -3342,8 +3363,10 @@ function patchSpecialValue() {
 }
 
 function notifyUpdate(version) {
+	newUpdate = 1;
+	
     aleiLog(INFO, `New update: ${version}`);
-    NewNote(`ALEI: There is new update: ${version}, you are currently in ${GM_info.script.version}`, "#FFFFFF");
+    NewNote(`ALEI: There is new update: ${version}, you are currently in ${GM_info.script.version}<br>Press Ctrl + Shift to update`, "#FFFFFF");
 }
 
 function notifyIfTheresUpdate(script) {
