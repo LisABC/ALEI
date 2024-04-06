@@ -45,6 +45,8 @@ This part includes changes to adds new things to ALE.
   - Ctrl + V to paste them (If no action is selected, it'll paste at end, if it is, it will paste before that action)
   - Ctrl + R selected actions to reverse them
   - Del/Backspace (Backspace asks you before deleting) to directly delete them.
+- Z-Index for objects
+- Quick update to new ALEI version
 
 # Fixes
 This part includes changes that are meant to fix issues (It doesn't have to be code issue, it can be any issue, ambiguity issues, etc.)
