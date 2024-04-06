@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      11.6
+// @version      11.7
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -63,7 +63,8 @@ let aleiSettings = {
     rematchUID:         readStorage("ALEI_RemapUID",             false, (val) => val === "true"),
     showIDs:            readStorage("ALEI_ShowIDs",              false, (val) => val === "true"),
     blackTheme:         readStorage("ALEI_BlackTheme",           false, (val) => val === "true"),
-    gridBasedOnSnapping:readStorage("ALEI_gridBasedOnSnapping",  true,  (val) => val === "true")
+    gridBasedOnSnapping:readStorage("ALEI_gridBasedOnSnapping",  true,  (val) => val === "true"),
+	showZIndex:         readStorage("ALEI_ShowZIndex",           false, (val) => val === "true")
 }
 window.aleiSettings = aleiSettings;
 
@@ -110,6 +111,7 @@ function updateParameters() {
     add("tary", "value", "Target Y", "door");
     // Adding our own parameter for showıng IDs.
     param_type[param_type.length] = ["__id", "value", "ID", "", "*"]
+	param_type[param_type.length] = ["__zIndex", "value", "Z-Index", "", "*"]
     // Patching parameters
     param_type[0] = ['uid', 'string', 'Name', 'Object Name', '*'];
 }
@@ -1165,6 +1167,8 @@ function UpdatePhysicalParam(paramname, chvalue) {
     NewNote('Operation complete:<br><br>' + list_changes, note_passive);
     if (layer_mismatch) NewNote('Note: Some changes weren\'t made due to missmatch of active layer and class of selected objects', note_neutral);
     lfz(false);
+	
+	sortObjects();
 }
 
 let imageContextMap = {};
@@ -2125,6 +2129,20 @@ function copyToPermanentClipboard() {
     }
 }
 
+function changeTopRightText() {
+	let containerElem = document.getElementById("version_rights");
+	let elem = containerElem.childNodes[0];
+	
+	containerElem.style.width = "170px";
+	elem.style.width = "160px";
+	
+	elem.innerHTML = "Plazma Burst 2 Level Editor v1.4<br>ALE Improvements v" + GM_info.script.version;
+}
+
+function sortObjects() {
+	es.sort((a, b) => a.pm.__zIndex - b.pm.__zIndex);
+}
+
 let targetElement;
 
 document.addEventListener("mousedown", e => {
@@ -2383,7 +2401,9 @@ function patchDecorUpload() {
 function setParameter(index, value) {
     let rightParams = document.getElementById("rparams");
 
-    rightParams.childNodes[index].childNodes[1].innerHTML = value;
+    if (index < rightParams.childNodes.length) {
+		rightParams.childNodes[index].childNodes[1].innerHTML = value;
+	}
 }
 
 function getSelection() {
@@ -2548,6 +2568,14 @@ function assignObjectIDs() {
     }
 }
 
+function assignZIndex() {
+	for (let i = 0; i < es.length; i++) {
+		if (es[i].pm.__zIndex === undefined) {
+			es[i].pm.__zIndex = 1;
+		}
+	}
+}
+
 function patchANI() {
     let oldAni = ani;
     window.ani = function() {
@@ -2555,6 +2583,7 @@ function patchANI() {
         oldAni();
         if (ngpu) {
             assignObjectIDs();
+			assignZIndex();
             if (aleiSettings.showSameParameters) {
                 setSameParameters();;
             }
@@ -2609,6 +2638,8 @@ function patch_m_down() {
         og_mdown(e);
         if (es.length > previousEsLength) { // New element is made.
             assignObjectIDs();
+			assignZIndex();
+			sortObjects();
             let element = es[es.length - 1];
             if (!("x" in element.pm)) return;
             // We now have to do job of fixPos, we cannot set fixPos to have it argument-based directly because of scoping
@@ -2792,6 +2823,8 @@ function ServerRequest_handleMapData(mapCode) {
             let rights = expression.split(";")[0].split(".innerHTML=")[1].slice(1, -1);
             maprights.value = rights;
             NewNote(`Map '${mapid}' has been successfully loaded.`, note_good);
+			assignZIndex();
+			sortObjects();
             continue
         }
         // Actual mapdata.
@@ -2962,6 +2995,8 @@ function patchUpdateGUIParams() {
     let origUGP = _origUGP;
 
     window.UpdateGUIParams = function() {
+		let zIndexSave = [];
+		
         origUGP = _origUGP;
         window.GenParamVal = function(base, value) {
             let resp = origGPV(base, value);
@@ -2974,10 +3009,17 @@ function patchUpdateGUIParams() {
         }
         let selected = getSelection();
         let shouldDisplayID = (selected.length == 1) && aleiSettings.showIDs;
+		let shouldDisplayZIndex = (selected.length >= 1) && aleiSettings.showZIndex;
+		
+		for (let i = 0; i < selected.length; i++) {
+			if (selected[i]._class == "trigger") {
+				shouldDisplayZIndex = 0;
+			}
+		}
 
         if (shouldDisplayID) {
-            origUGP = origUGP.toString();
-            origUGP = origUGP.replace("if ( i >= 4 && (i-4) % 3 == 0 ) {", "if (i >= 5 && (i - 5) % 3 == 0) {")
+			origUGP = origUGP.toString();
+            origUGP = origUGP.replace("if ( i >= 4 && (i-4) % 3 == 0 ) {", "if (i >= 5 && (i - 5) % 3 == 0) {");
             eval(origUGP);
             origUGP = UpdateGUIParams;
             //selected[0].pm.__id = selected[0].aleiID;
@@ -2985,8 +3027,25 @@ function patchUpdateGUIParams() {
             entries.splice(0, 0, ["__id",  selected[0].aleiID ]);
             selected[0].pm = Object.fromEntries(entries);
         }
+		
+		if (!shouldDisplayZIndex) {
+			for (let i = 0; i < selected.length; i++) {
+				zIndexSave.push(selected[i].pm.__zIndex);
+				
+				delete selected[i].pm.__zIndex;
+			}
+		}
+		
         origUGP();
+		
         if (shouldDisplayID) delete selected[0].pm.__id;
+		
+		if (!shouldDisplayZIndex) {
+			for (let i = 0; i < selected.length; i++) {
+				selected[i].pm.__zIndex = zIndexSave.shift();
+			}
+		}
+		
         window.GenParamVal = origGPV;
     }
     aleiLog(DEBUG, "Patched UpdateGUIParams");
@@ -3136,6 +3195,11 @@ function createALEISettingsMenu() {
     registerButton("showids", [true, false], "showIDs");
     addText("Object IDs:")
     addBinaryOption("Show", "Hide", "ALEI_ShowIDs", "showIDs", "showids")
+	
+	// Z-Index.
+    registerButton("showzindex", [true, false], "showZIndex");
+    addText("Object z-index:")
+    addBinaryOption("Show", "Hide", "ALEI_ShowZIndex", "showZIndex", "showzindex")
 
     // Show same parameters.
     registerButton("sameparams", [true, false], "showSameParameters");
@@ -3791,6 +3855,7 @@ let ALE_start = (async function() {
     registerClipboardItemAction();
     patchClipboardFunctions();
     patchDrawGrid();
+	changeTopRightText();
 
     checkForUpdates();
 
