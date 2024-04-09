@@ -47,6 +47,8 @@ This part includes changes to adds new things to ALE.
   - Del/Backspace (Backspace asks you before deleting) to directly delete them.
 - Z-Index for objects
 - Quick update to new ALEI version
+- Get image size
+- Center decoration X, Y
 
 # Fixes
 This part includes changes that are meant to fix issues (It doesn't have to be code issue, it can be any issue, ambiguity issues, etc.)
