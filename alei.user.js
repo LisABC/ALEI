@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      11.9
+// @version      12.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -2143,6 +2143,228 @@ function sortObjects() {
 	es.sort((a, b) => a.pm.__zIndex - b.pm.__zIndex);
 }
 
+function addDecorButtons() {
+	let rparams = document.getElementById("rparams");
+	let selection = getSelection();
+	
+	if (rparams && selection.length == 1) {
+		let getImageSize_button = '<a onclick="getImageSize();" class="tool_btn tool_wid" style="display: block; width: 100%; margin-top: 4px;">Get image size</a>';
+		let centerDecorationX_button = '<a onclick="centerImageX();" class="tool_btn tool_wid" style="display: block; width: 100%; margin-top: 4px;">Center decoration X</a>';
+		let centerDecorationY_button = '<a onclick="centerImageY();" class="tool_btn tool_wid" style="display: block; width: 100%; margin-top: 4px;">Center decoration Y</a>';
+		
+		if (selection[0]._class == "bg") {
+			rparams.innerHTML += getImageSize_button;
+		}
+		
+		if (selection[0]._class == "decor") {
+			rparams.innerHTML += getImageSize_button;
+			rparams.innerHTML += centerDecorationX_button;
+			rparams.innerHTML += centerDecorationY_button;
+		}
+	}
+}
+
+function getImageSize() {
+	let selection = getSelection();
+	let id;
+	
+	if (selection[0]._class == "bg") {
+		id = selection[0].pm.m;
+	}
+	
+	if (selection[0]._class == "decor") {
+		id = selection[0].pm.model;
+	}
+	
+	if (typeof id == "string") {
+		let img = document.createElement("img");
+		
+		img.onload = function() {
+			let w = img.width;
+			let h = img.height;
+			
+			img.remove();
+			
+			alert("W: " + w + "\nH: " + h);
+		}
+		
+		img.onerror = function() {
+			img.remove();
+			
+			alert("Image not found.");
+		}
+		
+		img.src = "https://www.plazmaburst2.com/mimage_cache.php?image_id=" + id.slice(1);
+	} else {
+		alert("Image not found.");
+	}
+}
+
+function getImageData() {
+	return new Promise((res, err) => {
+		let selection = getSelection();
+		let id;
+		
+		if (selection[0]._class == "bg") {
+			id = selection[0].pm.m;
+		}
+		
+		if (selection[0]._class == "decor") {
+			id = selection[0].pm.model;
+		}
+		
+		if (typeof id == "string") {
+			let img = document.createElement("img");
+			
+			img.onload = function() {
+				let w = img.width;
+				let h = img.height;
+				
+				let canvas = document.createElement("canvas");
+				let ctx = canvas.getContext("2d");
+				
+				canvas.width = img.width;
+				canvas.height = img.height;
+				
+				ctx.beginPath();
+				ctx.drawImage(img, 0, 0);
+				ctx.closePath();
+				
+				res([ctx.getImageData(0, 0, w, h).data, w]);
+			}
+			
+			img.onerror = function() {
+				img.remove();
+				
+				alert("Image not found.");
+				
+				res(1);
+			}
+			
+			img.src = "https://www.plazmaburst2.com/mimage_cache.php?image_id=" + id.slice(1);
+		} else {
+			alert("Image not found.");
+			
+			res(1);
+		}
+	});
+}
+
+function arrMin(arr) {
+	let min = Infinity;
+	
+	for (let i = 0; i < arr.length; i++) {
+		if (arr[i] < min) {
+			min = arr[i];
+		}
+	}
+	
+	return min;
+}
+
+function arrMax(arr) {
+	let max = -Infinity;
+	
+	for (let i = 0; i < arr.length; i++) {
+		if (arr[i] > max) {
+			max = arr[i];
+		}
+	}
+	
+	return max;
+}
+
+function getImagePosition(data, w) {
+	let arrX = [];
+	let arrY = [];
+	
+	let minX;
+	let minY;
+	let maxX;
+	let maxY;
+	
+	let centerX = 0;
+	let centerY = 0;
+	
+	if (data != 1) {
+		for (let i = 0; i < data.length; i += 4) {
+			if (data[i + 3] >= 3) {
+				let x = (i / 4) % w;
+				let y = Math.floor(i / 4 / w);
+				
+				arrX.push(x);
+				arrY.push(y);
+			}
+		}
+		
+		minX = arrMin(arrX);
+		minY = arrMin(arrY);
+		maxX = arrMax(arrX);
+		maxY = arrMax(arrY);
+		
+		centerX = (minX + maxX) / 2;
+		centerY = (minY + maxY) / 2;
+	}
+	
+	return {
+		x: centerX,
+		y: centerY
+	}
+}
+
+function setDecorOffset(x, y) {
+	let selection = getSelection();
+	
+	selection[0].pm.u = x;
+	selection[0].pm.v = y;
+}
+
+function centerImageX() {
+	let selection = getSelection();
+	
+	if (selection.length == 1) {
+		if (selection[0]._class == "decor") {
+			getImageData().then(res => {
+				if (res != 1) {
+					let center = getImagePosition(res[0], res[1]);
+					let x = center.x;
+					
+					setDecorOffset(-x, selection[0].pm.v);
+				}
+			});
+		}
+	}
+	
+	need_redraw = 1;
+	need_GUIParams_update = 1;
+}
+
+function centerImageY() {
+	let selection = getSelection();
+	
+	if (selection.length == 1) {
+		if (selection[0]._class == "decor") {
+			getImageData().then(res => {
+				if (res != 1) {
+					let center = getImagePosition(res[0], res[1]);
+					let y = center.y;
+					
+					setDecorOffset(selection[0].pm.u, -y);
+				}
+			});
+		}
+	}
+	
+	need_redraw = 1;
+	need_GUIParams_update = 1;
+}
+
+function imageFunctions() {
+	window.getImageSize = getImageSize;
+	window.centerImageX = centerImageX;
+	window.centerImageY = centerImageY;
+}
+
 let newUpdate = 0;
 
 let targetElement;
@@ -3066,6 +3288,8 @@ function patchUpdateGUIParams() {
 			}
 		}
 		
+		addDecorButtons();
+		
         window.GenParamVal = origGPV;
     }
     aleiLog(DEBUG, "Patched UpdateGUIParams");
@@ -3878,6 +4102,7 @@ let ALE_start = (async function() {
     patchClipboardFunctions();
     patchDrawGrid();
 	changeTopRightText();
+	imageFunctions();
 
     checkForUpdates();
 
