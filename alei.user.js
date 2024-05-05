@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      12.0
+// @version      12.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -64,7 +64,7 @@ let aleiSettings = {
     showIDs:            readStorage("ALEI_ShowIDs",              false, (val) => val === "true"),
     blackTheme:         readStorage("ALEI_BlackTheme",           false, (val) => val === "true"),
     gridBasedOnSnapping:readStorage("ALEI_gridBasedOnSnapping",  true,  (val) => val === "true"),
-	showZIndex:         readStorage("ALEI_ShowZIndex",           false, (val) => val === "true")
+    showZIndex:         readStorage("ALEI_ShowZIndex",           false, (val) => val === "true")
 }
 window.aleiSettings = aleiSettings;
 
@@ -276,7 +276,13 @@ function updateSounds() {
             ["hurt", "Hurt", 1],
             ["edown", "Celebrating", 2],
             ["death", "Death", 1]
-        ]
+        ],
+	phantom: [
+	    "Phantom",
+	    ["edown", "Celebrating", 1],
+	    ["welcome", "Alerted", 2],
+	    ["death", "Death", 1]
+	]
     };
     for (let entry of Object.entries(voices)) {
         let character = entry[0];
@@ -310,6 +316,7 @@ function updateVoicePresets() {
     VP["serkova"] = "Serkova";
     VP["ferro"] = "Lt. Ferro";
     VP["drohnentroop"] = "Drohnen Trooper";
+    VP["phantom"] = "Phantom";
 }
 
 function updateStyles() {
