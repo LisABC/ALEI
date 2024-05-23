@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      12.2
+// @version      12.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -14,6 +14,17 @@
 // ==/UserScript==
 
 let window = unsafeWindow;
+let isNative;
+try {
+   GM_info
+   isNative = true
+   window["nativeALEIRunning"] = true;
+} catch (e) {isNative = false};
+
+if(window["nativeALEIRunning"] == true) {
+    // An ALEI instance is already running, probably ran under tampermonkey so let that run.
+    Hello_IgnoreThisError_ItIsIntentional // hope this is not defined
+}
 
 // Shorthand things
 function $id(id) {
@@ -464,6 +475,9 @@ function _turnLinkIntoSkinSpan(src, charName) {
 }
 
 async function fetchSkinsFrom(startingID) {
+    if(!isNative) {
+        NewNote(`ALEI: Will not check for any undetected skins as the function requires tampermonkey-specific function.`, `#FFFF00`);
+    }
     const requestsAtOnce = 5;
     let requestsRunning = true;
     let skinsAdded = [];
@@ -1174,7 +1188,7 @@ function UpdatePhysicalParam(paramname, chvalue) {
     NewNote('Operation complete:<br><br>' + list_changes, note_passive);
     if (layer_mismatch) NewNote('Note: Some changes weren\'t made due to missmatch of active layer and class of selected objects', note_neutral);
     lfz(false);
-	
+
 	sortObjects();
 }
 
@@ -2139,10 +2153,10 @@ function copyToPermanentClipboard() {
 function changeTopRightText() {
 	let containerElem = document.getElementById("version_rights");
 	let elem = containerElem.childNodes[0];
-	
+
 	containerElem.style.width = "170px";
 	elem.style.width = "160px";
-	
+
 	elem.innerHTML = "Plazma Burst 2 Level Editor v1.4<br>ALE Improvements v" + GM_info.script.version;
 }
 
@@ -2153,16 +2167,16 @@ function sortObjects() {
 function addDecorButtons() {
 	let rparams = document.getElementById("rparams");
 	let selection = getSelection();
-	
+
 	if (rparams && selection.length == 1) {
 		let getImageSize_button = '<a onclick="getImageSize();" class="tool_btn tool_wid" style="display: block; width: 100%; margin-top: 4px;">Get image size</a>';
 		let centerDecorationX_button = '<a onclick="centerImageX();" class="tool_btn tool_wid" style="display: block; width: 100%; margin-top: 4px;">Center decoration X</a>';
 		let centerDecorationY_button = '<a onclick="centerImageY();" class="tool_btn tool_wid" style="display: block; width: 100%; margin-top: 4px;">Center decoration Y</a>';
-		
+
 		if (selection[0]._class == "bg") {
 			rparams.innerHTML += getImageSize_button;
 		}
-		
+
 		if (selection[0]._class == "decor") {
 			rparams.innerHTML += getImageSize_button;
 			rparams.innerHTML += centerDecorationX_button;
@@ -2174,33 +2188,33 @@ function addDecorButtons() {
 function getImageSize() {
 	let selection = getSelection();
 	let id;
-	
+
 	if (selection[0]._class == "bg") {
 		id = selection[0].pm.m;
 	}
-	
+
 	if (selection[0]._class == "decor") {
 		id = selection[0].pm.model;
 	}
-	
+
 	if (typeof id == "string") {
 		let img = document.createElement("img");
-		
+
 		img.onload = function() {
 			let w = img.width;
 			let h = img.height;
-			
+
 			img.remove();
-			
+
 			alert("W: " + w + "\nH: " + h);
 		}
-		
+
 		img.onerror = function() {
 			img.remove();
-			
+
 			alert("Image not found.");
 		}
-		
+
 		img.src = "https://www.plazmaburst2.com/mimage_cache.php?image_id=" + id.slice(1);
 	} else {
 		alert("Image not found.");
@@ -2211,47 +2225,47 @@ function getImageData() {
 	return new Promise((res, err) => {
 		let selection = getSelection();
 		let id;
-		
+
 		if (selection[0]._class == "bg") {
 			id = selection[0].pm.m;
 		}
-		
+
 		if (selection[0]._class == "decor") {
 			id = selection[0].pm.model;
 		}
-		
+
 		if (typeof id == "string") {
 			let img = document.createElement("img");
-			
+
 			img.onload = function() {
 				let w = img.width;
 				let h = img.height;
-				
+
 				let canvas = document.createElement("canvas");
 				let ctx = canvas.getContext("2d");
-				
+
 				canvas.width = img.width;
 				canvas.height = img.height;
-				
+
 				ctx.beginPath();
 				ctx.drawImage(img, 0, 0);
 				ctx.closePath();
-				
+
 				res([ctx.getImageData(0, 0, w, h).data, w]);
 			}
-			
+
 			img.onerror = function() {
 				img.remove();
-				
+
 				alert("Image not found.");
-				
+
 				res(1);
 			}
-			
+
 			img.src = "https://www.plazmaburst2.com/mimage_cache.php?image_id=" + id.slice(1);
 		} else {
 			alert("Image not found.");
-			
+
 			res(1);
 		}
 	});
@@ -2259,60 +2273,60 @@ function getImageData() {
 
 function arrMin(arr) {
 	let min = Infinity;
-	
+
 	for (let i = 0; i < arr.length; i++) {
 		if (arr[i] < min) {
 			min = arr[i];
 		}
 	}
-	
+
 	return min;
 }
 
 function arrMax(arr) {
 	let max = -Infinity;
-	
+
 	for (let i = 0; i < arr.length; i++) {
 		if (arr[i] > max) {
 			max = arr[i];
 		}
 	}
-	
+
 	return max;
 }
 
 function getImagePosition(data, w) {
 	let arrX = [];
 	let arrY = [];
-	
+
 	let minX;
 	let minY;
 	let maxX;
 	let maxY;
-	
+
 	let centerX = 0;
 	let centerY = 0;
-	
+
 	if (data != 1) {
 		for (let i = 0; i < data.length; i += 4) {
 			if (data[i + 3] >= 3) {
 				let x = (i / 4) % w;
 				let y = Math.floor(i / 4 / w);
-				
+
 				arrX.push(x);
 				arrY.push(y);
 			}
 		}
-		
+
 		minX = arrMin(arrX);
 		minY = arrMin(arrY);
 		maxX = arrMax(arrX);
 		maxY = arrMax(arrY);
-		
+
 		centerX = (minX + maxX) / 2;
 		centerY = (minY + maxY) / 2;
 	}
-	
+
 	return {
 		x: centerX,
 		y: centerY
@@ -2321,47 +2335,47 @@ function getImagePosition(data, w) {
 
 function setDecorOffset(x, y) {
 	let selection = getSelection();
-	
+
 	selection[0].pm.u = x;
 	selection[0].pm.v = y;
 }
 
 function centerImageX() {
 	let selection = getSelection();
-	
+
 	if (selection.length == 1) {
 		if (selection[0]._class == "decor") {
 			getImageData().then(res => {
 				if (res != 1) {
 					let center = getImagePosition(res[0], res[1]);
 					let x = center.x;
-					
+
 					setDecorOffset(-x, selection[0].pm.v);
 				}
 			});
 		}
 	}
-	
+
 	need_redraw = 1;
 	need_GUIParams_update = 1;
 }
 
 function centerImageY() {
 	let selection = getSelection();
-	
+
 	if (selection.length == 1) {
 		if (selection[0]._class == "decor") {
 			getImageData().then(res => {
 				if (res != 1) {
 					let center = getImagePosition(res[0], res[1]);
 					let y = center.y;
-					
+
 					setDecorOffset(selection[0].pm.u, -y);
 				}
 			});
 		}
 	}
-	
+
 	need_redraw = 1;
 	need_GUIParams_update = 1;
 }
@@ -2556,21 +2570,21 @@ document.addEventListener("keydown", e => {
 
         copyToPermanentClipboard();
     }
-	
+
 	if (e.ctrlKey && e.shiftKey) {
 		if (newUpdate) {
 			let wnd = new Object();
-			
+
 			window.onblur = function() {
 				setTimeout(() => {
 					wnd.close();
 				}, 1000);
 			}
-			
+
 			window.onfocus = function() {
 				location.reload();
 			}
-			
+
 			wnd = window.open("https://github.com/LisABC/ALEI/raw/main/alei.user.js");
 		}
 	}
@@ -3245,7 +3259,7 @@ function patchUpdateGUIParams() {
 
     window.UpdateGUIParams = function() {
 		let zIndexSave = [];
-		
+
         origUGP = _origUGP;
         window.GenParamVal = function(base, value) {
             let resp = origGPV(base, value);
@@ -3259,7 +3273,7 @@ function patchUpdateGUIParams() {
         let selected = getSelection();
         let shouldDisplayID = (selected.length == 1) && aleiSettings.showIDs;
 		let shouldDisplayZIndex = (selected.length >= 1) && aleiSettings.showZIndex;
-		
+
 		for (let i = 0; i < selected.length; i++) {
 			if (selected[i]._class == "trigger") {
 				shouldDisplayZIndex = 0;
@@ -3276,27 +3290,27 @@ function patchUpdateGUIParams() {
             entries.splice(0, 0, ["__id",  selected[0].aleiID ]);
             selected[0].pm = Object.fromEntries(entries);
         }
-		
+
 		if (!shouldDisplayZIndex) {
 			for (let i = 0; i < selected.length; i++) {
 				zIndexSave.push(selected[i].pm.__zIndex);
-				
+
 				delete selected[i].pm.__zIndex;
 			}
 		}
-		
+
         origUGP();
-		
+
         if (shouldDisplayID) delete selected[0].pm.__id;
-		
+
 		if (!shouldDisplayZIndex) {
 			for (let i = 0; i < selected.length; i++) {
 				selected[i].pm.__zIndex = zIndexSave.shift();
 			}
 		}
-		
+
 		addDecorButtons();
-		
+
         window.GenParamVal = origGPV;
     }
     aleiLog(DEBUG, "Patched UpdateGUIParams");
@@ -3446,7 +3460,7 @@ function createALEISettingsMenu() {
     registerButton("showids", [true, false], "showIDs");
     addText("Object IDs:")
     addBinaryOption("Show", "Hide", "ALEI_ShowIDs", "showIDs", "showids")
-	
+
 	// Z-Index.
     registerButton("showzindex", [true, false], "showZIndex");
     addText("Object z-index:")
@@ -3594,7 +3608,7 @@ function patchSpecialValue() {
 
 function notifyUpdate(version) {
 	newUpdate = 1;
-	
+
     aleiLog(INFO, `New update: ${version}`);
     NewNote(`ALEI: There is new update: ${version}, you are currently in ${GM_info.script.version}<br>Press Ctrl + Shift to update`, "#FFFFFF");
 }
@@ -4057,6 +4071,7 @@ function patchNewNote() {
 
 let ALE_start = (async function() {
     'use strict';
+
     VAL_TABLE = special_values_table;
     ROOT_ELEMENT = document.documentElement;
     stylesheets = document.styleSheets;
@@ -4111,10 +4126,18 @@ let ALE_start = (async function() {
 	changeTopRightText();
 	imageFunctions();
 
-    checkForUpdates();
+    if(isNative) checkForUpdates();
 
     NewNote("ALEI: Welcome!", "#7777FF");
-    aleiLog(INFO, `Welcome! TamperMonkey Version: ${GM_info.version} ALEI Version: ${GM_info.script.version}`);
+    aleiLog(INFO, `Welcome!`);
+    if(isNative) {
+        aleiLog(INFO, `TamperMonkey Version: ${GM_info.version} ALEI Version: ${GM_info.script.version}`);
+    } else {
+        let message = "You are running ALEI not under tampermonkey, this is not native ALEI, please load ALEI by tampermonkey when possible.";
+        NewNote(`ALEI: ${message}`, "#FFFF00");
+        NewNote(`ALEI: Check https://github.com/LisABC/ALEI for more details.`, "#FFFF00");
+        aleiLog(INFO, message);
+    }
 });
 
 document.addEventListener("DOMContentLoaded", () => ALE_start());
