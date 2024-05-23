@@ -4124,10 +4124,12 @@ let ALE_start = (async function() {
     registerClipboardItemAction();
     patchClipboardFunctions();
     patchDrawGrid();
-	changeTopRightText();
 	imageFunctions();
 
-    if(isNative) checkForUpdates();
+    if(isNative) {
+        checkForUpdates();
+        changeTopRightText();
+    }
 
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, `Welcome!`);
