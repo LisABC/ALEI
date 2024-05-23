@@ -21,7 +21,7 @@ try {
    window["nativeALEIRunning"] = true;
 } catch (e) {isNative = false};
 
-if(window["nativeALEIRunning"] == true) {
+if(!isNative && (window["nativeALEIRunning"] == true)) {
     // An ALEI instance is already running, probably ran under tampermonkey so let that run.
     Hello_IgnoreThisError_ItIsIntentional // hope this is not defined
 }
