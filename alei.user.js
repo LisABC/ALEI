@@ -477,6 +477,7 @@ function _turnLinkIntoSkinSpan(src, charName) {
 async function fetchSkinsFrom(startingID) {
     if(!isNative) {
         NewNote(`ALEI: Will not check for any undetected skins as the function requires tampermonkey-specific function.`, `#FFFF00`);
+	return;
     }
     const requestsAtOnce = 5;
     let requestsRunning = true;
