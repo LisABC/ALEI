@@ -7,6 +7,7 @@ This part includes changes that was done because game has it but ALE doesnt.
 - Added missing voice presets.
 - Added NARL weapon and Hakase decor.
 - Projectile models.
+- Added properties of water(attach), region(uses_timer), trigger(execute), decor(text)
 
 # Features
 This part includes changes to adds new things to ALE.
