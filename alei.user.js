@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      12.3
+// @version      12.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -120,9 +120,13 @@ function updateParameters() {
     add("moving", "bool", "Is Moving?", "door");
     add("tarx", "value", "Target X", "door");
     add("tary", "value", "Target Y", "door");
-    // Adding our own parameter for showıng IDs.
-    param_type[param_type.length] = ["__id", "value", "ID", "", "*"]
-	param_type[param_type.length] = ["__zIndex", "value", "Z-Index", "", "*"]
+    // Adding our own parameter.
+    add("__id", "value", "ID", "*");
+    add("__zIndex", "value", "Z-Index", "*");
+    add("execute", "bool", "Executes directly?", "trigger");
+    add("uses_timer", "bool", "Calls timer?", "region");
+    add("text", "string", "Placeholder text", "decor");
+    add("attach", "door+none", "Attach to", "water");
     // Patching parameters
     param_type[0] = ['uid', 'string', 'Name', 'Object Name', '*'];
 }
@@ -1886,7 +1890,6 @@ function getObjectBox(obj) {
 
 function getSelectionImage() {
     let selection = getSelection();
-    let originalES = es;
     let arr1 = [];
     let arr2 = [];
     let minX = +Infinity;
@@ -1923,19 +1926,7 @@ function getSelectionImage() {
         es.push(e);
     }
 
-    let cs = {} // CS: Current Settings, because we will change settings for rendering images
-    cs.theme = THEME;
-    cs.grid_opacity = GRID_ALPHA;
-    cs.showConnections = SHOW_CONNECTIONS;
-    //
-    cs.dtx = dis_to_x;
-    cs.dty = dis_to_y;
-    //
-    cs.dfx = dis_from_x;
-    cs.dfy = dis_from_y;
-    //
-    cs.ctm = ConsoleTraceMessages;
-    cs.zoom = zoom;
+    
 
     THEME = 4;
     GRID_ALPHA = 0;
@@ -1955,22 +1946,12 @@ function getSelectionImage() {
 
     Render();
 
-    window.es = originalES;
-    THEME = cs.theme;
-    GRID_ALPHA = cs.grid_opacity;
-    SHOW_CONNECTIONS = cs.showConnections;
-    dis_to_x = cs.dtx;
-    dis_to_y = cs.dty;
-    dis_from_x = cs.dfx;
-    dis_from_y = cs.dfy;
-    ConsoleTraceMessages = cs.ctm;
-    zoom = cs.zoom;
-    zoom_validate();
-
     let w = maxX - minX + 20;
     let h = maxY - minY + 20;
 
+    aleiLog(DEBUG2, "Before GID");
     let data = ctx.getImageData(0, 0, w, h);
+    aleiLog(DEBUG2, "After GID");
 
     let canvas = document.createElement("canvas");
     let ctx2 = canvas.getContext("2d");
@@ -1999,8 +1980,6 @@ function getSelectionImage() {
             w = h * divide;
         }
     }
-
-    need_redraw = 1;
 
     canvas2.width = w;
     canvas2.height = h;
@@ -2089,6 +2068,20 @@ function updateClipboardDiv() {
 	`;
 
     let originalES = window.es;
+    let cs = {} // CS: Current Settings, because we will change settings for rendering images
+    cs.theme = THEME;
+    cs.grid_opacity = GRID_ALPHA;
+    cs.showConnections = SHOW_CONNECTIONS;
+    //
+    cs.dtx = dis_to_x;
+    cs.dty = dis_to_y;
+    //
+    cs.dfx = dis_from_x;
+    cs.dfy = dis_from_y;
+    //
+    cs.ctm = ConsoleTraceMessages;
+    cs.zoom = zoom;
+
     window.es = [];
     for (let i = 0; i < items.length; i++) {
         __pasteObjectClipboard(items[i]);
@@ -2102,6 +2095,17 @@ function updateClipboardDiv() {
 
     clipboardDiv.innerHTML = html + "</div>";
     window.es = originalES;
+    THEME = cs.theme;
+    GRID_ALPHA = cs.grid_opacity;
+    SHOW_CONNECTIONS = cs.showConnections;
+    dis_to_x = cs.dtx;
+    dis_to_y = cs.dty;
+    dis_from_x = cs.dfx;
+    dis_from_y = cs.dfy;
+    ConsoleTraceMessages = cs.ctm;
+    zoom = cs.zoom;
+    need_redraw = 1;
+    zoom_validate();
 }
 
 function __pasteObjectClipboard(item) {
@@ -2929,6 +2933,16 @@ function patchEntityClass() {
     let og_E = E;
     window.E = function(_class) {
         let result = new og_E(_class);
+        // Adding property.
+        if(_class == "water") result.pm.attach = -1;
+        else if(_class == "decor") result.pm.text = "Hello World!";
+        else if(_class == "trigger") {
+            let entries = Object.entries(result.pm);
+            entries.splice(5, 0, ["execute", false]);
+            result.pm = Object.fromEntries(entries);
+        }
+        else if(_class == "region") result.pm.uses_timer = false;
+
         result.fixPos = function() {}; // For proper snapping.
         return result;
     }
@@ -3282,12 +3296,11 @@ function patchUpdateGUIParams() {
 		}
 
         if (shouldDisplayID) {
+            let entries = Object.entries(selected[0].pm);
 			origUGP = origUGP.toString();
-            origUGP = origUGP.replace("if ( i >= 4 && (i-4) % 3 == 0 ) {", "if (i >= 5 && (i - 5) % 3 == 0) {");
+            origUGP = origUGP.replace("if ( i >= 4 && (i-4) % 3 == 0 ) {", "if (i >= 6 && (i - 6) % 3 == 0) {");
             eval(origUGP);
             origUGP = UpdateGUIParams;
-            //selected[0].pm.__id = selected[0].aleiID;
-            let entries = Object.entries(selected[0].pm);
             entries.splice(0, 0, ["__id",  selected[0].aleiID ]);
             selected[0].pm = Object.fromEntries(entries);
         }
