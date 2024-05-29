@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      12.5
+// @version      12.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -16,9 +16,9 @@
 let window = unsafeWindow;
 let isNative;
 try {
-   GM_info
-   isNative = true
-   window["nativeALEIRunning"] = true;
+    GM_info
+    isNative = true
+    window["nativeALEIRunning"] = true;
 } catch (e) {isNative = false};
 
 if(!isNative && (window["nativeALEIRunning"] == true)) {
@@ -76,7 +76,8 @@ let aleiSettings = {
     showIDs:            readStorage("ALEI_ShowIDs",              false, (val) => val === "true"),
     blackTheme:         readStorage("ALEI_BlackTheme",           false, (val) => val === "true"),
     gridBasedOnSnapping:readStorage("ALEI_gridBasedOnSnapping",  true,  (val) => val === "true"),
-    showZIndex:         readStorage("ALEI_ShowZIndex",           false, (val) => val === "true")
+    showZIndex:         readStorage("ALEI_ShowZIndex",           false, (val) => val === "true"),
+    renderObjectNames:  readStorage("ALEI_RenderObjectNames",    true,  (val) => val === "true")
 }
 window.aleiSettings = aleiSettings;
 
@@ -108,6 +109,7 @@ aleiLog(INFO, "Starting up...");
 // JS_ prefix for JavaScript ones, ALE_ for ALE ones
 let JS_setTimeout = window.setTimeout;
 let JS_eval = window.eval;
+let ALE_Render;
 
 let aleiSessionID = null; // ID of this session
 let aleiSessionList = []; // Set of known session IDs
@@ -307,12 +309,12 @@ function updateSounds() {
             ["edown", "Celebrating", 2],
             ["death", "Death", 1]
         ],
-	phantom: [
-	    "Phantom",
-	    ["edown", "Celebrating", 1],
-	    ["welcome", "Alerted", 2],
-	    ["death", "Death", 1]
-	]
+        phantom: [
+            "Phantom",
+            ["edown", "Celebrating", 1],
+            ["welcome", "Alerted", 2],
+            ["death", "Death", 1]
+        ]
     };
     for (let entry of Object.entries(voices)) {
         let character = entry[0];
@@ -496,7 +498,7 @@ function _turnLinkIntoSkinSpan(src, charName) {
 async function fetchSkinsFrom(startingID) {
     if(!isNative) {
         NewNote(`ALEI: Will not check for any undetected skins as the function requires tampermonkey-specific function.`, `#FFFF00`);
-	return;
+        return;
     }
     const requestsAtOnce = 5;
     let requestsRunning = true;
@@ -1012,9 +1014,60 @@ function addRematchUIOptions_helper() {
 
 }
 
+window.ALEI_UpdateNameRenderSetting = function(status) { // TODO: we should have mixin function lol, check: <#1245454955477729382>
+    if(!status) {
+        let code = ALE_Render.toString().replace("if (es[i].pm.uid != undefined)", "if (false)");
+        eval(code);
+        window.Render = Render;
+        aleiSettings.renderObjectNames = false;
+        writeStorage("ALEI_RenderObjectNames", "false");
+    } else {
+        window.Render = ALE_Render;
+        aleiSettings.renderObjectNames = true;
+        writeStorage("ALEI_RenderObjectNames", "true");
+    }
+    UpdateTools();
+    need_redraw = 1;
+}
+function addPreviewNamesOptions_helper() {
+    let prevElement = $query(`a[onmousedown="ShowTexturesSet(true);"]`);
+
+    function space() {
+        let spacer = document.createElement("div");
+        spacer.setAttribute("class", "q");
+        prevElement.outerHTML += spacer.outerHTML;
+    }
+
+    let headerText = document.createElement("span");
+    headerText.setAttribute("class", "gui_sel_info");
+    headerText.innerHTML = "Object Names";
+
+    let buttonHTML = "";
+
+    function addButton(text, status) {
+        let button = document.createElement("a");
+        let _class = "tool_btn";
+
+        if(status == aleiSettings.renderObjectNames) _class = "tool_btn2";
+
+        button.setAttribute("class", `tool_wid ${_class}`);
+        button.setAttribute("style", "width: 32px");
+        button.setAttribute("onmousedown", `ALEI_UpdateNameRenderSetting(${status});`);
+        button.innerHTML = text;
+        buttonHTML += button.outerHTML;
+    }
+
+    addButton("Show", true);
+    addButton("Hide", false);
+
+    prevElement.outerHTML += `<br><div class="q"></div><br>` + headerText.outerHTML + "<br>" + buttonHTML;
+
+}
+
 function onToolUpdate() {
     addSnappingOptions_helper();
     addRematchUIOptions_helper();
+    addPreviewNamesOptions_helper();
 }
 
 function patchUpdateTools() {
@@ -1205,9 +1258,9 @@ function UpdatePhysicalParam(paramname, chvalue) {
                     list_changes += 'Parameter "' + paramname + '" of object "' + (es[elems].pm.uid != null ? es[elems].pm.uid : es[elems]._class) + '" was set to "' + chvalue + '"<br>';
                     if(paramname == "uses_timer") { // I do not have to do this, but i will for convenience
                         if([true, "true"].indexOf(es[elems].pm.uses_timer) != -1) {
-                               param_type[REGION_EXECUTE_PARAM_ID][1] = "timer+none";
+                            param_type[REGION_EXECUTE_PARAM_ID][1] = "timer+none";
                         } else {
-                               param_type[REGION_EXECUTE_PARAM_ID][1] = "trigger+none";
+                            param_type[REGION_EXECUTE_PARAM_ID][1] = "trigger+none";
                         }
                         need_GUIParams_update = true;
                     }
@@ -1217,7 +1270,7 @@ function UpdatePhysicalParam(paramname, chvalue) {
     if (layer_mismatch) NewNote('Note: Some changes weren\'t made due to missmatch of active layer and class of selected objects', note_neutral);
     lfz(false);
 
-	sortObjects();
+    sortObjects();
 }
 
 let imageContextMap = {};
@@ -1949,7 +2002,7 @@ function getSelectionImage() {
         es.push(e);
     }
 
-    
+
 
     THEME = 4;
     GRID_ALPHA = 0;
@@ -2179,239 +2232,239 @@ function copyToPermanentClipboard() {
 }
 
 function changeTopRightText() {
-	let containerElem = document.getElementById("version_rights");
-	let elem = containerElem.childNodes[0];
+    let containerElem = document.getElementById("version_rights");
+    let elem = containerElem.childNodes[0];
 
-	containerElem.style.width = "170px";
-	elem.style.width = "160px";
+    containerElem.style.width = "170px";
+    elem.style.width = "160px";
 
-	elem.innerHTML = "Plazma Burst 2 Level Editor v1.4<br>ALE Improvements v" + GM_info.script.version;
+    elem.innerHTML = "Plazma Burst 2 Level Editor v1.4<br>ALE Improvements v" + GM_info.script.version;
 }
 
 function sortObjects() {
-	es.sort((a, b) => a.pm.__zIndex - b.pm.__zIndex);
+    es.sort((a, b) => a.pm.__zIndex - b.pm.__zIndex);
 }
 
 function addDecorButtons() {
-	let rparams = document.getElementById("rparams");
-	let selection = getSelection();
+    let rparams = document.getElementById("rparams");
+    let selection = getSelection();
 
-	if (rparams && selection.length == 1) {
-		let getImageSize_button = '<a onclick="getImageSize();" class="tool_btn tool_wid" style="display: block; width: 100%; margin-top: 4px;">Get image size</a>';
-		let centerDecorationX_button = '<a onclick="centerImageX();" class="tool_btn tool_wid" style="display: block; width: 100%; margin-top: 4px;">Center decoration X</a>';
-		let centerDecorationY_button = '<a onclick="centerImageY();" class="tool_btn tool_wid" style="display: block; width: 100%; margin-top: 4px;">Center decoration Y</a>';
+    if (rparams && selection.length == 1) {
+        let getImageSize_button = '<a onclick="getImageSize();" class="tool_btn tool_wid" style="display: block; width: 100%; margin-top: 4px;">Get image size</a>';
+        let centerDecorationX_button = '<a onclick="centerImageX();" class="tool_btn tool_wid" style="display: block; width: 100%; margin-top: 4px;">Center decoration X</a>';
+        let centerDecorationY_button = '<a onclick="centerImageY();" class="tool_btn tool_wid" style="display: block; width: 100%; margin-top: 4px;">Center decoration Y</a>';
 
-		if (selection[0]._class == "bg") {
-			rparams.innerHTML += getImageSize_button;
-		}
+        if (selection[0]._class == "bg") {
+            rparams.innerHTML += getImageSize_button;
+        }
 
-		if (selection[0]._class == "decor") {
-			rparams.innerHTML += getImageSize_button;
-			rparams.innerHTML += centerDecorationX_button;
-			rparams.innerHTML += centerDecorationY_button;
-		}
-	}
+        if (selection[0]._class == "decor") {
+            rparams.innerHTML += getImageSize_button;
+            rparams.innerHTML += centerDecorationX_button;
+            rparams.innerHTML += centerDecorationY_button;
+        }
+    }
 }
 
 function getImageSize() {
-	let selection = getSelection();
-	let id;
+    let selection = getSelection();
+    let id;
 
-	if (selection[0]._class == "bg") {
-		id = selection[0].pm.m;
-	}
+    if (selection[0]._class == "bg") {
+        id = selection[0].pm.m;
+    }
 
-	if (selection[0]._class == "decor") {
-		id = selection[0].pm.model;
-	}
+    if (selection[0]._class == "decor") {
+        id = selection[0].pm.model;
+    }
 
-	if (typeof id == "string") {
-		let img = document.createElement("img");
+    if (typeof id == "string") {
+        let img = document.createElement("img");
 
-		img.onload = function() {
-			let w = img.width;
-			let h = img.height;
+        img.onload = function() {
+            let w = img.width;
+            let h = img.height;
 
-			img.remove();
+            img.remove();
 
-			alert("W: " + w + "\nH: " + h);
-		}
+            alert("W: " + w + "\nH: " + h);
+        }
 
-		img.onerror = function() {
-			img.remove();
+        img.onerror = function() {
+            img.remove();
 
-			alert("Image not found.");
-		}
+            alert("Image not found.");
+        }
 
-		img.src = "https://www.plazmaburst2.com/mimage_cache.php?image_id=" + id.slice(1);
-	} else {
-		alert("Image not found.");
-	}
+        img.src = "https://www.plazmaburst2.com/mimage_cache.php?image_id=" + id.slice(1);
+    } else {
+        alert("Image not found.");
+    }
 }
 
 function getImageData() {
-	return new Promise((res, err) => {
-		let selection = getSelection();
-		let id;
+    return new Promise((res, err) => {
+        let selection = getSelection();
+        let id;
 
-		if (selection[0]._class == "bg") {
-			id = selection[0].pm.m;
-		}
+        if (selection[0]._class == "bg") {
+            id = selection[0].pm.m;
+        }
 
-		if (selection[0]._class == "decor") {
-			id = selection[0].pm.model;
-		}
+        if (selection[0]._class == "decor") {
+            id = selection[0].pm.model;
+        }
 
-		if (typeof id == "string") {
-			let img = document.createElement("img");
+        if (typeof id == "string") {
+            let img = document.createElement("img");
 
-			img.onload = function() {
-				let w = img.width;
-				let h = img.height;
+            img.onload = function() {
+                let w = img.width;
+                let h = img.height;
 
-				let canvas = document.createElement("canvas");
-				let ctx = canvas.getContext("2d");
+                let canvas = document.createElement("canvas");
+                let ctx = canvas.getContext("2d");
 
-				canvas.width = img.width;
-				canvas.height = img.height;
+                canvas.width = img.width;
+                canvas.height = img.height;
 
-				ctx.beginPath();
-				ctx.drawImage(img, 0, 0);
-				ctx.closePath();
+                ctx.beginPath();
+                ctx.drawImage(img, 0, 0);
+                ctx.closePath();
 
-				res([ctx.getImageData(0, 0, w, h).data, w]);
-			}
+                res([ctx.getImageData(0, 0, w, h).data, w]);
+            }
 
-			img.onerror = function() {
-				img.remove();
+            img.onerror = function() {
+                img.remove();
 
-				alert("Image not found.");
+                alert("Image not found.");
 
-				res(1);
-			}
+                res(1);
+            }
 
-			img.src = "https://www.plazmaburst2.com/mimage_cache.php?image_id=" + id.slice(1);
-		} else {
-			alert("Image not found.");
+            img.src = "https://www.plazmaburst2.com/mimage_cache.php?image_id=" + id.slice(1);
+        } else {
+            alert("Image not found.");
 
-			res(1);
-		}
-	});
+            res(1);
+        }
+    });
 }
 
 function arrMin(arr) {
-	let min = Infinity;
+    let min = Infinity;
 
-	for (let i = 0; i < arr.length; i++) {
-		if (arr[i] < min) {
-			min = arr[i];
-		}
-	}
+    for (let i = 0; i < arr.length; i++) {
+        if (arr[i] < min) {
+            min = arr[i];
+        }
+    }
 
-	return min;
+    return min;
 }
 
 function arrMax(arr) {
-	let max = -Infinity;
+    let max = -Infinity;
 
-	for (let i = 0; i < arr.length; i++) {
-		if (arr[i] > max) {
-			max = arr[i];
-		}
-	}
+    for (let i = 0; i < arr.length; i++) {
+        if (arr[i] > max) {
+            max = arr[i];
+        }
+    }
 
-	return max;
+    return max;
 }
 
 function getImagePosition(data, w) {
-	let arrX = [];
-	let arrY = [];
+    let arrX = [];
+    let arrY = [];
 
-	let minX;
-	let minY;
-	let maxX;
-	let maxY;
+    let minX;
+    let minY;
+    let maxX;
+    let maxY;
 
-	let centerX = 0;
-	let centerY = 0;
+    let centerX = 0;
+    let centerY = 0;
 
-	if (data != 1) {
-		for (let i = 0; i < data.length; i += 4) {
-			if (data[i + 3] >= 3) {
-				let x = (i / 4) % w;
-				let y = Math.floor(i / 4 / w);
+    if (data != 1) {
+        for (let i = 0; i < data.length; i += 4) {
+            if (data[i + 3] >= 3) {
+                let x = (i / 4) % w;
+                let y = Math.floor(i / 4 / w);
 
-				arrX.push(x);
-				arrY.push(y);
-			}
-		}
+                arrX.push(x);
+                arrY.push(y);
+            }
+        }
 
-		minX = arrMin(arrX);
-		minY = arrMin(arrY);
-		maxX = arrMax(arrX);
-		maxY = arrMax(arrY);
+        minX = arrMin(arrX);
+        minY = arrMin(arrY);
+        maxX = arrMax(arrX);
+        maxY = arrMax(arrY);
 
-		centerX = (minX + maxX) / 2;
-		centerY = (minY + maxY) / 2;
-	}
+        centerX = (minX + maxX) / 2;
+        centerY = (minY + maxY) / 2;
+    }
 
-	return {
-		x: centerX,
-		y: centerY
-	}
+    return {
+        x: centerX,
+        y: centerY
+    }
 }
 
 function setDecorOffset(x, y) {
-	let selection = getSelection();
+    let selection = getSelection();
 
-	selection[0].pm.u = x;
-	selection[0].pm.v = y;
+    selection[0].pm.u = x;
+    selection[0].pm.v = y;
 }
 
 function centerImageX() {
-	let selection = getSelection();
+    let selection = getSelection();
 
-	if (selection.length == 1) {
-		if (selection[0]._class == "decor") {
-			getImageData().then(res => {
-				if (res != 1) {
-					let center = getImagePosition(res[0], res[1]);
-					let x = center.x;
+    if (selection.length == 1) {
+        if (selection[0]._class == "decor") {
+            getImageData().then(res => {
+                if (res != 1) {
+                    let center = getImagePosition(res[0], res[1]);
+                    let x = center.x;
 
-					setDecorOffset(-x, selection[0].pm.v);
-				}
-			});
-		}
-	}
+                    setDecorOffset(-x, selection[0].pm.v);
+                }
+            });
+        }
+    }
 
-	need_redraw = 1;
-	need_GUIParams_update = 1;
+    need_redraw = 1;
+    need_GUIParams_update = 1;
 }
 
 function centerImageY() {
-	let selection = getSelection();
+    let selection = getSelection();
 
-	if (selection.length == 1) {
-		if (selection[0]._class == "decor") {
-			getImageData().then(res => {
-				if (res != 1) {
-					let center = getImagePosition(res[0], res[1]);
-					let y = center.y;
+    if (selection.length == 1) {
+        if (selection[0]._class == "decor") {
+            getImageData().then(res => {
+                if (res != 1) {
+                    let center = getImagePosition(res[0], res[1]);
+                    let y = center.y;
 
-					setDecorOffset(selection[0].pm.u, -y);
-				}
-			});
-		}
-	}
+                    setDecorOffset(selection[0].pm.u, -y);
+                }
+            });
+        }
+    }
 
-	need_redraw = 1;
-	need_GUIParams_update = 1;
+    need_redraw = 1;
+    need_GUIParams_update = 1;
 }
 
 function imageFunctions() {
-	window.getImageSize = getImageSize;
-	window.centerImageX = centerImageX;
-	window.centerImageY = centerImageY;
+    window.getImageSize = getImageSize;
+    window.centerImageX = centerImageX;
+    window.centerImageY = centerImageY;
 }
 
 let newUpdate = 0;
@@ -2599,23 +2652,23 @@ document.addEventListener("keydown", e => {
         copyToPermanentClipboard();
     }
 
-	if (e.ctrlKey && e.shiftKey) {
-		if (newUpdate) {
-			let wnd = new Object();
+    if (e.ctrlKey && e.shiftKey) {
+        if (newUpdate) {
+            let wnd = new Object();
 
-			window.onblur = function() {
-				setTimeout(() => {
-					wnd.close();
-				}, 1000);
-			}
+            window.onblur = function() {
+                setTimeout(() => {
+                    wnd.close();
+                }, 1000);
+            }
 
-			window.onfocus = function() {
-				location.reload();
-			}
+            window.onfocus = function() {
+                location.reload();
+            }
 
-			wnd = window.open("https://github.com/LisABC/ALEI/raw/main/alei.user.js");
-		}
-	}
+            wnd = window.open("https://github.com/LisABC/ALEI/raw/main/alei.user.js");
+        }
+    }
 });
 
 function doTooltip() {
@@ -2693,8 +2746,8 @@ function setParameter(index, value) {
     let rightParams = document.getElementById("rparams");
 
     if (index < rightParams.childNodes.length) {
-		rightParams.childNodes[index].childNodes[1].innerHTML = value;
-	}
+        rightParams.childNodes[index].childNodes[1].innerHTML = value;
+    }
 }
 
 function getSelection() {
@@ -2860,11 +2913,11 @@ function assignObjectIDs() {
 }
 
 function assignZIndex() {
-	for (let i = 0; i < es.length; i++) {
-		if (es[i].pm.__zIndex === undefined) {
-			es[i].pm.__zIndex = 1;
-		}
-	}
+    for (let i = 0; i < es.length; i++) {
+        if (es[i].pm.__zIndex === undefined) {
+            es[i].pm.__zIndex = 1;
+        }
+    }
 }
 
 function patchANI() {
@@ -2874,7 +2927,7 @@ function patchANI() {
         oldAni();
         if (ngpu) {
             assignObjectIDs();
-			assignZIndex();
+            assignZIndex();
             if (aleiSettings.showSameParameters) {
                 setSameParameters();;
             }
@@ -2929,8 +2982,8 @@ function patch_m_down() {
         og_mdown(e);
         if (es.length > previousEsLength) { // New element is made.
             assignObjectIDs();
-			assignZIndex();
-			sortObjects();
+            assignZIndex();
+            sortObjects();
             let element = es[es.length - 1];
             if (!("x" in element.pm)) return;
             // We now have to do job of fixPos, we cannot set fixPos to have it argument-based directly because of scoping
@@ -3124,8 +3177,8 @@ function ServerRequest_handleMapData(mapCode) {
             let rights = expression.split(";")[0].split(".innerHTML=")[1].slice(1, -1);
             maprights.value = rights;
             NewNote(`Map '${mapid}' has been successfully loaded.`, note_good);
-			assignZIndex();
-			sortObjects();
+            assignZIndex();
+            sortObjects();
             continue
         }
         // Actual mapdata.
@@ -3296,7 +3349,7 @@ function patchUpdateGUIParams() {
     let origUGP = _origUGP;
 
     window.UpdateGUIParams = function() {
-		let zIndexSave = [];
+        let zIndexSave = [];
 
         origUGP = _origUGP;
         window.GenParamVal = function(base, value) {
@@ -3310,13 +3363,13 @@ function patchUpdateGUIParams() {
         }
         let selected = getSelection();
         let shouldDisplayID = (selected.length == 1) && aleiSettings.showIDs;
-		let shouldDisplayZIndex = (selected.length >= 1) && aleiSettings.showZIndex;
+        let shouldDisplayZIndex = (selected.length >= 1) && aleiSettings.showZIndex;
 
-		for (let i = 0; i < selected.length; i++) {
-			if (selected[i]._class == "trigger") {
-				shouldDisplayZIndex = 0;
-			}
-		}
+        for (let i = 0; i < selected.length; i++) {
+            if (selected[i]._class == "trigger") {
+                shouldDisplayZIndex = 0;
+            }
+        }
 
         let startSeparatorFrom = 5;
 
@@ -3332,33 +3385,33 @@ function patchUpdateGUIParams() {
         eval(origUGP);
         origUGP = UpdateGUIParams;
 
-		if (!shouldDisplayZIndex) {
-			for (let i = 0; i < selected.length; i++) {
-				zIndexSave.push(selected[i].pm.__zIndex);
+        if (!shouldDisplayZIndex) {
+            for (let i = 0; i < selected.length; i++) {
+                zIndexSave.push(selected[i].pm.__zIndex);
 
-				delete selected[i].pm.__zIndex;
-			}
-		}
+                delete selected[i].pm.__zIndex;
+            }
+        }
 
         if((selected.length == 1) && (selected[0]._class == "region")) {
-             if([true, "true"].indexOf(selected[0].pm.uses_timer) != -1) {
-                 param_type[REGION_EXECUTE_PARAM_ID][1] = "timer+none";
-             } else {
-                 param_type[REGION_EXECUTE_PARAM_ID][1] = "trigger+none";
-             }
+            if([true, "true"].indexOf(selected[0].pm.uses_timer) != -1) {
+                param_type[REGION_EXECUTE_PARAM_ID][1] = "timer+none";
+            } else {
+                param_type[REGION_EXECUTE_PARAM_ID][1] = "trigger+none";
+            }
         }
 
         origUGP();
 
         if (shouldDisplayID) delete selected[0].pm.__id;
 
-		if (!shouldDisplayZIndex) {
-			for (let i = 0; i < selected.length; i++) {
-				selected[i].pm.__zIndex = zIndexSave.shift();
-			}
-		}
+        if (!shouldDisplayZIndex) {
+            for (let i = 0; i < selected.length; i++) {
+                selected[i].pm.__zIndex = zIndexSave.shift();
+            }
+        }
 
-		addDecorButtons();
+        addDecorButtons();
 
         window.GenParamVal = origGPV;
     }
@@ -3510,9 +3563,9 @@ function createALEISettingsMenu() {
     addText("Object IDs:")
     addBinaryOption("Show", "Hide", "ALEI_ShowIDs", "showIDs", "showids")
 
-	// Z-Index.
+    // Z-Index.
     registerButton("showzindex", [true, false], "showZIndex");
-    addText("Object z-index:")
+    addText("Object z-index:");
     addBinaryOption("Show", "Hide", "ALEI_ShowZIndex", "showZIndex", "showzindex")
 
     // Show same parameters.
@@ -3520,13 +3573,22 @@ function createALEISettingsMenu() {
     addText("Same Parameters:");
     addBinaryOption("Show", "Hide", "ALEI_ShowSameParameters", "showSameParameters", "sameparams");
 
+    // Black theme.
     registerButton("blackTheme", [true, false], "blackTheme");
-    addText("Black theme:", true)
+    addText("Black theme:", true);
     addBinaryOption("Yes", "No", "ALEI_BlackTheme", "blackTheme", "blackTheme");
 
+    // Change grid based on snapping
     registerButton("changeGridBasedOnSnapping", [true, false], "gridBasedOnSnapping");
-    addText("Grid by Snap:")
+    addText("Grid by Snap:");
     addBinaryOption("Yes", "No", "ALEI_gridBasedOnSnapping", "gridBasedOnSnapping", "changeGridBasedOnSnapping");
+
+    // Render object names?
+    /*registerButton("showObjectNames", [true, false], "renderObjectNames");
+    addText("Show object names: ");
+    addBinaryOption("Yes", "No", "ALEI_RenderObjectNames", "renderObjectNames", "showObjectNames");
+    */
+    // TODO: Add remap UID and show object names here.
     // TODO: Shorten those...
 
     window.ALEI_settingsMenu = mainWindow;
@@ -3662,7 +3724,7 @@ function patchSpecialValue() {
 }
 
 function notifyUpdate(version) {
-	newUpdate = 1;
+    newUpdate = 1;
 
     aleiLog(INFO, `New update: ${version}`);
     NewNote(`ALEI: There is new update: ${version}, you are currently in ${GM_info.script.version}<br>Press Ctrl + Shift to update`, "#FFFFFF");
@@ -4130,6 +4192,7 @@ let ALE_start = (async function() {
     VAL_TABLE = special_values_table;
     ROOT_ELEMENT = document.documentElement;
     stylesheets = document.styleSheets;
+    ALE_Render = Render;
     // Handling rest of things
     addPropertyPanelResize();
     addObjBoxResize();
@@ -4178,12 +4241,14 @@ let ALE_start = (async function() {
     registerClipboardItemAction();
     patchClipboardFunctions();
     patchDrawGrid();
-	imageFunctions();
+    imageFunctions();
 
     if(isNative) {
         checkForUpdates();
         changeTopRightText();
     }
+
+    ALEI_UpdateNameRenderSetting(aleiSettings.renderObjectName);
 
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, `Welcome!`);
