@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      12.4
+// @version      12.5
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -38,6 +38,7 @@ let ROOT_ELEMENT = document.documentElement;
 let stylesheets = document.styleSheets;
 let VAL_TABLE = {}; // Will be filled later.
 let displayOperationCompleteNotes = true;
+let REGION_EXECUTE_PARAM_ID; // Will be set later.
 
 const INFO = 0;
 const DEBUG = 1;
@@ -129,6 +130,20 @@ function updateParameters() {
     add("attach", "door+none", "Attach to", "water");
     // Patching parameters
     param_type[0] = ['uid', 'string', 'Name', 'Object Name', '*'];
+
+    // Setting global variables for future use
+    for(let i = 0; i < param_type.length; i++) {
+        let param = param_type[i];
+        let key = param[0];
+        let selector = param[4];
+
+        if((key == "use_target") && (selector == "region")) {
+            REGION_EXECUTE_PARAM_ID = i;
+        }
+    }
+    VAL_TABLE["timer+none"] = new Array();
+    VAL_TABLE["timer+none"][-1] = "- No timer -";
+    VAL_TABLE["timer+none"]["[listof]"] = "timer"; // Somebody save me.
 }
 
 function updateSounds() {
@@ -1188,6 +1203,14 @@ function UpdatePhysicalParam(paramname, chvalue) {
                         alert('Unknown value type: ' + typeof(chvalue));
                     }
                     list_changes += 'Parameter "' + paramname + '" of object "' + (es[elems].pm.uid != null ? es[elems].pm.uid : es[elems]._class) + '" was set to "' + chvalue + '"<br>';
+                    if(paramname == "uses_timer") { // I do not have to do this, but i will for convenience
+                        if([true, "true"].indexOf(es[elems].pm.uses_timer) != -1) {
+                               param_type[REGION_EXECUTE_PARAM_ID][1] = "timer+none";
+                        } else {
+                               param_type[REGION_EXECUTE_PARAM_ID][1] = "trigger+none";
+                        }
+                        need_GUIParams_update = true;
+                    }
                 } else layer_mismatch = true;
             } need_redraw = true;
     NewNote('Operation complete:<br><br>' + list_changes, note_passive);
@@ -3295,15 +3318,19 @@ function patchUpdateGUIParams() {
 			}
 		}
 
+        let startSeparatorFrom = 5;
+
         if (shouldDisplayID) {
+            startSeparatorFrom = 6;
             let entries = Object.entries(selected[0].pm);
-			origUGP = origUGP.toString();
-            origUGP = origUGP.replace("if ( i >= 4 && (i-4) % 3 == 0 ) {", "if (i >= 6 && (i - 6) % 3 == 0) {");
-            eval(origUGP);
-            origUGP = UpdateGUIParams;
             entries.splice(0, 0, ["__id",  selected[0].aleiID ]);
             selected[0].pm = Object.fromEntries(entries);
         }
+
+        origUGP = origUGP.toString();
+        origUGP = origUGP.replace("if ( i >= 4 && (i-4) % 3 == 0 ) {", `if (i >= ${startSeparatorFrom} && (i - ${startSeparatorFrom}) % 3 == 0) {`);
+        eval(origUGP);
+        origUGP = UpdateGUIParams;
 
 		if (!shouldDisplayZIndex) {
 			for (let i = 0; i < selected.length; i++) {
@@ -3312,6 +3339,14 @@ function patchUpdateGUIParams() {
 				delete selected[i].pm.__zIndex;
 			}
 		}
+
+        if((selected.length == 1) && (selected[0]._class == "region")) {
+             if([true, "true"].indexOf(selected[0].pm.uses_timer) != -1) {
+                 param_type[REGION_EXECUTE_PARAM_ID][1] = "timer+none";
+             } else {
+                 param_type[REGION_EXECUTE_PARAM_ID][1] = "trigger+none";
+             }
+        }
 
         origUGP();
 
@@ -3615,7 +3650,13 @@ function patchSpecialValue() {
             let returning = VAL_TABLE[base][value];
             if (returning === undefined) return ERROR_VALUE;
             else return returning;
-        } else return _OG(base, value);
+        } else if(base == "trigger+none") { // I actually do not have to do this, but i will do it to get rid of annoyance
+            if(value == -1) return VAL_TABLE["trigger+none"][-1];
+            return special_value("trigger", value);
+        }else if(base == "timer+none") {
+            if(value == -1) return VAL_TABLE["timer+none"][-1];
+            return special_value("timer", value);
+        }else return _OG(base, value);
     }
     aleiLog(DEBUG, "Patched SpecialValue");
 }
