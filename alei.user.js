@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      12.6
+// @version      12.7
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -986,8 +986,9 @@ function addSnappingOptions_helper() {
 }
 
 window.ALEI_UpdateRematchUIDSetting = function(value) {
+
     aleiSettings.rematchUID = value;
-    writeStorage("ALEI_RemapUID", value + 0);
+    writeStorage("ALEI_RemapUID", value);
     UpdateTools();
 }
 
@@ -1020,11 +1021,11 @@ window.ALEI_UpdateNameRenderSetting = function(status) { // TODO: we should have
         eval(code);
         window.Render = Render;
         aleiSettings.renderObjectNames = false;
-        writeStorage("ALEI_RenderObjectNames", "false");
+        writeStorage("ALEI_RenderObjectNames", false);
     } else {
         window.Render = ALE_Render;
         aleiSettings.renderObjectNames = true;
-        writeStorage("ALEI_RenderObjectNames", "true");
+        writeStorage("ALEI_RenderObjectNames", true);
     }
     UpdateTools();
     need_redraw = 1;
@@ -3515,13 +3516,13 @@ function createALEISettingsMenu() {
 
         box.innerHTML += button.outerHTML;
     }
-    function addBinaryOption(truthyVal, falsyVal, storage, key, internalName) {
+    function addBinaryOption(truthyVal, falsyVal, storage, key, internalName, callback = () => {}) {
         function _apply(val) {
             writeStorage(storage, val);
             aleiSettings[key] = val;
         }
-        addButton(truthyVal, `${internalName}_true`, () => _apply(true));
-        addButton(falsyVal, `${internalName}_false`, () => _apply(false));
+        addButton(truthyVal, `${internalName}_true`, () => {_apply(true); callback(true)});
+        addButton(falsyVal, `${internalName}_false`, () => {_apply(false); callback(false)});
     }
 
     // Log level.
@@ -3583,12 +3584,15 @@ function createALEISettingsMenu() {
     addText("Grid by Snap:");
     addBinaryOption("Yes", "No", "ALEI_gridBasedOnSnapping", "gridBasedOnSnapping", "changeGridBasedOnSnapping");
 
-    // Render object names?
-    /*registerButton("showObjectNames", [true, false], "renderObjectNames");
+    // Render object names
+    registerButton("showObjectNames", [true, false], "renderObjectNames");
     addText("Show object names: ");
-    addBinaryOption("Yes", "No", "ALEI_RenderObjectNames", "renderObjectNames", "showObjectNames");
-    */
-    // TODO: Add remap UID and show object names here.
+    addBinaryOption("Yes", "No", "ALEI_RenderObjectNames", "renderObjectNames", "showObjectNames", (status) => ALEI_UpdateNameRenderSetting(status));
+
+    // Remap UID
+    registerButton("remapUID", [true, false], "rematchUID");
+    addText("Remap UID: ");
+    addBinaryOption("Enabled", "Disabled", "ALEI_RemapUID", "rematchUID", "remapUID", (status) => ALEI_UpdateRematchUIDSetting(status));
     // TODO: Shorten those...
 
     window.ALEI_settingsMenu = mainWindow;
@@ -4248,7 +4252,8 @@ let ALE_start = (async function() {
         changeTopRightText();
     }
 
-    ALEI_UpdateNameRenderSetting(aleiSettings.renderObjectName);
+    aleiLog(DEBUG2, "Settings: " + JSON.stringify(aleiSettings));
+    if(aleiSettings.renderObjectName == false) ALEI_UpdateNameRenderSetting(false);
 
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, `Welcome!`);
