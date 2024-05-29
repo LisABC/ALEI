@@ -50,6 +50,7 @@ This part includes changes to adds new things to ALE.
 - Quick update to new ALEI version
 - Get image size
 - Center decoration X, Y
+- Opt-in object name hiding
 
 # Fixes
 This part includes changes that are meant to fix issues (It doesn't have to be code issue, it can be any issue, ambiguity issues, etc.)
