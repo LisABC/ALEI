@@ -17,9 +17,11 @@ Easiest way to install ALEI is to use it inside Tampermonkey. You can download T
 **NOTE:** Tampermonkey is the only natively supported userscript manager, you might have issues if you use others (Such as GreaseMonkey).
 
 # Thanks to
-- Noname/User475186 (Current maintainer)
-- Lisa/LisABC (Repository owner)
+- Lisa/LisABC (Repository Collaborator)
+- Noname/User475186 (Repository Collaborator)
 - Prosu/pr0suWANTED (Repository Collaborator)
+- Nyove/Nyoveee (Repository Collaborator)
+- PB Dman/gh-dman (Repository Collaborator)
 - Longbow/BlueBolt5000 (Contributor)
 - TNT69/AloneGuitar (Contributor)
 - Xeden
