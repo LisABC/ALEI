@@ -1,0 +1,23 @@
+{
+  "name": "alei",
+  "version": "12.8",
+  "description": "Changes to make ALE better.",
+  "main": "src/main.js",
+  "author": "mici1234, wanted2001, gcp5o",
+  "license": "",
+  "keywords": [],
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LisABC/ALEI"
+  },
+  "scripts": {
+    "build": "webpack"
+  },
+  "devDependencies": {
+    "@types/tampermonkey": "^5.0.3",
+    "webpack": "^5.92.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-userscript": "^3.2.2"
+  }
+}

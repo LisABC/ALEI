@@ -1,0 +1,16 @@
+{
+    "name": "ALE Improvements",
+    "version": "12.8",
+    "description": "Changes to make ALE better.",
+    "author": "mici1234, wanted2001, gcp5o",
+    "match": ["*://www.plazmaburst2.com/level_editor/map_edit.php*"],
+    "run-at": "document-start",
+    "icon": "https://github.com/LisABC/ALEI/blob/main/icon.png?raw=true",
+    "updateURL": "https://github.com/LisABC/ALEI/raw/main/alei.user.js",
+    "downloadURL": "https://github.com/LisABC/ALEI/raw/main/alei.user.js",
+    "connect": [
+        "github.com",
+        "githubusercontent.com"
+    ],
+    "grant": ["GM.xmlHttpRequest"]
+}
