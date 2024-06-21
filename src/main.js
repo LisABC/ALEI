@@ -6,10 +6,11 @@ try {
     GM_info
     isNative = true
     window["nativeALEIRunning"] = true;
-} catch (e) {isNative = false};
+} catch {isNative = false};
 
 if(!isNative && (window["nativeALEIRunning"] == true)) {
     // An ALEI instance is already running, probably ran under tampermonkey so let that run.
+    // eslint-disable-next-line
     Hello_IgnoreThisError_ItIsIntentional // hope this is not defined
 }
 
@@ -1266,6 +1267,8 @@ function UpdatePhysicalParam(paramname, chvalue) {
 }
 
 let imageContextMap = {};
+let last_element;
+let last_login;
 window.aleiContextRenameImage = function(id) {
     var v = prompt('New name:', imageContextMap[id]);
     CloseImageContext();
@@ -1404,7 +1407,7 @@ function RandomizeName(oldname) {
     var newname = oldname;
     var phrase = "*";
     var unoriginal;
-    for (var i = 0; i < es.length; i++)
+    for (let i = 0; i < es.length; i++)
         if (es[i].exists)
             if (es[i].pm.uid != undefined) {
                 if (es[i].pm.uid == newname) {
@@ -1424,7 +1427,7 @@ function RandomizeName(oldname) {
                 newname = oldname.substring(0, indof) + phrase + (copysuffix + 1);
             }
             takes += 1;
-            for (var i = 0; i < es.length; i++)
+            for (let i = 0; i < es.length; i++)
                 if (es[i].exists)
                     if (es[i].pm.uid != undefined) {
                         if (es[i].pm.uid == newname) {
@@ -2254,6 +2257,8 @@ document.addEventListener("keydown", e => {
                 h = 0;
             }
 
+            // i is undefined and i'm pretty sure it's not supposed to be like that. so this definitely doesn't work how it should.
+            // i'll just leave it cuz idk how it's supposed to be and it doesn't throw an error because of some implicit globals from vanilla ale
             let parsed = alescriptParse(targetElement.value, [x, y, w, h, i]);
 
             if (typeof parsed == "number") {
@@ -2648,7 +2653,7 @@ function PasteFromClipBoard(ClipName) {
     }
     clipboard = unserialize(sessionStorage[ClipName]);
     lcz();
-    for (var i = 0; i < es.length; i++)
+    for (let i = 0; i < es.length; i++)
         if (es[i].exists) {
             if (es[i].selected) {
                 ldn('es[' + i + '].selected=false;');
@@ -2659,14 +2664,14 @@ function PasteFromClipBoard(ClipName) {
     var max_x = 0;
     var min_y = 0;
     var max_y = 0;
-    i = 0;
+    let i = 0;
     var from_obj = es.length;
     while (typeof(clipboard[i]) !== 'undefined') {
         var newparam = es.length;
         ldn('es[' + newparam + '].exists=true;');
         lnd('es[' + newparam + '].exists=false;');
         es[newparam] = new E(clipboard[i]._class);
-        for (param in clipboard[i]) {
+        for (let param in clipboard[i]) {
             es[newparam][param] = clipboard[i][param];
         }
         if (typeof(es[newparam].pm.x) !== 'undefined')
@@ -2713,8 +2718,8 @@ function PasteFromClipBoard(ClipName) {
 
     m_drag_x = mouse_x;
     m_drag_y = mouse_y;
-    m_down_x = m_pos_x;
-    m_down_y = m_pos_y;
+    let m_down_x = m_pos_x;
+    let m_down_y = m_pos_y;
     var x1 = Math.round((m_pos_x) / GRID_SNAPPING) * GRID_SNAPPING;
     var y1 = Math.round((m_pos_y) / GRID_SNAPPING) * GRID_SNAPPING;
     var lo_x = Math.round((x1 - (min_x + max_x) / 2) / GRID_SNAPPING) * GRID_SNAPPING;
@@ -2727,7 +2732,7 @@ function PasteFromClipBoard(ClipName) {
             es[i2].pm.uid = RandomizeName(es[i2].pm.uid);
             es[i2].exists = true;
             for (var i3 = from_obj; i3 < es.length; i3++) {
-                for (param in es[i3].pm) {
+                for (let param in es[i3].pm) {
                     if (typeof(es[i3].pm[param]) == 'string') {
                         if (es[i3].pm[param] == old_uid) {
                             es[i3].pm[param] = es[i2].pm.uid;
@@ -2750,7 +2755,7 @@ function PasteFromClipBoard(ClipName) {
     // Again by Prosu
     x1 = Math.round((m_pos_x - m_down_x) / GRID_SNAPPING) * GRID_SNAPPING;
     y1 = Math.round((m_pos_y - m_down_y) / GRID_SNAPPING) * GRID_SNAPPING;
-    for (var i = 0; i < es.length; i++) {
+    for (let i = 0; i < es.length; i++) {
         if (es[i]._isphysical && es[i].exists && es[i].selected && (MatchLayer(es[i]) || paint_draw_mode)) {
             es[i].pm.x += x1;
             es[i].pm.y += y1;
@@ -3331,7 +3336,7 @@ function addProjectileModels() {
         55: "https://static.miraheze.org/plazmaburstwiki/d/d1/Lazer_55.png"
     };
     for (let i = 1; i < 56; i++) {
-        projectileModels[i] = `<img src=\'${projectileModels[i]}\' style=\'width: 60px; height: 20px\'/>`;
+        projectileModels[i] = `<img src='${projectileModels[i]}' style='width: 60px; height: 20px'/>`;
     }
     aleiLog(DEBUG, "Loaded projectile models.");
 }
@@ -3396,13 +3401,13 @@ async function checkForUpdates() {
 
 function ALEI_DoWorldScale() {
     var newscale = prompt('Multiply selection size by % (percents)', 100);
-    if (newscale == null || newscale == 100) {} else {
+    if (!(newscale == null || newscale == 100)) {
         var factor = Math.floor(newscale) / 100;
         {
             let snappingScript = `/GRID_SNAPPING)*GRID_SNAPPING;`
             var roundwell = true;
             lcz();
-            for (i = 0; i < es.length; i++)
+            for (let i = 0; i < es.length; i++)
                 if (es[i].exists)
                     if (es[i].selected)
                         if (MatchLayer(es[i])) {
