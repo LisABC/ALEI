@@ -5000,7 +5000,7 @@ function extendTriggerList() {
         }
 
         // Convert it back to a normal trigger if it doesnt have more than 10 actions
-        if(new_trigger_actions.length <= 10){
+        if(new_trigger_actions.length <= 10 && selectedTrigger.pm["extended"]){
             addTriggerActionCount(-selectedTrigger.pm["totalNumOfActions"]);
         }
         else{
@@ -5020,6 +5020,7 @@ function extendTriggerList() {
             UpdatePhysicalParam(direct_update_params[i], direct_update_values[i], false);
         }
 
+        NewNote("Trigger updated successfully.", note_good);
         return true;
     }
 
