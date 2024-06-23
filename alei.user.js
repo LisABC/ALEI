@@ -4773,7 +4773,7 @@ function extendTriggerList() {
      *  [FROM]                       |    [TO]
      *  trigger*1                    |    trigger*1                             trigger*3                             trigger*3
      *  extended:           true     |    extended:           true              *deleted*                             *deleted*
-     *  totalNumOfActions:  25       |    *deleted*                             *deleted*                             *deleted*  
+     *  totalNumOfActions:  25       |    totalNumOfActions:  25                *deleted*                             *deleted*  
      *  additionalActions:  [..]     |    *deleted*                             *deleted*                             *deleted*
      *  additionalParamA:   [..]     |    *deleted*                             *deleted*                             *deleted*
      *  additionalParamB:   [..]     |    *deleted*                             *deleted*                             *deleted*
@@ -4796,7 +4796,6 @@ function extendTriggerList() {
         let allAdditionalActions = new Array();
         let allAdditionalParamA = new Array();
         let allAdditionalParamB = new Array();
-        let allTotalNumOfActions = new Array();
 
         // For every extended trigger..
         for(const entity of es){
@@ -4856,12 +4855,10 @@ function extendTriggerList() {
             allAdditionalActions.push(JSON.parse(JSON.stringify(entity.pm["additionalActions"])));
             allAdditionalParamA.push(JSON.parse(JSON.stringify(entity.pm["additionalParamA"])));
             allAdditionalParamB.push(JSON.parse(JSON.stringify(entity.pm["additionalParamB"])));
-            allTotalNumOfActions.push(entity.pm["totalNumOfActions"]);
 
             delete entity.pm["additionalActions"];
             delete entity.pm["additionalParamA"];
             delete entity.pm["additionalParamB"];
-            delete entity.pm["totalNumOfActions"];
         }
     
         // Save this map!
@@ -4879,7 +4876,6 @@ function extendTriggerList() {
             entity.pm["additionalActions"] = allAdditionalActions[index];
             entity.pm["additionalParamA"] = allAdditionalParamA[index];
             entity.pm["additionalParamB"] = allAdditionalParamB[index];
-            entity.pm["totalNumOfActions"] = allTotalNumOfActions[index];
 
             // Restore the 10th trigger action from arrays
             entity.pm[`actions_10_type`]    = entity.pm["additionalActions"].shift();
@@ -5053,6 +5049,8 @@ function parseExtendedTriggers(){
         if(entity._class !== "trigger") continue;
         if(!entity.pm["extended"])      continue;
     
+        let previousTotalNumOfActions = entity.pm["totalNumOfActions"];
+
         // Create extended trigger's additional properties.
         entity.pm["totalNumOfActions"] = 9;
         entity.pm["additionalActions"] = new Array();
@@ -5083,7 +5081,7 @@ function parseExtendedTriggers(){
             }
 
             entity.pm["totalNumOfActions"] += 9;
-
+            
             // Remove those auto generated triggers
             es.splice(nextTriggerIndex, 1);
 
@@ -5096,6 +5094,28 @@ function parseExtendedTriggers(){
             if(iterationCount > maxIteration){
                 aleiLog(note_bad, "When parsing extended triggers, potentially reached an infinite loop.");
                 break;
+            }
+        }
+
+        // Shrink extended trigger to previously saved size if the last few trigger actions is empty.
+        if(previousTotalNumOfActions){
+            const doNothingTriggerAction = -1;
+            let isAllEmpty = true;
+
+            for(let i = previousTotalNumOfActions + 1; i < entity.pm["totalNumOfActions"]; i++){
+                if(entity.pm["additionalActions"][i - 11] != doNothingTriggerAction){
+                    isAllEmpty = false;
+                    break;
+                }
+            }
+
+            // Shrink the trigger action.
+            if(isAllEmpty){
+                let difference = entity.pm["totalNumOfActions"] - previousTotalNumOfActions;
+                entity.pm["additionalActions"].length -= difference;
+                entity.pm["additionalParamA"].length -= difference;
+                entity.pm["additionalParamB"].length -= difference;
+                entity.pm["totalNumOfActions"] = previousTotalNumOfActions;
             }
         }
     }
