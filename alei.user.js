@@ -2980,7 +2980,7 @@ function fixIndex(index, objectType) {
 
     if (objectType == "trigger") {
         let separator = Trigger_getSeparatorStart(getSelection().length);
-        if(index > separator) fixedIndex = index + Math.floor((index - 3)/3);
+        if(index > separator) fixedIndex = index + Math.floor((index - separator - 1)/3 + 1);
     }
     return fixedIndex;
 }
@@ -5189,7 +5189,7 @@ let ALE_start = (async function() {
     addFunctionToWindow();
 
     if(isNative) {
-        checkForUpdates();
+        //checkForUpdates();
         changeTopRightText();
     } else {
         // load this map twice to parse extended triggers.
