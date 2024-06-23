@@ -2980,7 +2980,7 @@ function fixIndex(index, objectType) {
 
     if (objectType == "trigger") {
         let separator = Trigger_getSeparatorStart(getSelection().length);
-        fixedIndex = index + Math.floor((index - 3)/3);
+        if(index > separator) fixedIndex = index + Math.floor((index - 3)/3);
     }
     return fixedIndex;
 }
