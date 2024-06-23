@@ -5039,7 +5039,6 @@ function extendTriggerList() {
  *  It looks for potential triggers configured in a linked list manner and converts it to an extended trigger.
  */
 function parseExtendedTriggers(){
-    let iterationCount = 1;
     const maxIteration = 1000;
     const switchExecutionAction = 363;
 
@@ -5049,6 +5048,7 @@ function parseExtendedTriggers(){
         if(entity._class !== "trigger") continue;
         if(!entity.pm["extended"])      continue;
     
+        let iterationCount = 1; 
         let previousTotalNumOfActions = entity.pm["totalNumOfActions"];
 
         // Create extended trigger's additional properties.
