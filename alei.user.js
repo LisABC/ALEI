@@ -2979,11 +2979,9 @@ function fixIndex(index, objectType) {
     let fixedIndex = index;
 
     if (objectType == "trigger") {
-        if (index > 4) {
-            fixedIndex = index + Math.floor((index - 2) / 3);
-        }
+        let separator = Trigger_getSeparatorStart(getSelection().length);
+        fixedIndex = index + Math.floor((index - 3)/3);
     }
-
     return fixedIndex;
 }
 
@@ -4351,6 +4349,20 @@ function patchNewNote() {
 }
 
 /**
+ * Trigger_getSeparatorStart(selectionCount) gives number which determines where does trigger's separator line starts from.
+ * This is used for fixIndex and PatchGUIParams;
+*/
+function Trigger_getSeparatorStart(selectionCount) {
+    let shouldDisplayID = (selectionCount == 1) && aleiSettings.showIDs;
+    let startSeparatorFrom = 5; // Name + X + Y + Max Calls + Enabled + Executes Directly
+
+    if (shouldDisplayID) { // + ID
+         startSeparatorFrom = 6;
+    }
+    return startSeparatorFrom;
+}
+
+/**
  *  extendTriggerList() is responsible for patching many of the original functions to support the 
  *  implementation of extended triggers.
  * 
@@ -4424,12 +4436,7 @@ function extendTriggerList() {
         var param_associated = new Array();
 
         // Code to change the starting point of the gap between trigger actions.
-        let shouldDisplayID = (selects == 1) && aleiSettings.showIDs;
-        let startSeparatorFrom = 5;
-        
-        if (shouldDisplayID) {
-            startSeparatorFrom = 6;
-        }
+        let startSeparatorFrom = Trigger_getSeparatorStart(selects);
 
         for (var i = 0; i < es.length; i++) {
             if (!es[i].exists) continue;
@@ -5182,7 +5189,7 @@ let ALE_start = (async function() {
     addFunctionToWindow();
 
     if(isNative) {
-        checkForUpdates();
+        //checkForUpdates();
         changeTopRightText();
     } else {
         // load this map twice to parse extended triggers.
