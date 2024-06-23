@@ -4245,7 +4245,7 @@ function unselectTriggerActions() {
     updateTriggerActionElements();
 }
 
-function triggerActionsPreventError() {
+window.triggerActionsPreventError = () => {
     selectedTriggerActions = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     hoveredTriggerAction = -1;
     UpdateGUIParams();
