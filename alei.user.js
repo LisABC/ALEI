@@ -5189,7 +5189,7 @@ let ALE_start = (async function() {
     addFunctionToWindow();
 
     if(isNative) {
-        //checkForUpdates();
+        checkForUpdates();
         changeTopRightText();
     } else {
         // load this map twice to parse extended triggers.
