@@ -4897,6 +4897,7 @@ function extendTriggerList() {
     }
 
     function CompileTrigger() {
+        const skipTriggerActions = [123, 361, 364, 365];
         const selection = getSelection();
 
         if(selection.length != 1){
@@ -4973,8 +4974,15 @@ function extendTriggerList() {
             }
         }
 
+        let hasEncounteredSkipTrigger = false;
         // Retrieve all the trigger action.
         for (let i = 0; i < new_trigger_actions.length; i++) {
+            // A skip trigger action for every 9th trigger action. Add a do nothing trigger action.
+            if((i + 1) % 9 === 0 && skipTriggerActions.includes(new_trigger_actions[i][0])){
+                new_trigger_actions.splice(i, 0, [-1, 0, 0]);
+                hasEncounteredSkipTrigger = true;
+            }
+
             ScheduleParamSet('actions_' + (i + 1) + '_type', new_trigger_actions[i][0]);
             ScheduleParamSet('actions_' + (i + 1) + '_targetA', new_trigger_actions[i][1]);
             ScheduleParamSet('actions_' + (i + 1) + '_targetB', new_trigger_actions[i][2]);  
@@ -4985,6 +4993,10 @@ function extendTriggerList() {
             ScheduleParamSet('actions_' + i + '_type', -1);
             ScheduleParamSet('actions_' + i + '_targetA', 0);
             ScheduleParamSet('actions_' + i + '_targetB', 0);
+        }
+
+        if(hasEncounteredSkipTrigger){
+            NewNote("Skip trigger actions encountered in every 9th trigger action. Inserted an 'Do Nothing' trigger action.", note_neutral);
         }
 
         // Convert it back to a normal trigger if it doesnt have more than 10 actions
