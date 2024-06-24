@@ -13,6 +13,8 @@
 // @grant        GM.xmlHttpRequest
 // ==/UserScript==
 
+"use strict";
+
 let window = unsafeWindow;
 let isNative;
 try {
