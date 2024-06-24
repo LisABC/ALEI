@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      13.0
+// @version      13.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -3265,7 +3265,7 @@ function PasteFromClipBoard(ClipName) {
             es[i2].pm.uid = RandomizeName(es[i2].pm.uid);
             es[i2].exists = true;
             for (var i3 = from_obj; i3 < es.length; i3++) {
-                for (param in es[i3].pm) {
+                for (let param in es[i3].pm) {
                     if (typeof(es[i3].pm[param]) == 'string') {
                         if (es[i3].pm[param] == old_uid) {
                             es[i3].pm[param] = es[i2].pm.uid;
