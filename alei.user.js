@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      12.9
+// @version      13.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -3204,7 +3204,7 @@ function PasteFromClipBoard(ClipName) {
         ldn('es[' + newparam + '].exists=true;');
         lnd('es[' + newparam + '].exists=false;');
         es[newparam] = new E(clipboard[i]._class);
-        for (param in clipboard[i]) {
+        for (let param in clipboard[i]) {
             es[newparam][param] = clipboard[i][param];
         }
         if (typeof(es[newparam].pm.x) !== 'undefined')
@@ -3251,8 +3251,8 @@ function PasteFromClipBoard(ClipName) {
 
     m_drag_x = mouse_x;
     m_drag_y = mouse_y;
-    m_down_x = m_pos_x;
-    m_down_y = m_pos_y;
+    let  m_down_x = m_pos_x;
+    let m_down_y = m_pos_y;
     var x1 = Math.round((m_pos_x) / GRID_SNAPPING) * GRID_SNAPPING;
     var y1 = Math.round((m_pos_y) / GRID_SNAPPING) * GRID_SNAPPING;
     var lo_x = Math.round((x1 - (min_x + max_x) / 2) / GRID_SNAPPING) * GRID_SNAPPING;
@@ -4577,7 +4577,7 @@ function extendTriggerList() {
 
             // Display additional trigger actions for extended triggers.
             if (selects == 1 && first_selected_object._class == 'trigger' && first_selected_object.pm["extended"]) {
-                selectingAExtendedTrigger = true;
+                //selectingAExtendedTrigger = true;
                 for(let i = 10; i < first_selected_object.pm["totalNumOfActions"]; ++i){
                     let triggerAction = first_selected_object.pm["additionalActions"][i - 10] === undefined ? -1 : first_selected_object.pm["additionalActions"][i - 10];
                     let paramA        = first_selected_object.pm["additionalParamA"][i - 10]  === undefined ? 0  : first_selected_object.pm["additionalParamA"][i - 10];
