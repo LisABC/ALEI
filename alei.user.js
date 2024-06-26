@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      13.2
+// @version      13.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -132,7 +132,7 @@ function updateParameters() {
     add("uses_timer", "bool", "Calls timer?", "region");
     add("text", "string", "Placeholder text", "decor");
     add("attach", "door+none", "Attach to", "water");
-    
+
     // add("extended", "bool", "Extended?", "trigger");
     // add("totalNumOfActions", "value", "Total No. Of Actions: ", "trigger");
     // add("nextTrigger", "trigger+none", "Next trigger", "trigger");
@@ -1023,20 +1023,13 @@ function addRematchUIOptions_helper() {
 }
 
 window.ALEI_UpdateNameRenderSetting = function(status) { // TODO: we should have mixin function lol, check: <#1245454955477729382>
-    if(!status) {
-        let code = ALE_Render.toString().replace("if (es[i].pm.uid != undefined)", "if (false)");
-        eval(code);
-        window.Render = Render;
-        aleiSettings.renderObjectNames = false;
-        writeStorage("ALEI_RenderObjectNames", false);
-    } else {
-        window.Render = ALE_Render;
-        aleiSettings.renderObjectNames = true;
-        writeStorage("ALEI_RenderObjectNames", true);
-    }
+    window.ENABLE_TEXT = status;
+    aleiSettings.renderObjectNames = status;
+    writeStorage("ALEI_RenderObjectNames", status);
     UpdateTools();
     need_redraw = 1;
 }
+
 function addPreviewNamesOptions_helper() {
     let prevElement = $query(`a[onmousedown="ShowTexturesSet(true);"]`);
 
@@ -1242,7 +1235,7 @@ function updateUIDReferences(oldName, newName) {
 /**
  *  This function updates the actual entity class's pm property based on selection.
  *  This function is invoked from setletedit().
- * 
+ *
  *  @param {*}          paramname            Property to update   Eg: actions_1_type
  *  @param {*}          chvalue              Value to update with Eg: 0
  *  @param {boolean}    toShowNote           Default parameter (true). Indicates whether to show confirmation note.
@@ -1256,7 +1249,7 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
     // Finds selection.
     for (var elems = 0; elems < es.length; elems++) {
         if (!es[elems].exists)                                                    continue;
-        if (!es[elems].selected)                                                  continue; 
+        if (!es[elems].selected)                                                  continue;
         if (!es[elems].pm.hasOwnProperty(paramname) && !es[elems].pm["extended"]) continue;
         if (!MatchLayer(es[elems])) {
             layer_mismatch = true;
@@ -1298,7 +1291,7 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
                 aleiLog(WARN, "Something went wrong with regex. " + match[2]);
                 return;
             }
-            
+
             lnd(`es["${elems}"].pm["${propertyName}"][${index}] = ${es[elems].pm[propertyName][index]};`);
             ldn(`es["${elems}"].pm["${propertyName}"][${index}] = ${chvalue};`);
 
@@ -1315,8 +1308,8 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
         }
 
         list_changes += 'Parameter "' + paramname + '" of object "' + (es[elems].pm.uid != null ? es[elems].pm.uid : es[elems]._class) + '" was set to "' + chvalue + '"<br>';
-    } 
-    
+    }
+
     need_redraw = true;
 
     if(toShowNote) {
@@ -2303,7 +2296,7 @@ function sortObjects() {
     es.sort((a, b) => a.pm.__zIndex - b.pm.__zIndex);
 }
 
-// Adds additional button 
+// Adds additional button
 function addAdditionalButtons() {
     const rparams = document.getElementById("rparams");
     const selection = getSelection();
@@ -2348,7 +2341,7 @@ function addAdditionalButtons() {
         `;
         rparams.innerHTML += extendTriggerAction_button;
 
-        // Update GUI to change parameter type based on trigger action. 
+        // Update GUI to change parameter type based on trigger action.
         StreetMagic();
     }
 }
@@ -2356,7 +2349,7 @@ function addAdditionalButtons() {
 /**
  * This function is invoked whenever users pressed the "Extend trigger action list." or the "Shrink trigger action list" buttons.
  * This function is responsible for creating and maintaining extended triggers.
- * 
+ *
  * @param {Number} value    The amount of trigger actions to add or subtract from the currently selected trigger,
  */
 function addTriggerActionCount(value){
@@ -3448,7 +3441,7 @@ async function ALEI_ServerRequest(request, operation, callback = null) {
         else if (operation == 'load') NewNote('Oops! Error occoured durning loading. Usually it may be happening due to connection problems.', note_bad)
         return;
     }
-        
+
     try {
         handleServerRequestResponse(request, operation, response.response);
         if (request.indexOf("a=get_images") != -1 && request.indexOf("for_class=decor_model") != -1) {
@@ -4359,19 +4352,19 @@ function Trigger_getSeparatorStart(selectionCount) {
 }
 
 /**
- *  extendTriggerList() is responsible for patching many of the original functions to support the 
+ *  extendTriggerList() is responsible for patching many of the original functions to support the
  *  implementation of extended triggers.
- * 
+ *
  *  Extended triggers are triggers that can hold more than 10 trigger actions, and is compatible with the vanilla ALE.
- *  They are implemented similar to a linked list, with the main extended trigger pointing to the next trigger via the 
+ *  They are implemented similar to a linked list, with the main extended trigger pointing to the next trigger via the
  *  10th trigger action.
- * 
+ *
  *  View addTriggerActionCount to see what unique properties an extended trigger has (class invariant).
- *  View SaveThisMap to see the structe of the linked list. 
+ *  View SaveThisMap to see the structe of the linked list.
  */
 function extendTriggerList() {
 
-    /** Modifies the original UpdateGUIParams to provide support for trigger extension. 
+    /** Modifies the original UpdateGUIParams to provide support for trigger extension.
     */
     function newUpdateGUIParams() {
         // Get current GUI scroll percentage. This is so we can reset the GUI scroll percentage after reupdating the GUI.
@@ -4436,8 +4429,8 @@ function extendTriggerList() {
 
         for (var i = 0; i < es.length; i++) {
             if (!es[i].exists) continue;
-            if (!es[i].selected) continue; 
-                
+            if (!es[i].selected) continue;
+
             // Selects the first object if not already selected.
             if (first_selected_object == null)
                 first_selected_object = es[i];
@@ -4445,7 +4438,7 @@ function extendTriggerList() {
 
             // Iterate through all entity's properties names. (__z_Index, actions_10_targetA, etc..)
             for (let parameter in es[i].pm) {
-                // Find the ID associated with that property. Eg: __z_Index: 98. 
+                // Find the ID associated with that property. Eg: __z_Index: 98.
                 // This ID is the same as the index to retrieve this property in param_type.
                 var ind2 = FindMachingParameterID(parameter, es[i]._class);
 
@@ -4456,11 +4449,11 @@ function extendTriggerList() {
                         paramscount_to_display.push(1);
                         paramsvalue_to_display.push(es[i].pm[parameter]);
                         param_associated.push(parameter);
-                    
+
                 } else {
                     paramscount_to_display[ind]++;
                 }
-            } 
+            }
         }
 
         if (edit_triggers_as_text && selects == 1 && first_selected_object._class == 'trigger') {
@@ -4529,22 +4522,22 @@ function extendTriggerList() {
                 current_gui_params.push(param_associated[i]);
 
                 // Creating the actual row
-                str += 
-                    pre_temp + 
+                str +=
+                    pre_temp +
                     param_type[params_to_display[i]][2] +       // Label of the row. Eg: Name
-                    post_temp + 
+                    post_temp +
                     param_type[params_to_display[i]][1]         // Type of input. Eg: string
-                    + '\')" onMouseOver="letover(this, \'' + 
-                    param_type[params_to_display[i]][1] 
-                    + '\')" id="' + 'pm_' + 
+                    + '\')" onMouseOver="letover(this, \'' +
+                    param_type[params_to_display[i]][1]
+                    + '\')" id="' + 'pm_' +
                     param_type[params_to_display[i]][0]         // Name of property. Eg: __z_Index
-                    + '">' + 
+                    + '">' +
                     value +                                     // Value of proerty. Eg: 1
                 '</span></div>';
 
                 // Add a tiny gap to split every trigger action.
                 if (first_selected_object._class == 'trigger') {
-                    
+
                     if (i >= startSeparatorFrom && (i - startSeparatorFrom) % 3 == 0) {
                         str += '<div style="height:2px"></div>';
                     }
@@ -4554,7 +4547,7 @@ function extendTriggerList() {
                 if (first_selected_object._class != 'trigger' && i == last_i) {
                     pre_temp = '<div class="p_i"><span class="pa1 p_u0 r_lb">';
                     post_temp = ':</span><span class="pa2 p_u0 r_rb" onclick="letedit(this, \'';
-                
+
                 // First row has top rounded corners, now change it to no rounded corners.
                 } else if (i == 0) {
                     pre_temp = '<div class="p_i"><span class="pa1 p_u1">';
@@ -4573,7 +4566,7 @@ function extendTriggerList() {
                     // rowHTML represents all the HTML to display a set of triggers and parameters (3 rows).
                     let rowHtml = `
                         <div class="p_i"><span class="pa1 p_u1">
-                        Action '${i + 1}' type: 
+                        Action '${i + 1}' type:
                         </span><span class="pa2 p_u2 r_rt" onclick="letedit(this, 'trigger_type')" onmouseover="letover(this, 'trigger_type')" id='pm_actions_${i + 1}_type'>
                             <pvalue real='${triggerAction}'>
                             ${special_values_table['trigger_type'][triggerAction]}
@@ -4581,7 +4574,7 @@ function extendTriggerList() {
                         </span></div>
 
                         <div class="p_i"><span class="pa1 p_u1">
-                        - parameter A: 
+                        - parameter A:
                         </span><span class="pa2 p_u2 r_rt" onclick="letedit(this, 'no_change')" onmouseover="letover(this, 'no_change')" id='pm_actions_${i + 1}_targetA'>
                             <pvalue real='${paramA}'>
                             '${paramA}'
@@ -4589,13 +4582,13 @@ function extendTriggerList() {
                         </span></div>
 
                         <div class="p_i"><span class="pa1 p_u1">
-                        - parameter B: 
+                        - parameter B:
                         </span><span class="pa2 p_u2 r_rt" onclick="letedit(this, 'no_change')" onmouseover="letover(this, 'no_change')" id='pm_actions_${i + 1}_targetB'>
                             <pvalue real='${paramB}'>
                             '${paramB}'
                             </pvalue>
                         </span></div>
-                        
+
                         <div style="height:2px"></div>
                     `
 
@@ -4628,9 +4621,9 @@ function extendTriggerList() {
 /**
  *  This function is invoked whenever someone clicks on an option in the dropdown menu of parameter values.
  *  For example, clicking on "Force Movable 'A' move to Region 'B'"
- * 
- *  Prompts for further input if required and updates the GUI. 
- * 
+ *
+ *  Prompts for further input if required and updates the GUI.
+ *
  *  @param {string} val1    The real actual value.
  *  @param {string} val2    Name / Label of the value clicked.
  *  @param {string} defval  Previous real value.
@@ -4666,7 +4659,7 @@ function extendTriggerList() {
             }
             val1 = eval(val1.replace('[val]', gotval));
             val2 = val2.replace('#', gotval);
-        } 
+        }
 
         // Clicked on a value that prompts for a hex colour code.
         else if (val1.indexOf('[color]') != -1) {
@@ -4713,7 +4706,7 @@ function extendTriggerList() {
             eval('valobj.onclick = function(e){letedit(this, \'' + our_case + '\');}');
             eval('valobj.onmouseover = function(e){letover(this, \'' + our_case + '\');}');
             valobj.innerHTML = GenParamVal(our_case, innerHTML_to_value(valobj.innerHTML));
-            
+
             // Early exit, we are done here with engine mark.
             return;
         }
@@ -4735,7 +4728,7 @@ function extendTriggerList() {
         if(!isTrigger){
             return;
         }
-        
+
         // Iterate through all the trigger actions and modify their parameter type to reflect on the respective trigger actions.
         for (var i = 1; i <= totalNumOfActions; i++) {
             var mark_obj = document.getElementById('pm_actions_' + i + '_type');
@@ -4769,18 +4762,18 @@ function extendTriggerList() {
     let oldSaveThisMap = window.SaveThisMap;
     /**
      *  This function extends the SaveThisMap functionality by first parsing all instances of extended triggers into a linked list of normal triggers.
-     * 
+     *
      *  [FROM]                       |    [TO]
      *  trigger*1                    |    trigger*1                             trigger*3                             trigger*3
      *  extended:           true     |    extended:           true              *deleted*                             *deleted*
-     *  totalNumOfActions:  25       |    totalNumOfActions:  25                *deleted*                             *deleted*  
+     *  totalNumOfActions:  25       |    totalNumOfActions:  25                *deleted*                             *deleted*
      *  additionalActions:  [..]     |    *deleted*                             *deleted*                             *deleted*
      *  additionalParamA:   [..]     |    *deleted*                             *deleted*                             *deleted*
      *  additionalParamB:   [..]     |    *deleted*                             *deleted*                             *deleted*
      *  actions1-10         [..]     |    actions1-9          [..]              actions1-9   [..]                     actions1-7    [..]
      *                               |    actions10           trigger*2         actions10    trigger*3                actions8-10   Do nothing.
-     * 
-     * 
+     *
+     *
      *  @param {*} temp_to_real_compile_data     Parameters that the old SaveThisMap uses. (no idea what it is tbh)
      *  @param {*} callback                      Parameters that the old SaveThisMap uses. (no idea what it is tbh)
      */
@@ -4860,7 +4853,7 @@ function extendTriggerList() {
             delete entity.pm["additionalParamA"];
             delete entity.pm["additionalParamB"];
         }
-    
+
         // Save this map!
         oldSaveThisMap(temp_to_real_compile_data, callback);
 
@@ -4899,7 +4892,7 @@ function extendTriggerList() {
         if(selection.length != 1){
             return;
         }
-        
+
         const selectedTrigger = selection[0];
 
         var opcode_field = document.getElementById('opcode_field');
@@ -4913,10 +4906,10 @@ function extendTriggerList() {
             direct_update_params.push(a);
             direct_update_values.push(b);
         }
-        
+
         for (var i = 0; i < code_lines.length; i++) {
             var line = code_lines[i];
-            
+
             let paramA_start = line.indexOf('( "');
             let separator = line.indexOf('", "');
             let end = line.indexOf('" );');
@@ -4945,7 +4938,7 @@ function extendTriggerList() {
 
                 new_trigger_actions.push([action_type, valueA, valueB]);
 
-            } 
+            }
             // Parsing the header portion..
             else if (semicolon != -1) {
                 var left_part = line.substring(0, semicolon);
@@ -4981,7 +4974,7 @@ function extendTriggerList() {
 
             ScheduleParamSet('actions_' + (i + 1) + '_type', new_trigger_actions[i][0]);
             ScheduleParamSet('actions_' + (i + 1) + '_targetA', new_trigger_actions[i][1]);
-            ScheduleParamSet('actions_' + (i + 1) + '_targetB', new_trigger_actions[i][2]);  
+            ScheduleParamSet('actions_' + (i + 1) + '_targetB', new_trigger_actions[i][2]);
         }
 
         // Populate the rest with empty trigger actions if it's lesser than 10.
@@ -5035,7 +5028,7 @@ function extendTriggerList() {
 }
 
 /** This function is invoked whenever the map loads.
- * 
+ *
  *  It looks for potential triggers configured in a linked list manner and converts it to an extended trigger.
  */
 function parseExtendedTriggers(){
@@ -5047,8 +5040,8 @@ function parseExtendedTriggers(){
         if(!entity.exists)              continue;
         if(entity._class !== "trigger") continue;
         if(!entity.pm["extended"])      continue;
-    
-        let iterationCount = 1; 
+
+        let iterationCount = 1;
         let previousTotalNumOfActions = entity.pm["totalNumOfActions"];
 
         // Create extended trigger's additional properties.
@@ -5081,14 +5074,14 @@ function parseExtendedTriggers(){
             }
 
             entity.pm["totalNumOfActions"] += 9;
-            
+
             // Remove those auto generated triggers
             es.splice(nextTriggerIndex, 1);
 
             // Continue iterating
             currentTrigger = nextTrigger;
-            nextTriggerIndex = es.findIndex(e => e.pm["uid"] === currentTrigger.pm["actions_10_targetA"] && currentTrigger.pm["actions_10_type"] === switchExecutionAction); 
-            
+            nextTriggerIndex = es.findIndex(e => e.pm["uid"] === currentTrigger.pm["actions_10_targetA"] && currentTrigger.pm["actions_10_type"] === switchExecutionAction);
+
             // Protect users from potential infinite iteration.
             iterationCount++;
             if(iterationCount > maxIteration){
@@ -5124,7 +5117,7 @@ function parseExtendedTriggers(){
 /**
  * Function that adds new CSS style to ALE.
  * - Add style rule for 2 side by side button
- * 
+ *
  * This function is run once in ALE_Start.
  */
 function updateCSSFile() {
@@ -5207,7 +5200,7 @@ let ALE_start = (async function() {
     } else {
         // load this map twice to parse extended triggers.
         LoadThisMap();
-    }  
+    }
 
     aleiLog(DEBUG2, "Settings: " + JSON.stringify(aleiSettings));
     if(aleiSettings.renderObjectName == false) ALEI_UpdateNameRenderSetting(false);
