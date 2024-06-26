@@ -27,7 +27,7 @@ Easiest way to install ALEI is to use it inside Tampermonkey. You can download T
 - Xeden
 - Nightmare
 - Yex
-- Shadowsyn
+- Shadowysn
 - TheRealOne
 - Silk1
 - Casey
