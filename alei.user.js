@@ -3541,12 +3541,6 @@ function patchUpdateGUIParams() {
             selected[0].pm = Object.fromEntries(entries);
         }
 
-        // moved to extendTriggerList.
-        // eval(origUGP
-        //     .toString()
-        //     .replace("if ( i >= 4 && (i-4) % 3 == 0 ) {", `if (i >= ${startSeparatorFrom} && (i - ${startSeparatorFrom}) % 3 == 0) {`)
-        // );
-
         if (!shouldDisplayZIndex) {
             for (let i = 0; i < selected.length; i++) {
                 zIndexSave.push(selected[i].pm.__zIndex);
@@ -4523,13 +4517,6 @@ function extendTriggerList() {
             var pre_temp = '<div id="rparams"><div class="p_i"><span class="pa1 p_u1 r_lt">';   // Start off with rounded corners
             var post_temp = ':</span><span class="pa2 p_u2 r_rt" onclick="letedit(this, \'';
             var last_i = params_to_display.length - 2;                                          // Index to keep track of last row.
-
-            // This never happens
-            // if (params_to_display.length == 1) {
-            //     pre_temp = '<div id="rparams"><div class="p_i"><span class="pa1 p_u1 r_lt r_lb">';
-            //     post_temp = ':</span><span class="pa2 p_u2 r_rt r_rb" onclick="letedit(this, \'';
-            // }
-            
             var value;
 
             // Iterate through all the params to display.
@@ -4554,7 +4541,7 @@ function extendTriggerList() {
                     + '">' + 
                     value +                                     // Value of proerty. Eg: 1
                 '</span></div>';
-                
+
                 // Add a tiny gap to split every trigger action.
                 if (first_selected_object._class == 'trigger') {
                     
@@ -4611,6 +4598,7 @@ function extendTriggerList() {
                         
                         <div style="height:2px"></div>
                     `
+
                     // Creating the actual row
                     str += rowHtml;
                 }
@@ -4633,6 +4621,8 @@ function extendTriggerList() {
         if(guiHTMLElement){
             guiHTMLElement.scrollTop = amountToScroll;
         }
+
+        StreetMagic();
     }
 
 /**
@@ -4702,6 +4692,7 @@ function extendTriggerList() {
         UpdatePhysicalParam((lettarget.id.replace('pm_', '')), val1);
 
         var parameter_updated = lettarget.id.replace('pm_', '');
+
         if (parameter_updated == 'mark' || (parameter_updated.indexOf('actions_') != -1 && parameter_updated.indexOf('_type') != -1))
             StreetMagic();
     }
