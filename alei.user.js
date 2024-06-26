@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      13.3
+// @version      13.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -465,7 +465,7 @@ function updateSkins() {
         [198, "Blue Civil Security Heavy"],
         [199, "Red Civil Security Heavy"],
         [200, "Xenos Welder"],
-        [201, "Xenos Engineer"],
+        [201, "Xenos Special Unit"],
         [202, "Serkova Assault Unit"],
         [203, "Serkova Gunner Unit"],
         [204, "Serkova Grenader Unit"],
