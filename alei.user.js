@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      13.7
+// @version      13.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -5057,7 +5057,7 @@ function extendTriggerList() {
         `for ( let property in`
     );
 
-    window.Render = eval(`(${RenderInString})`);    
+    window.Render = eval(`(${RenderInString})`);
 }
 
 /** This function is invoked whenever the map loads.
@@ -5237,6 +5237,19 @@ let ALE_start = (async function() {
 
     aleiLog(DEBUG2, "Settings: " + JSON.stringify(aleiSettings));
     ALEI_UpdateNameRenderSetting(aleiSettings.renderObjectNames);
+
+    let ALE_PreviewQualitySet = window.PreviewQualitySet;
+    window.PreviewQualitySet = (val) => {
+        ALE_PreviewQualitySet(val);
+        writeStorage("ALEI_PreviewQualitySet", val);
+    };
+
+    window.PreviewQualitySet(
+        readStorage(
+            "ALEI_PreviewQualitySet",
+            false,
+            (val) => val === "true")
+    );
 
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, `Welcome!`);
