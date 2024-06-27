@@ -5172,6 +5172,12 @@ function updateCSSFile() {
 
 // Creates mapping of object connections so that we don't recreate line mapping everytime.
 // This will be used in Render function for when we are drawing object connection lines.
+function __OCM_AddReference(from, to) {
+    let ocm = ObjectConnectionMapping;
+    if(ocm[from]["to"].indexOf(to) === -1) ocm[from]["to"].push(to);
+    if(ocm[to]["by"].indexOf(from) === -1) ocm[to]["by"].push(from);
+}
+
 function CreateConnectionMapping() {
     aleiLog(INFO, `Going to make object connection map now.`);
     window.ObjectConnectionMapping = {};
@@ -5198,8 +5204,7 @@ function CreateConnectionMapping() {
         if(typeof(parameter) !== "string") return;
 
         if(utem[parameter] !== undefined) { // Simple case where parameter is simply reference to object.
-            ocm[trigger]["to"].push(parameter);
-            ocm[parameter]["by"].push(trigger);
+            __OCM_AddReference(trigger, parameter);
             return;
         }
         if(parameter.includes(",") === undefined) return;
@@ -5208,10 +5213,7 @@ function CreateConnectionMapping() {
         let splt = parameter.split(",");
         for(let value of splt) {
             let val = value.trim();
-            if(utem[val] !== undefined) {
-                ocm[trigger]["to"].push(val);
-                ocm[val]["by"].push(trigger);
-            }
+            if(utem[val] !== undefined) __OCM_AddReference(trigger, val);
         }
     }
 
@@ -5225,8 +5227,7 @@ function CreateConnectionMapping() {
             let value = element.pm[key];
             if(utem[value] === undefined) continue; // Not valid object, just skip.
 
-            ocm[element.pm.uid]["to"].push(value);
-            ocm[value]["by"].push(element.pm.uid);
+            __OCM_AddReference(element.pm.uid, value);
         }
         // Special case for trigger actions.
         if(element._class !== "trigger") continue;
