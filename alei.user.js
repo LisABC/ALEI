@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      14.1
+// @version      14.2
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -5041,7 +5041,7 @@ function extendTriggerList() {
 
     // Patch the render function's connection line to work with >10 trigger actions.
     /*let RenderInString = window.Render.toString().replaceAll(
-        /es\[(i2?)\]\.pm\[ property \];/g, 
+        /es\[(i2?)\]\.pm\[ property \];/g,
         `es[$1].pm[ property ];
         let array;
         if(Array.isArray(value)) {
@@ -5051,7 +5051,7 @@ function extendTriggerList() {
             array = [value];
         }
 
-        for(let index = 0, value = array[index]; index < array.length; ++index, value = array[index]) 
+        for(let index = 0, value = array[index]; index < array.length; ++index, value = array[index])
         `
     );
 
@@ -5061,7 +5061,7 @@ function extendTriggerList() {
         `for ( let property in`
     );
 
-    // window.Render = eval(`(${RenderInString})`);    
+    window.Render = eval(`(${RenderInString})`);*/
 }
 
 /** This function is invoked whenever the map loads.
