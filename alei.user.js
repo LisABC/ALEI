@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      13.5
+// @version      14.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -148,6 +148,11 @@ function updateParameters() {
 
         if((key == "use_target") && (selector == "region")) {
             REGION_EXECUTE_PARAM_ID = i;
+            continue;
+        }
+        if(["w", "h"].indexOf(key) != -1) { // Enables height and width parameters to be able to have negative height and width.
+            param_type[i][1] = "value+round10";
+            continue;
         }
     }
     VAL_TABLE["timer+none"] = new Array();
@@ -1429,7 +1434,7 @@ function findObjects(name) {
 }
 
 function rotateObjects() {
-    let selected = getSelection();
+    let selected = SelectedObjects;
     let distX = [];
     let distY = [];
     let minX;
@@ -2016,7 +2021,7 @@ function getObjectBox(obj) {
 }
 
 function getSelectionImage() {
-    let selection = getSelection();
+    let selection = SelectedObjects;
     let arr1 = [];
     let arr2 = [];
     let minX = +Infinity;
@@ -2258,7 +2263,7 @@ function pasteFromPermanentClipboard(i) {
 
 function copyToPermanentClipboard() {
     try {
-        let selection = getSelection();
+        let selection = SelectedObjects;
 
         if (selection.length != 0) {
             CopyToClipBoard("permanent_clipboard");
@@ -2299,7 +2304,7 @@ function sortObjects() {
 // Adds additional button
 function addAdditionalButtons() {
     const rparams = document.getElementById("rparams");
-    const selection = getSelection();
+    const selection = SelectedObjects;
 
     // Param list not loaded or selection is not 1.
     if (!rparams || selection.length != 1) {
@@ -2354,7 +2359,7 @@ function addAdditionalButtons() {
  */
 function addTriggerActionCount(value){
 
-    const selection = getSelection();
+    const selection = SelectedObjects;
 
     if (selection.length != 1 || value === 0) {
         return;
@@ -2412,7 +2417,7 @@ function addTriggerActionCount(value){
 }
 
 function getImageSize() {
-    let selection = getSelection();
+    let selection = SelectedObjects;
     let id;
 
     if (selection[0]._class == "bg") {
@@ -2449,7 +2454,7 @@ function getImageSize() {
 
 function getImageData() {
     return new Promise((res, err) => {
-        let selection = getSelection();
+        let selection = SelectedObjects;
         let id;
 
         if (selection[0]._class == "bg") {
@@ -2560,14 +2565,14 @@ function getImagePosition(data, w) {
 }
 
 function setDecorOffset(x, y) {
-    let selection = getSelection();
+    let selection = SelectedObjects;
 
     selection[0].pm.u = x;
     selection[0].pm.v = y;
 }
 
 function centerImageX() {
-    let selection = getSelection();
+    let selection = SelectedObjects;
 
     if (selection.length == 1) {
         if (selection[0]._class == "decor") {
@@ -2587,7 +2592,7 @@ function centerImageX() {
 }
 
 function centerImageY() {
-    let selection = getSelection();
+    let selection = SelectedObjects;
 
     if (selection.length == 1) {
         if (selection[0]._class == "decor") {
@@ -2697,7 +2702,7 @@ document.addEventListener("keydown", e => {
     }
 
     if (e.code == "Enter" && targetElement != "[object HTMLInputElement]" && targetElement.id != "opcode_field" && canvas_focus) {
-        let selected = getSelection();
+        let selected = SelectedObjects;
 
         if (selected.length != 0) {
             let param = prompt("Enter parameter name:", "");
@@ -2760,7 +2765,7 @@ document.addEventListener("keydown", e => {
     }
 
     if (e.altKey && targetElement == "[object HTMLInputElement]") {
-        let selected = getSelection();
+        let selected = SelectedObjects;
 
         if (selected.length == 1) {
             let x = selected[0].pm.x;
@@ -2800,19 +2805,8 @@ document.addEventListener("keydown", e => {
 
     if (e.ctrlKey && e.shiftKey) {
         if (newUpdate) {
-            let wnd = new Object();
-
-            window.onblur = function() {
-                setTimeout(() => {
-                    wnd.close();
-                }, 1000);
-            }
-
-            window.onfocus = function() {
-                location.reload();
-            }
-
-            wnd = window.open("https://github.com/LisABC/ALEI/raw/main/alei.user.js");
+            window.open("https://github.com/LisABC/ALEI/raw/main/alei.user.js");
+            newUpdate = false;
         }
     }
 });
@@ -2896,16 +2890,8 @@ function setParameter(index, value) {
     }
 }
 
-function getSelection() {
-    let objects = [];
-
-    for (let i = 0; i < es.length; i++) {
-        if (es[i].selected && es[i].exists) {
-            objects.push(es[i]);
-        }
-    }
-
-    return objects;
+function getSelection() { // DEPRECATED! USE SelectedObjects DIRECTLY!
+    return SelectedObjects;
 }
 
 function areObjectsOfSameType(objects) {
@@ -3149,6 +3135,8 @@ function patch_m_down() {
     }
 }
 
+window.SelectedObjects = [];
+
 function patchEntityClass() {
     let og_E = E;
     window.E = function(_class) {
@@ -3167,7 +3155,28 @@ function patchEntityClass() {
         else if(_class == "region") result.pm.uses_timer = false;
 
         result.fixPos = function() {}; // For proper snapping.
-        return result;
+        result.selectChange = function(isSelected) {
+            if(isSelected) {
+                result.selectIndex = SelectedObjects.length;
+                SelectedObjects.push(result);
+            } else {
+                for(let i = result.selectIndex+1; i < SelectedObjects.length; i++) {
+                    SelectedObjects[i].selectIndex -= 1;
+                }
+                SelectedObjects.splice(result.selectIndex, 1);
+            }
+        }
+
+        function ProxySet(_, key, value) {
+            result[key] = value;
+            if(key == "selected") result.selectChange(value);
+            return true;
+        }
+
+        let proxy = new Proxy(result, {
+            set: ProxySet
+        })
+        return proxy;
     }
     aleiLog(DEBUG, "Patched entity.");
 }
@@ -3513,7 +3522,7 @@ function patchUpdateGUIParams() {
         }
 
         // Represents all the selected entity class.
-        let selected = getSelection();
+        let selected = SelectedObjects;
         // if(selected.length != 0) console.log(selected[0].pm);
 
         let shouldDisplayZIndex = (selected.length >= 1) && aleiSettings.showZIndex;
@@ -3975,7 +3984,7 @@ function patchCompileTrigger() {
 
     window.CompileTrigger = () => {
         let result = _og();
-        let selected = getSelection();
+        let selected = SelectedObjects;
         for (let i = 0; i < selected.length; i++) {
             let obj = selected[i];
             let keys = Object.keys(obj.pm);
@@ -4712,7 +4721,7 @@ function extendTriggerList() {
         }
 
         // Get current selection and check if it's an trigger.
-        let selected = getSelection();
+        let selected = SelectedObjects;
         let totalNumOfActions = 10;
         let isTrigger = false;
         if(selected.length == 1 && selected[0]._class == "trigger"){
@@ -4891,7 +4900,7 @@ function extendTriggerList() {
      */
     function CompileTrigger() {
         const skipTriggerActions = [123, 361, 364, 365];
-        const selection = getSelection();
+        const selection = SelectedObjects;
 
         if(selection.length != 1){
             return;
@@ -5031,7 +5040,7 @@ function extendTriggerList() {
     window.UpdateGUIParams = newUpdateGUIParams;
 
     // Patch the render function's connection line to work with >10 trigger actions.
-    let RenderInString = window.Render.toString().replaceAll(
+    /*let RenderInString = window.Render.toString().replaceAll(
         /es\[(i2?)\]\.pm\[ property \];/g, 
         `es[$1].pm[ property ];
         let array;
@@ -5231,7 +5240,20 @@ let ALE_start = (async function() {
     }
 
     aleiLog(DEBUG2, "Settings: " + JSON.stringify(aleiSettings));
-    if(aleiSettings.renderObjectName == false) ALEI_UpdateNameRenderSetting(false);
+    ALEI_UpdateNameRenderSetting(aleiSettings.renderObjectNames);
+
+    let ALE_PreviewQualitySet = window.PreviewQualitySet;
+    window.PreviewQualitySet = (val) => {
+        ALE_PreviewQualitySet(val);
+        writeStorage("ALEI_PreviewQualitySet", val);
+    };
+
+    window.PreviewQualitySet(
+        readStorage(
+            "ALEI_PreviewQualitySet",
+            false,
+            (val) => val === "true")
+    );
 
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, `Welcome!`);

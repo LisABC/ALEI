@@ -62,3 +62,4 @@ This part includes changes that are meant to fix issues (It doesn't have to be c
 This part includes changes that just rename, redirect things
 - Redirects old manual to [EaglePB2's Manual](https://eaglepb2.gitbook.io/pb2-editor-manual/)
 - Made negative teams more descriptive about what they do.
+- Allowed width and height values to be negative.
