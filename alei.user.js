@@ -3382,6 +3382,7 @@ function ServerRequest_handleMapData(mapCode) {
 function handleServerRequestResponse(request, operation, response) {
     if (response.indexOf("var es = new Array();") != -1) {
         ServerRequest_handleMapData(response);
+        CreateConnectionMapping();
     }else if (response.indexOf("knownmaps = [") !== -1) {
         window.knownmaps = [];
         for (let map of response.match(/"(.*?)"/g)) {
@@ -5167,6 +5168,89 @@ function updateCSSFile() {
 
     // Creates a new rule for class two-element-grid, useful as a parent div.
     cssFile.insertRule(".two-element-grid{ display: grid; justify-content: center; grid-template-columns: 50% 50%; }", 0);
+}
+
+// Creates mapping of object connections so that we don't recreate line mapping everytime.
+// This will be used in Render function for when we are drawing object connection lines.
+function CreateConnectionMapping() {
+    aleiLog(INFO, `Going to make object connection map now.`);
+    window.ObjectConnectionMapping = {};
+    window.uidToElementMap = {};
+
+    let ocm = ObjectConnectionMapping;
+    let utem = uidToElementMap;
+
+    for(let element of es) {
+        if(element.pm.uid === undefined) continue;
+        if(element.pm.uid === "#water") continue;
+
+        if(ocm[element.pm.uid] !== undefined) {
+            NewNote(`ALEI: 2+ objects share name ${element.pm.uid}, going to stop constructing object connection map.`, "#FF0000");
+            window.ObjectConnectionMapping = {};
+            return;
+        }
+
+        ocm[element.pm.uid] = {"by": [], "to": []};
+        utem[element.pm.uid] = element;
+    }
+
+    function Trigger_HandleParameter(trigger, parameter) {
+        if(typeof(parameter) !== "string") return;
+
+        if(utem[parameter] !== undefined) { // Simple case where parameter is simply reference to object.
+            ocm[trigger]["to"].push(parameter);
+            ocm[parameter]["by"].push(trigger);
+            return;
+        }
+        if(parameter.includes(",") === undefined) return;
+        // A little complex case where multiple objects are referenced
+        // As in Parameter B: #region*1,#region*2
+        let splt = parameter.split(",");
+        for(let value of splt) {
+            let val = value.trim();
+            if(utem[val] !== undefined) {
+                ocm[trigger]["to"].push(val);
+                ocm[val]["by"].push(trigger);
+            }
+        }
+    }
+
+    for(let element of es) {
+        if(element.pm.uid === undefined) continue;
+        if(element.pm.uid === "#water") continue;
+
+        // Eliminating parameters we don't need to look at.
+        for(let key of Object.keys(element.pm)) {
+            if(["target", "attach", "use_target", "incar", "ondeath", "callback"].indexOf(key) === -1) continue;
+            let value = element.pm[key];
+            if(utem[value] === undefined) continue; // Not valid object, just skip.
+
+            ocm[element.pm.uid]["to"].push(value);
+            ocm[value]["by"].push(element.pm.uid);
+        }
+        // Special case for trigger actions.
+        if(element._class !== "trigger") continue;
+        let pm = element.pm;
+            // Vanilla trigger case (10 actions, extended triggers will run this too)
+        for(let i = 1; i < 11; i++) {
+            if(pm[`actions_${i}_type`] == -1) continue;
+            if(pm[`actions_${i}_type`] === undefined) continue;
+            Trigger_HandleParameter(pm.uid, pm[`actions_${i}_targetA`]);
+            Trigger_HandleParameter(pm.uid, pm[`actions_${i}_targetB`]);
+        }
+          // Extended triggers.
+        if(pm.extended === undefined) continue;
+
+        let actions = pm.additionalActions;
+        let paramA = pm.additionalParamA;
+        let paramB = pm.additionalParamB;
+
+        for(let i = 0; i < actions.length; i++) {
+            if(actions[i] === -1) continue;
+            Trigger_HandleParameter(pm.uid, paramA[i]);
+            Trigger_HandleParameter(pm.uid, paramB[i]);
+        }
+    }
 }
 
 let ALE_start = (async function() {
