@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      13.5
+// @version      13.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -148,6 +148,11 @@ function updateParameters() {
 
         if((key == "use_target") && (selector == "region")) {
             REGION_EXECUTE_PARAM_ID = i;
+            continue;
+        }
+        if(["w", "h"].indexOf(key) != -1) { // Enables height and width parameters to be able to have negative height and width.
+            param_type[i][1] = "value+round10";
+            continue;
         }
     }
     VAL_TABLE["timer+none"] = new Array();
