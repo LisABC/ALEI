@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      14.2
+// @version      14.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1202,6 +1202,32 @@ const _ignoredKeys = [
     "gun_model",
     "model",
 ];
+
+/*
+ * UUIDR_Replace
+ * This is function that handles replacing name part.
+ * Is meant to be used in UpdateUIDReferences below.
+
+ * @param  {string}  value    Value to be replaced.
+ * @param  {string}  oldName  Previous name to be replaced from.
+ * @param  {string}  newName  New name to be replaced to.
+*/
+function UUIDR_Replace(value, oldName, newName) {
+    if ((typeof(value) !== "string")) return value;
+    if(value.indexOf(oldName) === -1) return value;
+    if(value == oldName) return newName;
+
+    let splt = value.split(",");
+    for (let i = 0; i < splt.length; i++) {
+         let item = splt[i];
+         if (item.trim() == oldName) {
+             splt[i] = item.replace(oldName, newName);
+         }
+    }
+    return splt.join(",");
+
+}
+
 function updateUIDReferences(oldName, newName) {
     aleiLog(DEBUG2, `Updating UID references from ${ANSI_CYAN}${oldName}${ANSI_RESET} to ${ANSI_CYAN}${newName}${ANSI_RESET}`);
     for (let i = 0; i < es.length; i++) {
@@ -1213,25 +1239,17 @@ function updateUIDReferences(oldName, newName) {
             let key = entry[0];
             let value = entry[1];
 
-            // Quick elimination
             if (_ignoredKeys.indexOf(key) !== -1) continue;
-            if (typeof(value) !== "string") continue;
-            if (value.indexOf(oldName) === -1) continue;
 
-            // Actual replacement
-            if (value === oldName) { // Fine.
-                properties[key] = newName;
+            if(["additionalParamA", "additionalParamB"].indexOf(key) !== -1) {
+                // This is extended action.
+                for(let i = 0; i < value.length; i++) {
+                    value[i] = UUIDR_Replace(value[i], oldName, newName);
+                }
                 continue;
             }
 
-            let splt = value.split(",");
-            for (let i = 0; i < splt.length; i++) {
-                let item = splt[i];
-                if (item.trim() == oldName) {
-                    splt[i] = item.replace(oldName, newName);
-                }
-            }
-            properties[key] = splt.join(",");
+            properties[key] = UUIDR_Replace(value, oldName, newName);
         }
     }
     window.need_GUIParams_update = true;
@@ -1252,6 +1270,8 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
     var list_changes = '';
 
     // Finds selection.
+    let ogES = window.es;
+    window.es = SelectedObjects;
     for (var elems = 0; elems < es.length; elems++) {
         if (!es[elems].exists)                                                    continue;
         if (!es[elems].selected)                                                  continue;
@@ -1276,6 +1296,13 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
             ldn('es[' + elems + '].pm[' + lup + '] = ' + chvalue + ';');
 
             // Saves the value to the class.
+            if((paramname == "uid") && aleiSettings.rematchUID) {
+                let oldName = es[elems].pm[paramname]; // Note: don't do this after getting original ES, otherwise id isn't valid lmao
+                window.es = ogES;
+                updateUIDReferences(oldName, chvalue);
+                ogES = window.es;
+                window.es = SelectedObjects;
+            }
             es[elems].pm[paramname] = chvalue;
         }
         // Handling extended trigger's >10 trigger action.
@@ -1325,6 +1352,7 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
         NewNote('Note: Some changes weren\'t made due to missmatch of active layer and class of selected objects', note_neutral);
     }
     lfz(false);
+    window.es = ogES;
 
     sortObjects();
 }
@@ -5179,7 +5207,6 @@ function __OCM_AddReference(from, to) {
 }
 
 function CreateConnectionMapping() {
-    aleiLog(INFO, `Going to make object connection map now.`);
     window.ObjectConnectionMapping = {};
     window.uidToElementMap = {};
 
@@ -5252,6 +5279,7 @@ function CreateConnectionMapping() {
             Trigger_HandleParameter(pm.uid, paramB[i]);
         }
     }
+    aleiLog(DEBUG, "Built object connection map.");
 }
 
 let ALE_start = (async function() {
