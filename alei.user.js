@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      14.3
+// @version      14.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -46,6 +46,7 @@ const INFO = 0;
 const DEBUG = 1;
 const DEBUG2 = 2;
 const WARN = -1;
+const __OCM_CHECKED_KEYS = ["target", "attach", "use_target", "incar", "ondeath", "callback"]; // OCM = Object Connection Mapping
 
 // Just for styling.
 const ANSI_RESET = "\x1B[0m"
@@ -1219,10 +1220,10 @@ function UUIDR_Replace(value, oldName, newName) {
 
     let splt = value.split(",");
     for (let i = 0; i < splt.length; i++) {
-         let item = splt[i];
-         if (item.trim() == oldName) {
-             splt[i] = item.replace(oldName, newName);
-         }
+        let item = splt[i];
+        if (item.trim() == oldName) {
+            splt[i] = item.replace(oldName, newName);
+        }
     }
     return splt.join(",");
 
@@ -1253,6 +1254,92 @@ function updateUIDReferences(oldName, newName) {
         }
     }
     window.need_GUIParams_update = true;
+}
+
+/*
+ * __OCM_EnsureValidReferences
+ * This function is called in UpdatePhysicalParam(AFTER parameter was set.) to keep integrity of OCM (Object Connection Mapping)
+ * Essentially just a function making sure the structure is valid on each parameter change.
+ *
+ * @param {E}     obj    PB2 Object to ensure validity of references of.
+*/
+function __OCM_EnsureValidReferences(obj) {
+    let ocm = window.ObjectConnectionMapping;
+    let utem = window.uidToElementMap;
+
+    let pm = obj.pm;
+    if(ocm[pm.uid] === undefined) return;
+
+    let newReferences = [];
+    function addReference(value) {
+        if(newReferences.indexOf(value) === -1) newReferences.push(value);
+    }
+
+    for(let key of Object.keys(pm)) {
+        if(__OCM_CHECKED_KEYS.indexOf(key) === -1) continue;
+        let value = pm[key];
+
+        if(utem[value] !== undefined) {
+            addReference(value);
+            continue;
+        }
+    }
+
+    function Trigger_HandleParameter(trigger, parameter) {
+        if(typeof(parameter) !== "string") return;
+
+        if(utem[parameter] !== undefined) { // Simple case where parameter is simply reference to object.
+            addReference(parameter);
+            return;
+        }
+        if(!parameter.includes(",")) return;
+        // A little complex case where multiple objects are referenced
+        // As in Parameter B: #region*1,#region*2
+        let splt = parameter.split(",");
+        for(let value of splt) {
+            let val = value.trim();
+            if(utem[val] !== undefined) addReference(val);
+        }
+    }
+
+    if(obj._class == "trigger") {
+        // Vanilla trigger case (10 actions, extended triggers will run this too)
+        for(let i = 1; i < 11; i++) {
+            if(pm[`actions_${i}_type`] == -1) continue;
+            if(pm[`actions_${i}_type`] === undefined) continue;
+            Trigger_HandleParameter(pm.uid, pm[`actions_${i}_targetA`]);
+            Trigger_HandleParameter(pm.uid, pm[`actions_${i}_targetB`]);
+        }
+        // Extended triggers.
+        if(pm.extended) {
+            let actions = pm.additionalActions;
+            let paramA = pm.additionalParamA;
+            let paramB = pm.additionalParamB;
+
+            for(let i = 0; i < actions.length; i++) {
+                if(actions[i] === -1) continue;
+                Trigger_HandleParameter(pm.uid, paramA[i]);
+                Trigger_HandleParameter(pm.uid, paramB[i]);
+            }
+        };
+
+
+    }
+
+    let oldReferences = ocm[pm.uid]["to"];
+    // let newReferences
+    for(let ref of newReferences) {
+        if(oldReferences.indexOf(ref) !== -1) continue; // No change.
+        // This wasn't in old reference, but is now, so added.
+        __OCM_AddReference(pm.uid, ref);
+    }
+    for(let ref of oldReferences) {
+        if(newReferences.indexOf(ref) !== -1) continue; // No change.
+        // This was in old reference, but not anymore, so removed.
+        __OCM_RemoveReference(pm.uid, ref);
+
+    }
+
 }
 
 /**
@@ -1295,7 +1382,7 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
             lnd('es[' + elems + '].pm[' + lup + '] = ' + es[elems].pm[paramname] + ';');
             ldn('es[' + elems + '].pm[' + lup + '] = ' + chvalue + ';');
 
-            // Saves the value to the class.
+            // Rematch UID
             if((paramname == "uid") && aleiSettings.rematchUID) {
                 let oldName = es[elems].pm[paramname]; // Note: don't do this after getting original ES, otherwise id isn't valid lmao
                 window.es = ogES;
@@ -1303,6 +1390,8 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
                 ogES = window.es;
                 window.es = SelectedObjects;
             }
+
+            // Saves the value to the class.
             es[elems].pm[paramname] = chvalue;
         }
         // Handling extended trigger's >10 trigger action.
@@ -1328,8 +1417,10 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
             ldn(`es["${elems}"].pm["${propertyName}"][${index}] = ${chvalue};`);
 
             es[elems].pm[propertyName][index] = chvalue;
-        }
 
+
+        }
+        __OCM_EnsureValidReferences(es[elems]);
         if(paramname == "uses_timer") { // I do not have to do this, but i will for convenience
             if([true, "true"].indexOf(es[elems].pm.uses_timer) != -1) {
                 param_type[REGION_EXECUTE_PARAM_ID][1] = "timer+none";
@@ -4384,7 +4475,7 @@ function Trigger_getSeparatorStart(selectionCount) {
     let startSeparatorFrom = 5; // Name + X + Y + Max Calls + Enabled + Executes Directly
 
     if (shouldDisplayID) { // + ID
-         startSeparatorFrom = 6;
+        startSeparatorFrom = 6;
     }
     return startSeparatorFrom;
 }
@@ -4483,10 +4574,10 @@ function extendTriggerList() {
                 // Find any potential duplicate.
                 var ind = params_to_display.indexOf(ind2);
                 if (ind == -1 && ind2 != -1) {
-                        params_to_display.push(ind2);   // params_to_display contains all the ID of properties
-                        paramscount_to_display.push(1);
-                        paramsvalue_to_display.push(es[i].pm[parameter]);
-                        param_associated.push(parameter);
+                    params_to_display.push(ind2);   // params_to_display contains all the ID of properties
+                    paramscount_to_display.push(1);
+                    paramsvalue_to_display.push(es[i].pm[parameter]);
+                    param_associated.push(parameter);
 
                 } else {
                     paramscount_to_display[ind]++;
@@ -4571,7 +4662,7 @@ function extendTriggerList() {
                     param_type[params_to_display[i]][0]         // Name of property. Eg: __z_Index
                     + '">' +
                     value +                                     // Value of proerty. Eg: 1
-                '</span></div>';
+                    '</span></div>';
 
                 // Add a tiny gap to split every trigger action.
                 if (first_selected_object._class == 'trigger') {
@@ -4586,7 +4677,7 @@ function extendTriggerList() {
                     pre_temp = '<div class="p_i"><span class="pa1 p_u0 r_lb">';
                     post_temp = ':</span><span class="pa2 p_u0 r_rb" onclick="letedit(this, \'';
 
-                // First row has top rounded corners, now change it to no rounded corners.
+                    // First row has top rounded corners, now change it to no rounded corners.
                 } else if (i == 0) {
                     pre_temp = '<div class="p_i"><span class="pa1 p_u1">';
                     post_temp = ':</span><span class="pa2 p_u2" onclick="letedit(this, \'';
@@ -5205,6 +5296,11 @@ function __OCM_AddReference(from, to) {
     if(ocm[from]["to"].indexOf(to) === -1) ocm[from]["to"].push(to);
     if(ocm[to]["by"].indexOf(from) === -1) ocm[to]["by"].push(from);
 }
+function __OCM_RemoveReference(from, to) {
+    let ocm = ObjectConnectionMapping;
+    if(ocm[from]["to"].indexOf(to) !== -1) ocm[from]["to"].splice(ocm[from]["to"].indexOf(to), 1);
+    if(ocm[to]["by"].indexOf(from) !== -1) ocm[to]["by"].splice(ocm[to]["by"].indexOf(from), 1);
+}
 
 function CreateConnectionMapping() {
     window.ObjectConnectionMapping = {};
@@ -5234,7 +5330,7 @@ function CreateConnectionMapping() {
             __OCM_AddReference(trigger, parameter);
             return;
         }
-        if(parameter.includes(",") === undefined) return;
+        if(parameter.includes(",") == false) return;
         // A little complex case where multiple objects are referenced
         // As in Parameter B: #region*1,#region*2
         let splt = parameter.split(",");
@@ -5250,7 +5346,7 @@ function CreateConnectionMapping() {
 
         // Eliminating parameters we don't need to look at.
         for(let key of Object.keys(element.pm)) {
-            if(["target", "attach", "use_target", "incar", "ondeath", "callback"].indexOf(key) === -1) continue;
+            if(__OCM_CHECKED_KEYS.indexOf(key) === -1) continue;
             let value = element.pm[key];
             if(utem[value] === undefined) continue; // Not valid object, just skip.
 
@@ -5259,14 +5355,14 @@ function CreateConnectionMapping() {
         // Special case for trigger actions.
         if(element._class !== "trigger") continue;
         let pm = element.pm;
-            // Vanilla trigger case (10 actions, extended triggers will run this too)
+        // Vanilla trigger case (10 actions, extended triggers will run this too)
         for(let i = 1; i < 11; i++) {
             if(pm[`actions_${i}_type`] == -1) continue;
             if(pm[`actions_${i}_type`] === undefined) continue;
             Trigger_HandleParameter(pm.uid, pm[`actions_${i}_targetA`]);
             Trigger_HandleParameter(pm.uid, pm[`actions_${i}_targetB`]);
         }
-          // Extended triggers.
+        // Extended triggers.
         if(pm.extended === undefined) continue;
 
         let actions = pm.additionalActions;
