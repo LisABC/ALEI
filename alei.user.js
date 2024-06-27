@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      13.1
+// @version      13.5
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -4625,16 +4625,16 @@ function extendTriggerList() {
         StreetMagic();
     }
 
-/**
- *  This function is invoked whenever someone clicks on an option in the dropdown menu of parameter values.
- *  For example, clicking on "Force Movable 'A' move to Region 'B'"
- * 
- *  Prompts for further input if required and updates the GUI. 
- * 
- *  @param {string} val1    The real actual value.
- *  @param {string} val2    Name / Label of the value clicked.
- *  @param {string} defval  Previous real value.
- */
+    /**
+     *  This function is invoked whenever someone clicks on an option in the dropdown menu of parameter values.
+     *  For example, clicking on "Force Movable 'A' move to Region 'B'"
+     * 
+     *  Prompts for further input if required and updates the GUI. 
+     * 
+     *  @param {string} val1    The real actual value.
+     *  @param {string} val2    Name / Label of the value clicked.
+     *  @param {string} defval  Previous real value.
+     */
     function setletedit(val1, val2, defval) {
         const skipTriggerActions = [123, 361, 364, 365];
 
@@ -4892,6 +4892,10 @@ function extendTriggerList() {
         UpdateGUIObjectsList();
     }
 
+    /**
+     *  This function is responsible for compiling the text portion of the trigger action when saved.
+     *  It is further patched to support more than 10 triggers.
+     */
     function CompileTrigger() {
         const skipTriggerActions = [123, 361, 364, 365];
         const selection = getSelection();
@@ -5032,6 +5036,30 @@ function extendTriggerList() {
     window.serialize = JSON.stringify;
     window.unserialize = JSON.parse;
     window.UpdateGUIParams = newUpdateGUIParams;
+
+    // Patch the render function's connection line to work with >10 trigger actions.
+    let RenderInString = window.Render.toString().replaceAll(
+        /es\[(i2?)\]\.pm\[ property \];/g, 
+        `es[$1].pm[ property ];
+        let array;
+        if(Array.isArray(value)) {
+            array = value;
+        }
+        else {
+            array = [value];
+        }
+
+        for(let index = 0, value = array[index]; index < array.length; ++index, value = array[index]) 
+        `
+    );
+
+    // Patch function for strict mode compliance
+    RenderInString = RenderInString.toString().replaceAll(
+        `for ( property in`,
+        `for ( let property in`
+    );
+
+    window.Render = eval(`(${RenderInString})`);    
 }
 
 /** This function is invoked whenever the map loads.
