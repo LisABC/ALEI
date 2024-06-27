@@ -5052,7 +5052,7 @@ function extendTriggerList() {
         `for ( let property in`
     );
 
-    window.Render = eval(`(${RenderInString})`);    
+    // window.Render = eval(`(${RenderInString})`);    
 }
 
 /** This function is invoked whenever the map loads.
