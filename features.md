@@ -51,6 +51,7 @@ This part includes changes to adds new things to ALE.
 - Get image size
 - Center decoration X, Y
 - Opt-in object name hiding
+- Extended triggers, as in triggers that can hold more than 10 actions than max 10.
 
 # Fixes
 This part includes changes that are meant to fix issues (It doesn't have to be code issue, it can be any issue, ambiguity issues, etc.)
