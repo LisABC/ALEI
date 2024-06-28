@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      14.6
+// @version      14.7
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1386,12 +1386,27 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
             if((paramname == "uid") && aleiSettings.rematchUID) {
                 let oldName = es[elems].pm[paramname]; // Note: don't do this after getting original ES, otherwise id isn't valid lmao
                 window.es = ogES;
+                // Making sure we keep names unique for OCM structure
                 if(window.uidToElementMap[chvalue] !== undefined) {
                     NewNote(`ALEI: Object with name ${chvalue} already exists, consider naming it differently.`, "#FFFF00");
                     return;
                 }
-
                 updateUIDReferences(oldName, chvalue);
+
+                let ocm = window.ObjectConnectionMapping;
+                ocm[chvalue] = ocm[oldName];
+                delete ocm[oldName];
+
+                function redirectConnections(obj, oldName, newName) {
+                    let index = ocm[obj]["to"].indexOf(oldName);
+                    if(index !== -1) ocm[obj]["to"][index] = newName;
+                    index = ocm[obj]["by"].indexOf(oldName);
+                    if(index !== -1) ocm[obj]["by"][index] = newName;
+                }
+
+                ocm[chvalue]["by"].map(v => redirectConnections(v, oldName, chvalue));
+                ocm[chvalue]["to"].map(v => redirectConnections(v, oldName, chvalue));
+
                 ogES = window.es;
                 window.es = SelectedObjects;
             }
