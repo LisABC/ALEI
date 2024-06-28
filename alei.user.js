@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      14.7
+// @version      14.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -5323,6 +5323,70 @@ function __OCM_RemoveReference(from, to) {
     if(ocm[to]["by"].indexOf(from) !== -1) ocm[to]["by"].splice(ocm[to]["by"].indexOf(from), 1);
 }
 
+/*
+ * __OCM_HandleObject
+ * Function responsible for internal registration of object mappings.
+ *
+ *@param {E}   element   PB2 object to create connection mapping of.
+*/
+
+function __OCM_HandleObject(element) {
+    let ocm = ObjectConnectionMapping;
+    let utem = uidToElementMap;
+
+
+    if(element.pm.uid === undefined) return;
+    if(element.pm.uid === "#water") return;
+
+    function Trigger_HandleParameter(trigger, parameter) {
+        if(typeof(parameter) !== "string") return;
+
+        if(utem[parameter] !== undefined) { // Simple case where parameter is simply reference to object.
+            __OCM_AddReference(trigger, parameter);
+            return;
+        }
+        if(parameter.includes(",") == false) return;
+        // A little complex case where multiple objects are referenced
+        // As in Parameter B: #region*1,#region*2
+        let splt = parameter.split(",");
+        for(let value of splt) {
+            let val = value.trim();
+            if(utem[val] !== undefined) __OCM_AddReference(trigger, val);
+        }
+    }
+
+    // Eliminating parameters we don't need to look at.
+    for(let key of Object.keys(element.pm)) {
+        if(__OCM_CHECKED_KEYS.indexOf(key) === -1) continue;
+        let value = element.pm[key];
+        if(utem[value] === undefined) continue; // Not valid object, just skip.
+
+        __OCM_AddReference(element.pm.uid, value);
+    }
+    // Special case for trigger actions.
+    if(element._class !== "trigger") return;
+    let pm = element.pm;
+    // Vanilla trigger case (10 actions, extended triggers will run this too)
+    for(let i = 1; i < 11; i++) {
+        if(pm[`actions_${i}_type`] == -1) continue;
+        if(pm[`actions_${i}_type`] === undefined) continue;
+        Trigger_HandleParameter(pm.uid, pm[`actions_${i}_targetA`]);
+        Trigger_HandleParameter(pm.uid, pm[`actions_${i}_targetB`]);
+    }
+    // Extended triggers.
+    if(pm.extended === undefined) return;
+
+    let actions = pm.additionalActions;
+    let paramA = pm.additionalParamA;
+    let paramB = pm.additionalParamB;
+
+    for(let i = 0; i < actions.length; i++) {
+        if(actions[i] === -1) continue;
+        Trigger_HandleParameter(pm.uid, paramA[i]);
+        Trigger_HandleParameter(pm.uid, paramB[i]);
+    }
+}
+
 function CreateConnectionMapping() {
     window.ObjectConnectionMapping = {};
     window.uidToElementMap = {};
@@ -5344,58 +5408,7 @@ function CreateConnectionMapping() {
         utem[element.pm.uid] = element;
     }
 
-    function Trigger_HandleParameter(trigger, parameter) {
-        if(typeof(parameter) !== "string") return;
-
-        if(utem[parameter] !== undefined) { // Simple case where parameter is simply reference to object.
-            __OCM_AddReference(trigger, parameter);
-            return;
-        }
-        if(parameter.includes(",") == false) return;
-        // A little complex case where multiple objects are referenced
-        // As in Parameter B: #region*1,#region*2
-        let splt = parameter.split(",");
-        for(let value of splt) {
-            let val = value.trim();
-            if(utem[val] !== undefined) __OCM_AddReference(trigger, val);
-        }
-    }
-
-    for(let element of es) {
-        if(element.pm.uid === undefined) continue;
-        if(element.pm.uid === "#water") continue;
-
-        // Eliminating parameters we don't need to look at.
-        for(let key of Object.keys(element.pm)) {
-            if(__OCM_CHECKED_KEYS.indexOf(key) === -1) continue;
-            let value = element.pm[key];
-            if(utem[value] === undefined) continue; // Not valid object, just skip.
-
-            __OCM_AddReference(element.pm.uid, value);
-        }
-        // Special case for trigger actions.
-        if(element._class !== "trigger") continue;
-        let pm = element.pm;
-        // Vanilla trigger case (10 actions, extended triggers will run this too)
-        for(let i = 1; i < 11; i++) {
-            if(pm[`actions_${i}_type`] == -1) continue;
-            if(pm[`actions_${i}_type`] === undefined) continue;
-            Trigger_HandleParameter(pm.uid, pm[`actions_${i}_targetA`]);
-            Trigger_HandleParameter(pm.uid, pm[`actions_${i}_targetB`]);
-        }
-        // Extended triggers.
-        if(pm.extended === undefined) continue;
-
-        let actions = pm.additionalActions;
-        let paramA = pm.additionalParamA;
-        let paramB = pm.additionalParamB;
-
-        for(let i = 0; i < actions.length; i++) {
-            if(actions[i] === -1) continue;
-            Trigger_HandleParameter(pm.uid, paramA[i]);
-            Trigger_HandleParameter(pm.uid, paramB[i]);
-        }
-    }
+    for(let element of es) __OCM_HandleObject(element);
     aleiLog(DEBUG, "Built object connection map.");
 }
 
