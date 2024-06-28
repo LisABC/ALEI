@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      14.5
+// @version      14.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1386,8 +1386,8 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
             if((paramname == "uid") && aleiSettings.rematchUID) {
                 let oldName = es[elems].pm[paramname]; // Note: don't do this after getting original ES, otherwise id isn't valid lmao
                 window.es = ogES;
-                if(window.uidToElementMap[newName] !== undefined) {
-                    NewNote(`ALEI: Object with name ${newName} already exists, consider naming it differently.`, "#FFFF00");
+                if(window.uidToElementMap[chvalue] !== undefined) {
+                    NewNote(`ALEI: Object with name ${chvalue} already exists, consider naming it differently.`, "#FFFF00");
                     return;
                 }
 
