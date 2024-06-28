@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      14.8
+// @version      14.9
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -5419,6 +5419,8 @@ let ALE_start = (async function() {
     ROOT_ELEMENT = document.documentElement;
     stylesheets = document.styleSheets;
     ALE_Render = Render;
+    window.ObjectConnectionMapping = {};
+    window.uidToElementMap = {};
 
     // Updates the current CSS stylesheet.
     updateCSSFile();
