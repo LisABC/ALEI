@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      15.0
+// @version      15.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -47,6 +47,7 @@ const INFO = 0;
 const DEBUG = 1;
 const DEBUG2 = 2;
 const WARN = -1;
+const SWARN = -2;
 const __OCM_CHECKED_KEYS = ["target", "attach", "use_target", "incar", "ondeath", "callback"]; // OCM = Object Connection Mapping
 
 // Just for styling.
@@ -77,7 +78,7 @@ let aleiSettings = {
     enableTooltips:     readStorage("ALEI_ShowTooltips",         false, (val) => val === "true"),
     showSameParameters: readStorage("ALEI_ShowSameParameters",   true , (val) => val === "true"),
     rematchUID:         readStorage("ALEI_RemapUID",             false, (val) => val === "true"),
-    showIDs:            readStorage("ALEI_ShowIDs",              false, (val) => val === "true"),
+    //showIDs:            readStorage("ALEI_ShowIDs",              false, (val) => val === "true"),
     blackTheme:         readStorage("ALEI_BlackTheme",           false, (val) => val === "true"),
     gridBasedOnSnapping:readStorage("ALEI_gridBasedOnSnapping",  true,  (val) => val === "true"),
     showZIndex:         readStorage("ALEI_ShowZIndex",           false, (val) => val === "true"),
@@ -101,9 +102,9 @@ let levelToNameMap = {
 }
 
 function aleiLog(level, text) {
-    if (level === WARN) {
+    if (level <= WARN) {
         console.warn(`[ALEI:WARNING]: ${text}`);
-        NewNote(`ALEI: Please check console.`, "#FFFF00");
+        if(level === WARN) NewNote(`ALEI: Please check console.`, "#FFFF00");
     }else if (level <= aleiSettings.logLevel)
         console.log(`[${ANSI_GREEN}ALEI:${levelToNameMap[level]}]: ${text}`)
 }
@@ -3029,9 +3030,19 @@ function patchDecorUpload() {
 
 function setParameter(index, value) {
     let rightParams = document.getElementById("rparams");
+    if(rightParams === undefined) return;
 
-    if (index < rightParams.childNodes.length) {
-        rightParams.childNodes[index].childNodes[1].innerHTML = value;
+    let actualIndex = 0; // We will bruteforce.
+    let i = 0;
+    while(i < index) {
+        i++;
+        actualIndex++;
+
+        if(rightParams.childNodes[actualIndex].childNodes[1] === undefined) actualIndex++;
+    }
+
+    if (actualIndex < rightParams.childNodes.length) {
+        rightParams.childNodes[actualIndex].childNodes[1].innerHTML = value;
     }
 }
 
@@ -3101,16 +3112,6 @@ function toBoolean(str) {
     }
 }
 
-function fixIndex(index, objectType) {
-    let fixedIndex = index;
-
-    if (objectType == "trigger") {
-        let separator = Trigger_getSeparatorStart(getSelection().length);
-        if(index > separator) fixedIndex = index + Math.floor((index - separator - 1)/3 + 1);
-    }
-    return fixedIndex;
-}
-
 const parameterMap = {
     "box": {"m": "box_model"},
     "door": {
@@ -3170,13 +3171,13 @@ function setSameParameters() {
             let value = objects[0].pm[parameters[indexes[i]]];
             let objectType = objects[0]._class;
 
-            setParameter(fixIndex(indexes[i], objectType), fixParameterValue(name, value, objectType));
+            setParameter(indexes[i], fixParameterValue(name, value, objectType));
         }
     }
 }
 
 function assignObjectIDs() {
-    if (!aleiSettings.showIDs) return;
+    // TODO: Refactor
     let idmap = {};
     for (let element of es) {
         if (!element.exists) continue;
@@ -3203,9 +3204,9 @@ function patchANI() {
         if (ngpu) {
             assignObjectIDs();
             assignZIndex();
-            if (aleiSettings.showSameParameters) {
+            /*if (aleiSettings.showSameParameters) {
                 setSameParameters();;
-            }
+            }*/
         }
     }
     aleiLog(DEBUG, "Patched ANI");
@@ -3294,6 +3295,7 @@ function patchEntityClass() {
             let entries = Object.entries(result.pm);
 
             entries.splice(5, 0, ["execute", false]);
+            entries.splice(0, 0, ["__id", 0]);
 
             result.pm = Object.fromEntries(entries);
         }
@@ -3683,13 +3685,7 @@ function patchUpdateGUIParams() {
             }
         }
 
-        let shouldDisplayID = (selected.length == 1) && aleiSettings.showIDs;
-
-        if (shouldDisplayID) {
-            let entries = Object.entries(selected[0].pm);
-            entries.splice(0, 0, ["__id",  selected[0].aleiID ]);
-            selected[0].pm = Object.fromEntries(entries);
-        }
+        if(selected.length > 0) selected.map(o => (o.pm.__id = o.aleiID));
 
         if (!shouldDisplayZIndex) {
             for (let i = 0; i < selected.length; i++) {
@@ -3710,7 +3706,7 @@ function patchUpdateGUIParams() {
         origUGP();
         addAdditionalButtons();
 
-        if (shouldDisplayID) delete selected[0].pm.__id;
+        //if (shouldDisplayID) delete selected[0].pm.__id;
 
         if (!shouldDisplayZIndex) {
             for (let i = 0; i < selected.length; i++) {
@@ -3864,10 +3860,10 @@ function createALEISettingsMenu() {
     addBinaryOption("Show", "Hide", "ALEI_ShowTooltips", "enableTooltips", "tooltip")
 
     // Object ID.
-    registerButton("showids", [true, false], "showIDs");
+    /*registerButton("showids", [true, false], "showIDs");
     addText("Object IDs:")
     addBinaryOption("Show", "Hide", "ALEI_ShowIDs", "showIDs", "showids")
-
+*/
     // Z-Index.
     registerButton("showzindex", [true, false], "showZIndex");
     addText("Object z-index:");
@@ -4151,11 +4147,7 @@ let triggerActionsClipboard = [];
 function getTriggerActionElements() {
     let arr = [];
     let elems = document.getElementsByClassName("p_i");
-    let i = 6;
-
-    if (aleiSettings.showIDs) {
-        i++;
-    }
+    let i = 7;
 
     for (; i < elems.length; i++) {
         arr.push(elems[i].childNodes[0]);
@@ -4491,12 +4483,7 @@ function patchNewNote() {
  * This is used for fixIndex and PatchGUIParams;
 */
 function Trigger_getSeparatorStart(selectionCount) {
-    let shouldDisplayID = (selectionCount == 1) && aleiSettings.showIDs;
-    let startSeparatorFrom = 5; // Name + X + Y + Max Calls + Enabled + Executes Directly
-
-    if (shouldDisplayID) { // + ID
-        startSeparatorFrom = 6;
-    }
+    let startSeparatorFrom = 6; // Name + X + Y + Max Calls + Enabled + Executes Directly + ID
     return startSeparatorFrom;
 }
 
@@ -4882,7 +4869,7 @@ function extendTriggerList() {
         for (var i = 1; i <= totalNumOfActions; i++) {
             var mark_obj = document.getElementById('pm_actions_' + i + '_type');
             if (mark_obj == null) {
-                aleiLog(WARN, "Failed to retrieve HTML element of property to dynamically apply property type.");
+                aleiLog(SWARN, "Failed to retrieve HTML element of property to dynamically apply property type.");
                 break;
             }
 
