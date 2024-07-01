@@ -5483,7 +5483,7 @@ let ALE_start = (async function() {
         checkForUpdates();
     } else {
         // load this map twice to parse extended triggers.
-        LoadThisMap();
+        if(mapid !== "") LoadThisMap();
     }
     changeTopRightText();
 
