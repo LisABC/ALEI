@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      15.1
+// @version      15.2
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -3030,7 +3030,19 @@ function patchDecorUpload() {
 
 function setParameter(index, value) {
     let rightParams = document.getElementById("rparams");
-    if(rightParams === undefined) return;
+    if(rightParams == undefined) return;
+    if(rightParams == null) return;
+
+    if(index > 13) {
+        let isAllTrigger = SelectedObjects.map(o => (o._class == "trigger"));
+        if(isAllTrigger.indexOf(false) !== -1) return;
+        function getActionCount(elem) {
+            if(elem.isExtended) return elem.pm.totalNumOfActions;
+            else return 10;
+        }
+        let minimumActionCount = Math.min(...SelectedObjects.map(o => getActionCount(o)));
+        if(index >= (minimumActionCount * 3 + Trigger_getSeparatorStart(SelectedObjects.length) - 1)) return;
+    }
 
     let actualIndex = 0; // We will bruteforce.
     let i = 0;
@@ -3204,9 +3216,7 @@ function patchANI() {
         if (ngpu) {
             assignObjectIDs();
             assignZIndex();
-            /*if (aleiSettings.showSameParameters) {
-                setSameParameters();;
-            }*/
+            if (aleiSettings.showSameParameters) setSameParameters();
         }
     }
     aleiLog(DEBUG, "Patched ANI");
@@ -3284,6 +3294,15 @@ function patch_m_down() {
 window.SelectedObjects = [];
 
 function patchEntityClass() {
+    function cleanUpSO() {
+        setTimeout(cleanUpSO, 5 * 1000);
+        for(let e of SelectedObjects) {
+            if(!e.selected) e.selectChange(false);
+        }
+    }
+    // For some reason, there can be unselected objects in SelectedObjects, still. (This shouldn't now happen now that we set selected manually)
+    setTimeout(cleanUpSO, 5 * 1000); // TODO. Do we need his anymore? Im too lazy to test...
+
     let og_E = E;
     window.E = function(_class) {
         let result = new og_E(_class);
@@ -3303,20 +3322,22 @@ function patchEntityClass() {
 
         result.fixPos = function() {}; // For proper snapping.
         result.selectChange = function(isSelected) {
-            if(isSelected) {
+            if(isSelected && !result.selected) {
                 result.selectIndex = SelectedObjects.length;
                 SelectedObjects.push(result);
-            } else {
+                result.selected = true;
+            } else if(!isSelected && result.selected) {
                 for(let i = result.selectIndex+1; i < SelectedObjects.length; i++) {
                     SelectedObjects[i].selectIndex -= 1;
                 }
                 SelectedObjects.splice(result.selectIndex, 1);
+                result.selected = false;
             }
         }
 
         function ProxySet(_, key, value) {
-            result[key] = value;
             if(key == "selected") result.selectChange(value);
+            else result[key] = value;
             return true;
         }
 
