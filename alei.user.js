@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      14.9
+// @version      15.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -41,6 +41,7 @@ let stylesheets = document.styleSheets;
 let VAL_TABLE = {}; // Will be filled later.
 let displayOperationCompleteNotes = true;
 let REGION_EXECUTE_PARAM_ID; // Will be set later.
+let OCM_LOADED = true; // Assume empty map.
 
 const INFO = 0;
 const DEBUG = 1;
@@ -999,6 +1000,8 @@ function addSnappingOptions_helper() {
 }
 
 window.ALEI_UpdateRematchUIDSetting = function(value) {
+    if(value && !OCM_LOADED) CreateConnectionMapping(); // To create OCM.
+    if(!value && OCM_LOADED) CreateConnectionMapping(); // To clear OCM. (As it might be already outdated by the time rematch UID gets enabled)
 
     aleiSettings.rematchUID = value;
     writeStorage("ALEI_RemapUID", value);
@@ -2433,7 +2436,10 @@ function changeTopRightText() {
     containerElem.style.width = "170px";
     elem.style.width = "160px";
 
-    elem.innerHTML = "Plazma Burst 2 Level Editor v1.4<br>ALE Improvements v" + GM_info.script.version;
+    let version = "UNKNOWN";
+    if(isNative) version = GM_info.script.version;
+
+    elem.innerHTML = elem.innerHTML.replaceAll("<br>", " ") + "<br>ALE Improvements v" + version;
 }
 
 function sortObjects() {
@@ -3521,6 +3527,7 @@ function ServerRequest_handleMapData(mapCode) {
 function handleServerRequestResponse(request, operation, response) {
     if (response.indexOf("var es = new Array();") != -1) {
         window.SelectedObjects = [];
+        OCM_LOADED = false;
         ServerRequest_handleMapData(response);
         CreateConnectionMapping();
     }else if (response.indexOf("knownmaps = [") !== -1) {
@@ -4043,20 +4050,12 @@ function notifyIfTheresUpdate(script) {
         break;
     }
 
-    let verParts = version.split(".");
-    let currentVerParts = GM_info.script.version.split(".");
+    let latestVersion = parseInt(version.replaceAll(".", ""));
+    let currentVersion = parseInt(GM_info.script.version.replaceAll(".", ""));
 
-    // x.y.z > x.y(.0)
-    if(verParts.length > currentVerParts.length) return notifyUpdate(version);
+    if(latestVersion > currentVersion) return notifyUpdate(version);
 
-    let smallestLength = Math.min(verParts.length , currentVerParts.length)
-    for (let i = 0; i < smallestLength; i++) {
-        let verPart = parseInt(verParts[i]);
-        let currentVerPart = parseInt(currentVerParts[i]);
-
-        if(verPart > currentVerPart) return notifyUpdate(version);
-    }
-    aleiLog(INFO, "No update detected.");
+    aleiLog(INFO, `REMOTE: ${version}, LOCAL: ${GM_info.script.version} => No update detected.`);
 }
 
 async function checkForUpdates() {
@@ -5388,8 +5387,11 @@ function __OCM_HandleObject(element) {
 }
 
 function CreateConnectionMapping() {
+    OCM_LOADED = false;
     window.ObjectConnectionMapping = {};
     window.uidToElementMap = {};
+
+    if(!aleiSettings.rematchUID) return; // Rematch UID is not necessarily a requirement for OCM but it is requirement if I wanna be lazy
 
     let ocm = ObjectConnectionMapping;
     let utem = uidToElementMap;
@@ -5409,6 +5411,7 @@ function CreateConnectionMapping() {
     }
 
     for(let element of es) __OCM_HandleObject(element);
+    OCM_LOADED = true;
     aleiLog(DEBUG, "Built object connection map.");
 }
 
@@ -5478,11 +5481,11 @@ let ALE_start = (async function() {
 
     if(isNative) {
         checkForUpdates();
-        changeTopRightText();
     } else {
         // load this map twice to parse extended triggers.
         LoadThisMap();
     }
+    changeTopRightText();
 
     aleiLog(DEBUG2, "Settings: " + JSON.stringify(aleiSettings));
     ALEI_UpdateNameRenderSetting(aleiSettings.renderObjectNames);
