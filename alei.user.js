@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      15.2
+// @version      15.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1674,75 +1674,75 @@ function blackTheme() {
 
     THEME = 4;
 
-    setStyle(".topui", "backgroundSize", "0px");
-    setStyle(".leftui", "backgroundSize", "0px");
-    setStyle(".rightui", "backgroundSize", "0px");
-    setStyle(".topui", "backgroundColor", "#101010");
-    setStyle(".leftui", "backgroundColor", "#101010");
-    setStyle(".rightui", "backgroundColor", "#101010");
-    setStyle(".field_btn", "backgroundColor", "#202020");
-    setStyle(".tool_btn", "backgroundColor", "#202020");
-    setStyle(".tool_btn", "border", "");
-    setStyle(".tool_btn2", "backgroundColor", "#333");
-    setStyle(".tool_btn2", "border", "1px solid #888");
-    setStyle(".field_btn", "color", "#CCC");
-    setStyle(".tool_btn", "color", "#CCC");
-    setStyle(".tool_btn2", "color", "#CCC");
-    setStyle(".gui_sel_info", "color", "#CCC");
-    setStyle(".c", "color", "#CCC");
-    setStyle(".pa1", "color", "#CCC");
-    setStyle(".pa2", "color", "#CCC");
-    setStyle(".field_dis_left", "color", "#CCC");
-    setStyle(".field_dis_right", "color", "#CCC");
+    setStyle(".topui", "backgroundSize", "0px"); // removes top ui detail
+    setStyle(".leftui", "backgroundSize", "0px"); // removes left ui detail
+    setStyle(".rightui", "backgroundSize", "0px"); // removes right ui detail
+    setStyle(".topui", "backgroundColor", "#0A0A0A");
+    setStyle(".leftui", "backgroundColor", "#0A0A0A");
+    setStyle(".rightui", "backgroundColor", "#0A0A0A");
+    setStyle(".field_btn", "backgroundColor", "#1E1E1E");
+    setStyle(".tool_btn", "backgroundColor", "#1E1E1E");
+    setStyle(".tool_btn", "border", ""); // tool button outline
+    setStyle(".tool_btn2", "backgroundColor", "#4566AB");
+    setStyle(".tool_btn2", "border", "1px solid #FFFFFF20");
+    setStyle(".field_btn", "color", "#FFFFFFD0");
+    setStyle(".tool_btn", "color", "#FFFFFFD0");
+    setStyle(".tool_btn2", "color", "#FFFFFFD0");
+    setStyle(".gui_sel_info", "color", "#FFFFFFD0");
+    setStyle(".c", "color", "#FFFFFF20");
+    setStyle(".pa1", "color", "#808080");
+    setStyle(".pa2", "color", "#FFFFFFD0");
+    setStyle(".field_dis_left", "color", "#FFFFFFD0");
+    setStyle(".field_dis_right", "color", "#FFFFFFD0");
     setStyle(".p_u1", "border", "");
     setStyle(".p_u2", "border", "");
-    setStyle(".pa1", "backgroundColor", "#202020");
-    setStyle(".pa2", "backgroundColor", "#000000");
-    setStyle(".objbox", "backgroundColor", "#000000");
-    setStyle(".field_dis_left", "backgroundColor", "#202020");
-    setStyle(".field_dis_right", "backgroundColor", "#000000");
-    setStyle(".selline1", "backgroundColor", "#202020");
-    setStyle(".tool_btn:hover", "backgroundColor", "#202020");
-    setStyle(".tool_btn:hover", "border", "1px solid #888");
-    setStyle(".tool_btn:hover", "color", "#CCC");
-    setStyle(".tool_btn2:hover", "backgroundColor", "#333");
-    setStyle(".tool_btn2:hover", "border", "1px solid #888");
-    setStyle(".tool_btn2:hover", "color", "#CCC");
-    setStyle(".field_btn:hover", "backgroundColor", "#333");
-    setStyle(".field_btn:hover", "color", "#CCC");
-    setStyle(".tool_btn:active", "backgroundColor", "#202020");
-    setStyle(".tool_btn:active", "border", "1px solid #888");
-    setStyle(".tool_btn:active", "color", "#CCC");
-    setStyle(".tool_btn2:active", "backgroundColor", "#333");
-    setStyle(".tool_btn2:active", "border", "1px solid #888");
-    setStyle(".tool_btn2:active", "color", "#CCC");
-    setStyle(".field_btn:active", "backgroundColor", "#333");
-    setStyle(".field_btn:active", "color", "#CCC");
-    setStyle("#mrtitle", "backgroundColor", "#202020");
-    setStyle("#mrbox", "backgroundColor", "#101010");
-    setStyle(".field_input", "backgroundColor", "#000");
-    setStyle(".field_input", "color", "#CCC");
-    setStyle(".btn", "backgroundColor", "#202020");
-    setStyle(".btn", "color", "#CCC");
-    setStyle(".btn:hover", "backgroundColor", "#333");
-    setStyle(".btn:hover", "color", "#CCC");
-    setStyle(".btn:active", "backgroundColor", "#333");
-    setStyle(".btn:active", "color", "#CCC");
-    setStyle("closebox", "backgroundColor", "#101010");
-    setStyle("closebox", "color", "#CCC");
-    setStyle(".list_group", "backgroundColor", "#202020");
-    setStyle(".list_group", "borderBottom", "");
-    setStyle(".list_group:hover", "backgroundColor", "#333");
-    setStyle(".list_group:active", "backgroundColor", "#333");
-    setStyle(".image_list_collapsable", "backgroundColor", "#101010");
-    setStyle(".img_option_selected", "backgroundColor", "#444");
-    setStyle(".rightui", "borderLeft", "");
-    setStyle(".leftui", "borderRight", "");
-    setStyle("::-webkit-scrollbar-thumb", "backgroundColor", "#888");
-    setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarColor", "");
-    setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarWidth", "");
-    setStyle("#tools_box", "overflow-y", "hidden");
-    setStyle("#tools_box", "overflow-y", "auto");
+    setStyle(".pa1", "backgroundColor", "#101010");
+    setStyle(".pa2", "backgroundColor", "#1B1B1B");
+    setStyle(".objbox", "backgroundColor", "#131313");
+    setStyle(".field_dis_left", "backgroundColor", "#1E1E1E");
+    setStyle(".field_dis_right", "backgroundColor", "#131313");
+    setStyle(".selline1", "backgroundColor", "#7A1314"); // selected object/current map
+    setStyle(".tool_btn:hover", "backgroundColor", "#353535");
+    setStyle(".tool_btn:hover", "border", "1px solid #FFFFFF20");
+    setStyle(".tool_btn:hover", "color", "#FFFFFFD0");
+    setStyle(".tool_btn2:hover", "backgroundColor", "#5077C4");
+    setStyle(".tool_btn2:hover", "border", "1px solid #FFFFFF20");
+    setStyle(".tool_btn2:hover", "color", "#FFFFFFD0");
+    setStyle(".field_btn:hover", "backgroundColor", "#353535");
+    setStyle(".field_btn:hover", "color", "#FFFFFFD0");
+    setStyle(".tool_btn:active", "backgroundColor", "#151515"); // object list hold fill
+    setStyle(".tool_btn:active", "border", "1px solid #FFFFFF20"); // object list hold outline
+    setStyle(".tool_btn:active", "color", "#FFFFFFD0"); // object list hold text
+    setStyle(".tool_btn2:active", "backgroundColor", "#39558C"); // toggled active button hold fill
+    setStyle(".tool_btn2:active", "border", "1px solid #FFFFFF20"); // toggled active button hold outline
+    setStyle(".tool_btn2:active", "color", "#FFFFFFD0"); // toggled active button hold text
+    setStyle(".field_btn:active", "backgroundColor", "#151515"); // field button hold fill
+    setStyle(".field_btn:active", "color", "#CCC"); // field button hold text
+    setStyle("#mrtitle", "backgroundColor", "#1E1E1E"); // map list overhead
+    setStyle("#mrbox", "backgroundColor", "#0A0A0A"); // maplist border fill
+    setStyle(".field_input", "backgroundColor", "#131313"); // map id field
+    setStyle(".field_input", "color", "#CCC"); // what
+    setStyle(".btn", "backgroundColor", "#1E1E1E"); // map button
+    setStyle(".btn", "color", "#CCC"); // what
+    setStyle(".btn:hover", "backgroundColor", "#353535"); // map button hover
+    setStyle(".btn:hover", "color", "#CCC"); // what is this 8
+    setStyle(".btn:active", "backgroundColor", "#151515"); // map button hold
+    setStyle(".btn:active", "color", "#CCC"); // what is this 10
+    setStyle("closebox", "backgroundColor", "#353535"); // decor list close button
+    setStyle("closebox", "color", "#CCC"); // what
+    setStyle(".list_group", "backgroundColor", "#1E1E1E"); // decor list category
+    setStyle(".list_group", "borderBottom", ""); // what is this 14
+    setStyle(".list_group:hover", "backgroundColor", "#353535"); // decor list category hover
+    setStyle(".list_group:active", "backgroundColor", "#0A0A0A"); // decor list category hold
+    setStyle(".image_list_collapsable", "backgroundColor", "#0A0A0A"); // decor list background
+    setStyle(".img_option_selected", "backgroundColor", "#4566AB40"); // current decor
+    setStyle(".rightui", "borderLeft", ""); // removes right ui border
+    setStyle(".leftui", "borderRight", ""); // removes left ui order
+    setStyle("::-webkit-scrollbar-thumb", "backgroundColor", "#888"); // what is this
+    setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarColor", ""); // what is this
+    setStyle("#rparams, #gui_objbox, #tools_box, #parambox", "scrollbarWidth", ""); // what is this
+    setStyle("#tools_box", "overflow-y", "hidden"); // what is this
+    setStyle("#tools_box", "overflow-y", "auto"); // what is this
 }
 
 function isNumber(str) {
