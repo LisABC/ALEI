@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      15.4
+// @version      15.5
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -3296,12 +3296,20 @@ window.SelectedObjects = [];
 function patchEntityClass() {
     function cleanUpSO() {
         setTimeout(cleanUpSO, 5 * 1000);
-        for(let e of SelectedObjects) {
-            if(!e.selected) e.selectChange(false);
+        // Update indexes. (Just incase.)
+        for(let i = 0; i < SelectedObjects.length; i++) {
+            SelectedObjects[i].selectIndex = i;
+        }
+        // Manually trigger select change if required.
+        for(let i = 0; i < SelectedObjects.length; i++) {
+            let e = SelectedObjects[i];
+            if(!e.selected) {
+                e.selectChange(false, true);
+            }
         }
     }
-    // For some reason, there can be unselected objects in SelectedObjects, still. (This shouldn't now happen now that we set selected manually)
-    setTimeout(cleanUpSO, 5 * 1000); // TODO. Do we need his anymore? Im too lazy to test...
+    // For some reason, there can be unselected objects in SelectedObjects, still, and sometimes indexes can be off bound, we have to fix it too.
+    setTimeout(cleanUpSO, 5 * 1000);
 
     let og_E = E;
     window.E = function(_class) {
@@ -3321,14 +3329,19 @@ function patchEntityClass() {
         else if(_class == "region") result.pm.uses_timer = false;
 
         result.fixPos = function() {}; // For proper snapping.
-        result.selectChange = function(isSelected) {
-            if(isSelected && !result.selected) {
+        result.selectChange = function(isSelected, force = false) {
+            if((isSelected && (!result.selected || force))) {
                 result.selectIndex = SelectedObjects.length;
                 SelectedObjects.push(result);
                 result.selected = true;
-            } else if(!isSelected && result.selected) {
+            } else if(!isSelected && (result.selected || force)) {
+                // Fix indexes.
+                for(let i = 0; i < SelectedObjects.length; i++) {
+                    SelectedObjects[i].selectIndex = i;
+                }
+                // Update indexes.
                 for(let i = result.selectIndex+1; i < SelectedObjects.length; i++) {
-                    SelectedObjects[i].selectIndex -= 1;
+                     SelectedObjects[i].selectIndex -= 1;
                 }
                 SelectedObjects.splice(result.selectIndex, 1);
                 result.selected = false;
