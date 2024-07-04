@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      15.5
+// @version      15.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -5440,6 +5440,8 @@ function patchRender() {
     // This is where Render will be patched.
     // Due to nature of this function, maybe it'll be better to call this function each time a patch is needed.
     // And to support that, this function will strictly work on ALE_Render than current Render
+    if(!aleiSettings.blackTheme) return;
+    // We should only patch for black theme, because setting render makes things lag for no apparent reason.
 
     let fn = ALE_Render.toString();
     fn = fn.replaceAll("for ( property", "for ( let property");
