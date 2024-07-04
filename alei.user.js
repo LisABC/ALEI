@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      15.3
+// @version      15.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -5423,6 +5423,26 @@ function CreateConnectionMapping() {
     aleiLog(DEBUG, "Built object connection map.");
 }
 
+function patchRender() {
+    // This is where Render will be patched.
+    // Due to nature of this function, maybe it'll be better to call this function each time a patch is needed.
+    // And to support that, this function will strictly work on ALE_Render than current Render
+
+    let fn = ALE_Render.toString();
+    fn = fn.replaceAll("for ( property", "for ( let property");
+
+    // Noname & Xeden's black theme
+    let GridColor = "#222222";
+    let GridLineColor = "#FFFFFF50";
+
+    fn = fn.replace("if ( THEME === THEME_BLUE )", `if (THEME === 4) ctx.fillStyle = '${GridColor}';\n else if (THEME === THEME_BLUE)`);
+    fn = fn.replace("if ( THEME !== THEME_DARK )", `if (THEME === 4) ctx.fillStyle = '${GridLineColor}';\n else if (THEME !== THEME_DARK)`);
+
+    window.Render = eval(`(${fn})`);
+
+
+}
+
 let ALE_start = (async function() {
     'use strict';
 
@@ -5510,6 +5530,8 @@ let ALE_start = (async function() {
             false,
             (val) => val === "true")
     );
+
+    patchRender();
 
     NewNote("ALEI: Welcome!", "#7777FF");
     aleiLog(INFO, `Welcome!`);
