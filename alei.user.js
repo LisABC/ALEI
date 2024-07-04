@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      15.6
+// @version      15.7
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1665,14 +1665,28 @@ function getRuleBySelector(selector) {
     return rule;
 }
 
-function setStyle(selector, style, value) {
+window.blackThemeUndos = [];
+
+function setStyle(selector, style, value, isUndo = false) {
+    if(!isUndo) blackThemeUndos.push([
+        selector,
+        style,
+        getRuleBySelector(selector).style[style]
+    ]);
     getRuleBySelector(selector).style[style] = value;
+}
+
+function UndoBlackTheme() {
+    ThemeSet(0);
+    for(let undo of blackThemeUndos) {
+        setStyle(undo[0], undo[1], undo[2], true);
+    }
 }
 
 function blackTheme() {
     ThemeSet(0);
 
-    THEME = 4;
+    window.THEME = 4;
 
     setStyle(".topui", "backgroundSize", "0px"); // removes top ui detail
     setStyle(".leftui", "backgroundSize", "0px"); // removes left ui detail
@@ -3910,8 +3924,11 @@ function createALEISettingsMenu() {
 
     // Black theme.
     registerButton("blackTheme", [true, false], "blackTheme");
-    addText("Black theme:", true);
-    addBinaryOption("Yes", "No", "ALEI_BlackTheme", "blackTheme", "blackTheme");
+    addText("Black theme:", false);
+    addBinaryOption("Yes", "No", "ALEI_BlackTheme", "blackTheme", "blackTheme", (status) => {
+        if(status) blackTheme()
+        else UndoBlackTheme();
+    });
 
     // Change grid based on snapping
     registerButton("changeGridBasedOnSnapping", [true, false], "gridBasedOnSnapping");
