@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      15.7
+// @version      15.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -82,7 +82,8 @@ let aleiSettings = {
     blackTheme:         readStorage("ALEI_BlackTheme",           false, (val) => val === "true"),
     gridBasedOnSnapping:readStorage("ALEI_gridBasedOnSnapping",  true,  (val) => val === "true"),
     showZIndex:         readStorage("ALEI_ShowZIndex",           false, (val) => val === "true"),
-    renderObjectNames:  readStorage("ALEI_RenderObjectNames",    true,  (val) => val === "true")
+    renderObjectNames:  readStorage("ALEI_RenderObjectNames",    true,  (val) => val === "true"),
+    ocmEnabled:         readStorage("ALEI_OCMEnabled",           false, (val) => val === "true")
 }
 window.aleiSettings = aleiSettings;
 
@@ -1001,8 +1002,8 @@ function addSnappingOptions_helper() {
 }
 
 window.ALEI_UpdateRematchUIDSetting = function(value) {
-    if(value && !OCM_LOADED) CreateConnectionMapping(); // To create OCM.
-    if(!value && OCM_LOADED) CreateConnectionMapping(); // To clear OCM. (As it might be already outdated by the time rematch UID gets enabled)
+    if(value && !OCM_LOADED && aleiSettings.ocmEnabled) CreateConnectionMapping(); // To create OCM.
+    if(!value && OCM_LOADED && aleiSettings.ocmEnabled) CreateConnectionMapping(); // To clear OCM. (As it might be already outdated by the time rematch UID gets enabled)
 
     aleiSettings.rematchUID = value;
     writeStorage("ALEI_RemapUID", value);
@@ -1397,19 +1398,20 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
                 }
                 updateUIDReferences(oldName, chvalue);
 
-                let ocm = window.ObjectConnectionMapping;
-                ocm[chvalue] = ocm[oldName];
-                delete ocm[oldName];
+                if(aleiSettings.ocmEnabled) {
+                    let ocm = window.ObjectConnectionMapping;
+                    ocm[chvalue] = ocm[oldName];
+                    delete ocm[oldName];
 
-                function redirectConnections(obj, oldName, newName) {
-                    let index = ocm[obj]["to"].indexOf(oldName);
-                    if(index !== -1) ocm[obj]["to"][index] = newName;
-                    index = ocm[obj]["by"].indexOf(oldName);
-                    if(index !== -1) ocm[obj]["by"][index] = newName;
+                    function redirectConnections(obj, oldName, newName) {
+                        let index = ocm[obj]["to"].indexOf(oldName);
+                        if(index !== -1) ocm[obj]["to"][index] = newName;
+                        index = ocm[obj]["by"].indexOf(oldName);
+                        if(index !== -1) ocm[obj]["by"][index] = newName;
+                    }
+                    ocm[chvalue]["by"].map(v => redirectConnections(v, oldName, chvalue));
+                    ocm[chvalue]["to"].map(v => redirectConnections(v, oldName, chvalue));
                 }
-
-                ocm[chvalue]["by"].map(v => redirectConnections(v, oldName, chvalue));
-                ocm[chvalue]["to"].map(v => redirectConnections(v, oldName, chvalue));
 
                 ogES = window.es;
                 window.es = SelectedObjects;
@@ -1444,7 +1446,7 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
 
 
         }
-        __OCM_EnsureValidReferences(es[elems]);
+        if(aleiSettings.ocmEnabled) __OCM_EnsureValidReferences(es[elems]);
         if(paramname == "uses_timer") { // I do not have to do this, but i will for convenience
             if([true, "true"].indexOf(es[elems].pm.uses_timer) != -1) {
                 param_type[REGION_EXECUTE_PARAM_ID][1] = "timer+none";
@@ -5430,6 +5432,7 @@ function CreateConnectionMapping() {
     window.uidToElementMap = {};
 
     if(!aleiSettings.rematchUID) return; // Rematch UID is not necessarily a requirement for OCM but it is requirement if I wanna be lazy
+    if(!aleiSettings.ocmEnabled) return;
 
     let ocm = ObjectConnectionMapping;
     let utem = uidToElementMap;
