@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      15.8
+// @version      15.9
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -70,20 +70,21 @@ if (localStorage['RIGHT_PANEL_WIDTH'] != undefined) {
 }
 
 let aleiSettings = {
-    rightPanelSize:     readStorage("ALEI_RightPanelWidth",   "30vw",  (val) => val            ),
-    triggerEditTextSize:readStorage("ALEI_EditTextSize",      "12px",  (val) => val + "px"     ),
-    starsImage:         readStorage("ALEI_StarImage",    "stars2.jpg", (val) => val            ),
-    logLevel:           readStorage("ALEI_LogLevel",             0,     parseInt               ),
-    showTriggerIDs:     readStorage("ALEI_ShowTriggerIDs",       false, (val) => val === "true"),
-    enableTooltips:     readStorage("ALEI_ShowTooltips",         false, (val) => val === "true"),
-    showSameParameters: readStorage("ALEI_ShowSameParameters",   true , (val) => val === "true"),
-    rematchUID:         readStorage("ALEI_RemapUID",             false, (val) => val === "true"),
-    //showIDs:            readStorage("ALEI_ShowIDs",              false, (val) => val === "true"),
-    blackTheme:         readStorage("ALEI_BlackTheme",           false, (val) => val === "true"),
-    gridBasedOnSnapping:readStorage("ALEI_gridBasedOnSnapping",  true,  (val) => val === "true"),
-    showZIndex:         readStorage("ALEI_ShowZIndex",           false, (val) => val === "true"),
-    renderObjectNames:  readStorage("ALEI_RenderObjectNames",    true,  (val) => val === "true"),
-    ocmEnabled:         readStorage("ALEI_OCMEnabled",           false, (val) => val === "true")
+    rightPanelSize:     readStorage("ALEI_RightPanelWidth",         "30vw",  (val) => val            ),
+    triggerEditTextSize:readStorage("ALEI_EditTextSize",            "12px",  (val) => val + "px"     ),
+    starsImage:         readStorage("ALEI_StarImage",               "stars2.jpg", (val) => val            ),
+    logLevel:           readStorage("ALEI_LogLevel",                0,     parseInt               ),
+    showTriggerIDs:     readStorage("ALEI_ShowTriggerIDs",          false, (val) => val === "true"),
+    enableTooltips:     readStorage("ALEI_ShowTooltips",            false, (val) => val === "true"),
+    showSameParameters: readStorage("ALEI_ShowSameParameters",      true , (val) => val === "true"),
+    rematchUID:         readStorage("ALEI_RemapUID",                false, (val) => val === "true"),
+    //showIDs:            readStorage("ALEI_ShowIDs",               false, (val) => val === "true"),
+    blackTheme:         readStorage("ALEI_BlackTheme",              false, (val) => val === "true"),
+    gridBasedOnSnapping:readStorage("ALEI_gridBasedOnSnapping",     true,  (val) => val === "true"),
+    showZIndex:         readStorage("ALEI_ShowZIndex",              false, (val) => val === "true"),
+    renderObjectNames:  readStorage("ALEI_RenderObjectNames",       true,  (val) => val === "true"),
+    ocmEnabled:         readStorage("ALEI_OCMEnabled",              false, (val) => val === "true"),
+    extendedTriggers:   readStorage("ALEI_ExtendedTriggersEnabled", true,  (val) => val === "true")
 }
 window.aleiSettings = aleiSettings;
 
@@ -2487,7 +2488,7 @@ function addAdditionalButtons() {
         rparams.innerHTML += centerDecorationY_button;
     }
 
-    if(!edit_triggers_as_text && selection[0]._class == "trigger"){
+    if(!edit_triggers_as_text && selection[0]._class == "trigger" && aleiSettings.extendedTriggers){
         const extendTriggerAction_button = `
             <div class="two-element-grid">
                 <a onclick="addTriggerActionCount(1)" class="tool_btn tool_wid" style="display: block; width: 95%; margin-top: 4px;">(+) Extend trigger action list.</a>
@@ -3338,11 +3339,14 @@ function patchEntityClass() {
             let entries = Object.entries(result.pm);
 
             entries.splice(5, 0, ["execute", false]);
-            entries.splice(0, 0, ["__id", 0]);
 
             result.pm = Object.fromEntries(entries);
         }
         else if(_class == "region") result.pm.uses_timer = false;
+
+        let entries = Object.entries(result.pm);
+        entries.splice(0, 0, ["__id", 0]);
+        result.pm = Object.fromEntries(entries);
 
         result.fixPos = function() {}; // For proper snapping.
         result.selectChange = function(isSelected, force = false) {
@@ -3573,7 +3577,7 @@ function ServerRequest_handleMapData(mapCode) {
 
     }
 
-    parseExtendedTriggers();
+    if(aleiSettings.extendedTriggers) parseExtendedTriggers();
 }
 
 function handleServerRequestResponse(request, operation, response) {
@@ -3753,7 +3757,14 @@ function patchUpdateGUIParams() {
             }
         }
 
-        origUGP();
+        let toCall = origUGP;
+        if(!aleiSettings.extendedTriggers) {
+            let sep = Trigger_getSeparatorStart(selected);
+            let fn = origUGP.toString();
+            fn = fn.replace("i >= 4 && (i-4)", `i >= ${sep} && (i-${sep})`);
+            toCall = eval(`(${fn})`);
+        }
+        toCall();
         addAdditionalButtons();
 
         //if (shouldDisplayID) delete selected[0].pm.__id;
@@ -3946,6 +3957,12 @@ function createALEISettingsMenu() {
     registerButton("remapUID", [true, false], "rematchUID");
     addText("Remap UID: ");
     addBinaryOption("Enabled", "Disabled", "ALEI_RemapUID", "rematchUID", "remapUID", (status) => ALEI_UpdateRematchUIDSetting(status));
+
+    // Extended triggers.
+    // Normally we shouldn't be locking this behind a setting, but the bugs got so annoying to the point I'd rather let people pick what they want.
+    registerButton("but_extendedTriggers", [true, false], "extendedTriggers");
+    addText("Extended triggers: ", true);
+    addBinaryOption("Enabled", "Disabled", "ALEI_ExtendedTriggersEnabled", "extendedTriggers", "but_extendedTriggers");
     // TODO: Shorten those...
 
     window.ALEI_settingsMenu = mainWindow;
@@ -5522,7 +5539,7 @@ let ALE_start = (async function() {
         doTooltip();
     }
     patchServerRequest();
-    extendTriggerList();
+    if (aleiSettings.extendedTriggers) extendTriggerList();
     patchUpdateGUIParams();
     patchTeamList();
     patchRandomizeName();
@@ -5546,7 +5563,7 @@ let ALE_start = (async function() {
         checkForUpdates();
     } else {
         // load this map twice to parse extended triggers.
-        if(mapid !== "") LoadThisMap();
+        if(mapid !== "" && aleiSettings.extendedTriggers) LoadThisMap();
     }
     changeTopRightText();
 
