@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      15.9
+// @version      16.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1381,7 +1381,7 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
 
         // For undo and redo.
         let lup = (typeof (paramname) == 'string') ? '"' + paramname + '"' : paramname;
-        chvalue = (typeof (chvalue) == 'number' || chvalue == 0) ? chvalue : `${chvalue}`;
+        chvalue = (typeof (chvalue) == 'number' || chvalue == 0) ? chvalue : _encodeXMLChars(`${chvalue}`);
 
         // Not a trigger or below action10 and below. Proceed with the usual Eric's implementation.
         if(!match || Number(match[1]) - 11 < 0){
