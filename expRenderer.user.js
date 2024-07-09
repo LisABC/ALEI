@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -192,7 +192,9 @@ function RenderSingleNonResizableObject(index, element) {
     ctx.globalAlpha = layerAlpha;
     let transformedDecor = false;
 
-    if(elemClass == "decor") { // Rotation & scaling.
+    if(elemClass == "decor") { // Rotation & scaling, also fetching decor if needed..
+        let model = pm.model;
+        if(window.special_values_table.decor_model[model] == undefined) window.ServerRequest(`a=get_images&for_class=decor_model&update_const=${model}`, 'request_consts');
         if((pm.r != 0) || (pm.sx != 1) || (pm.sy != 1)) {
             ctx.save();
             ctx.translate(w2s_x(x), w2s_y(y));
@@ -219,12 +221,20 @@ function RenderSingleNonResizableObject(index, element) {
 
     if(["player", "enemy"].indexOf(elemClass) !== -1) {
         window.MyDrawImage(window.img_chars_full[pm.char], w2s_x(pm.x - 36), w2s_y(pm.y - 104), w2s_w(110), w2s_h(130));
+    } else if ((elemClass == "decor") && (window.CACHED_DECORS[pm.model] !== undefined) && (!window.CACHED_DECORS[pm.model].native)) {
+        let image = window.CACHED_DECORS[pm.model];
+        window.MyDrawImage(
+            image,
+            w2s_x(pm.x + pm.u),
+            w2s_y(pm.y + pm.v),
+            w2s_w(image.width),
+            w2s_h(image.height)
+        );
     } else {
         window.MyDrawImage(window.img_decide(element), objX, objY, objW, objH);
     }
 
     if(factor == -1) ctx.restore();
-
     if(transformedDecor) ctx.restore();
 }
 
