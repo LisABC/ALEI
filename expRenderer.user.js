@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -12,7 +12,6 @@
 "use strict";
 
 let draw_rect;
-let draw_rect_edges;
 let draw_gridlines;
 
 let ctx;
@@ -33,23 +32,34 @@ let s2w_w;
 let themes = {
     0: { // THEME_BLUE
         backgroundColor: "#5880AB",
-        gridColor: "#FFFFFF"
+        gridColor: "#FFFFFF",
+        selectOutlineColor: "#A5A500",
+        selectEdgeOpacityFactor: 1
+
     },
     1: { // THEME_DARK
         backgroundColor: "#222222",
-        gridColor: "#888888"
+        gridColor: "#888888",
+        selectOutlineColor: "#FFFF00",
+        selectEdgeOpacityFactor: 1
     },
     2: { // THEME_GREEN
         backgroundColor: "#222222",
-        gridColor: "#FFFFFF"
+        gridColor: "#FFFFFF",
+        selectOutlineColor: "#FFFF00",
+        selectEdgeOpacityFactor: 1
     },
     3: { // THEME_PURPLE
         backgroundColor: "#222222",
-        gridColor: "#FFFFFF"
+        gridColor: "#FFFFFF",
+        selectOutlineColor: "#FFFF00",
+        selectEdgeOpacityFactor: 1
     },
     4: { // ALEI Black Theme
         backgroundColor: "#222222",
-        gridColor: "#FFFFFF"
+        gridColor: "#FFFFFF",
+        selectOutlineColor: "#FFFF00",
+        edgeOpacityFactor: 1
     }
 }
 let currentTheme;
@@ -91,13 +101,17 @@ let regionImages = {
 }
 
 function _DrawRectangle(color, opacity, x, y, w, h, edge) {
-    ctx.fillStyle = color;
     ctx.globalAlpha = opacity;
-    if(edge) draw_rect_edges(x, y, w, h)
-    else draw_rect(x, y, w, h);
+    if(edge) {
+        ctx.strokeStyle = color;
+        draw_rect_edges(x, y, w, h)
+    }else {
+        ctx.fillStyle = color;
+        draw_rect(x, y, w, h);
+    }
 }
 // Function responsible for rendering resizable objects. (Region, door, box, pusher, water)
-function RenderSingleResizableObject(index, element) {
+function RenderSingleResizableObject(element) {
     let elemClass = element._class;
     let objectColor = objectColors[elemClass];
     if(objectColor === undefined) return;
@@ -144,6 +158,11 @@ function RenderSingleResizableObject(index, element) {
         opacityFactor = objectColor.coloredOpacityFactor;
     }
 
+    if(element.selected) {
+        edgeColor = currentTheme.selectOutlineColor;
+        edgeOpacityFactor = currentTheme.selectEdgeOpacityFactor;
+    }
+
     _DrawRectangle(color, layerAlpha * opacityFactor, x, y, w, h, false); // Object itself.
     _DrawRectangle(edgeColor, layerAlpha * edgeOpacityFactor, x, y, w, h, true); // Edge.
 }
@@ -180,14 +199,21 @@ function RenderNRObjectBox(element, color, opacity) {
 }
 
 // Function responsible for rendering non-resizable objects (Everything else aside from ones mentioned above.)
-function RenderSingleNonResizableObject(index, element) {
+function RenderSingleNonResizableObject(element) {
     let elemClass = element._class;
     let layerAlpha = window.MatchLayer(element) ? 1: 0.3;
     let pm = element.pm;
     let x = pm.x;
     let y = pm.y;
 
-    RenderNRObjectBox(element, "#000", layerAlpha * 0.1);
+    let color = "#000";
+    let selectOpacityFactor = 0.1;
+    if(element.selected) {
+        color = currentTheme.selectOutlineColor;
+        selectOpacityFactor = currentTheme.selectEdgeOpacityFactor;
+    }
+
+    RenderNRObjectBox(element, color, layerAlpha * selectOpacityFactor);
 
     ctx.globalAlpha = layerAlpha;
     let transformedDecor = false;
@@ -238,9 +264,44 @@ function RenderSingleNonResizableObject(index, element) {
     if(transformedDecor) ctx.restore();
 }
 
-function RenderSingleObject(index, element) {
-    if(element._isresizable) RenderSingleResizableObject(index, element);
-    else RenderSingleNonResizableObject(index, element);
+function GetObjectCoordAndSize(element) {
+    let pm = element.pm;
+
+    let x, y, w, h;
+    if(element._isresizable) {
+        x = w2s_x(pm.x);
+        y = w2s_y(pm.y);
+        w = w2s_w(pm.w);
+        h = w2s_h(pm.h);
+    } else {
+        let boxClass = window.ThinkOfBBoxClass(element._class, element);
+        y = w2s_y(pm.y + window.bo_y[boxClass]);
+        h = w2s_h(window.bo_h[boxClass]);
+        if(pm.side != -1) {
+            x = w2s_x(pm.x + window.bo_x[boxClass]);
+            w = w2s_w(window.bo_w[boxClass]);
+        } else {
+            x = w2s_x(pm.x - window.bo_x[boxClass]);
+            w = w2s_w(-window.bo_w[boxClass]);
+            x += w;
+            w = -w;
+        }
+    }
+
+    return {x: x, y: y, w: w, h: h}
+}
+
+function RenderObjectMarkAndName(element, cns) {
+    if(!window.ENABLE_TEXT) return;
+    if(element.pm.uid == undefined) return;
+
+}
+
+function RenderSingleObject(element) {
+    if(element._isresizable) RenderSingleResizableObject(element);
+    else RenderSingleNonResizableObject(element);
+    let cns = GetObjectCoordAndSize(element);
+    RenderObjectMarkAndName(element, cns);
 }
 
 function RenderAllObjects() {
@@ -249,8 +310,7 @@ function RenderAllObjects() {
     let canvasW = s2w_w(canvasWidth);
     let canvasH = s2w_h(canvasHeight);
 
-    for(let i = 0; i < window.es.length; i++) {
-        let element = window.es[i];
+    for(let element of window.es) {
 
         // TODO: Does ALE already do this? Doing it just incase.
         let w = element.pm.w ? element.pm.w : 0;
@@ -263,7 +323,7 @@ function RenderAllObjects() {
         if(!element.exists) continue;
         if(!element._isphysical) continue;
 
-        RenderSingleObject(i, element);
+        RenderSingleObject(element);
     }
 }
 
@@ -278,9 +338,14 @@ function Renderer() {
     RenderAllObjects();
 }
 
+function draw_rect_edges(x, y, w, h) {
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.stroke();
+}
+
 (function() {
     draw_rect = window.lmfr;
-    draw_rect_edges = window.ldb;
     draw_gridlines = window.lg;
     // Those are just so tampermonkey does not give warning without us using window (exception being "es").
     w2s_x = window.w2s_x;
