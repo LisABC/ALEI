@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      16.0
+// @version      16.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1719,7 +1719,7 @@ function blackTheme() {
     setStyle(".field_dis_left", "backgroundColor", "#1E1E1E");
     setStyle(".field_dis_right", "backgroundColor", "#131313");
     setStyle(".selline1", "backgroundColor", "#7A1314"); // selected object/current map
-    setStyle(".tool_btn:hover", "backgroundColor", "#353535");
+    setStyle(".tool_btn:hover", "backgroundColor", "#5f8dd3");
     setStyle(".tool_btn:hover", "border", "1px solid #FFFFFF20");
     setStyle(".tool_btn:hover", "color", "#FFFFFFD0");
     setStyle(".tool_btn2:hover", "backgroundColor", "#5077C4");
