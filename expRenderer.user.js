@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -82,7 +82,7 @@ let objectColors = {
     },
     pushf: {col: "#2BFF40", edgeCol: "#3CFF4F"},
     region: {col: "#FFD52B", edgeCol: "#FFB03C", edgeOpacityFactor: 0.5, buttonOpacityFactor: 0.5},
-    bg: {col: "#000", edgeCol: "#910000", edgeOpacityFactor: 0.3}
+    bg: {col: "#000", edgeCol: "#910000", edgeOpacityFactor: 0.3, coloredOpacityFactor: 0.22}
 }
 let regionImages = {
     1: window.img_region,
@@ -134,10 +134,14 @@ function RenderSingleResizableObject(index, element) {
         window.MyDrawImage(
             image,
             w2s_x(pm.x + Math.round((pm.w - 41)/2)),
-            w2s_y(pm.y + Math.round((pm.h - 31)/2) - 10),
+            w2s_y(pm.y + Math.round((pm.h - 51)/2)),
             w2s_w(41),
             w2s_h(31)
         )
+    }
+    else if ((elemClass == "bg") && (pm.c.length == 7)) {
+        color = pm.c;
+        opacityFactor = objectColor.coloredOpacityFactor;
     }
 
     _DrawRectangle(color, layerAlpha * opacityFactor, x, y, w, h, false); // Object itself.
