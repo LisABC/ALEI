@@ -169,13 +169,17 @@ function RenderSingleNonResizableObject(index, element) {
     RenderNRObjectBox(element, "#000", layerAlpha * 0.1);
 
     ctx.globalAlpha = layerAlpha;
-    ctx.save();
+    let transformedDecor = false;
 
     if(elemClass == "decor") { // Rotation & scaling.
-        ctx.translate(w2s_x(x), w2s_y(y));
-        ctx.rotate(pm.r / 180 * Math.PI);
-        ctx.scale(pm.sx, pm.sy);
-        ctx.translate(-w2s_x(x), -w2s_y(y));
+        if((pm.r != 0) || (pm.sx != 1) || (pm.sy != 1)) {
+            ctx.save();
+            ctx.translate(w2s_x(x), w2s_y(y));
+            ctx.rotate(pm.r / 180 * Math.PI);
+            ctx.scale(pm.sx, pm.sy);
+            ctx.translate(-w2s_x(x), -w2s_y(y));
+            transformedDecor = true;
+        }
     }
 
     let offsetClass = window.ThinkOfOffsetClass(elemClass, element);
@@ -200,7 +204,7 @@ function RenderSingleNonResizableObject(index, element) {
 
     if(factor == -1) ctx.restore();
 
-    ctx.restore();
+    if(transformedDecor) ctx.restore();
 }
 
 function RenderSingleObject(index, element) {
@@ -209,8 +213,21 @@ function RenderSingleObject(index, element) {
 }
 
 function RenderAllObjects() {
+    let focusX = s2w_x(0);
+    let focusY = s2w_y(0);
+    let canvasW = s2w_w(canvasWidth);
+    let canvasH = s2w_h(canvasHeight);
+
     for(let i = 0; i < window.es.length; i++) {
         let element = window.es[i];
+
+        // TODO: Does ALE already do this? Doing it just incase.
+        let w = element.pm.w ? element.pm.w : 0;
+        let h = element.pm.h ? element.pm.h : 0;
+        if((element.pm.x + w) < focusX) continue;
+        if((element.pm.y + h) < focusY) continue;
+        if((focusX + canvasW) < element.pm.x) continue;
+        if((focusY + canvasH) < element.pm.y) continue;
 
         if(!element.exists) continue;
         if(!element._isphysical) continue;
