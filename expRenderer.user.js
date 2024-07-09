@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -331,7 +331,7 @@ function RenderObjectMarkAndName(element, cns) {
     }
     let x3 = Math.round(capx - dim.width / 2);
     let y3 = Math.round(capy - dim.height / 2);
-    if (!window.ENABLE_SHADOWS) {
+    if (window.ENABLE_SHADOWS) {
         ctx.fillStyle = 'rgba(0,0,0,0.1)';
         ctx.fillRect(x3 - 2, y3 - 2, dim.width + 4, dim.height + 4);
         ctx.fillRect(x3 - 4, y3 - 4, dim.width + 8, dim.height + 8);
