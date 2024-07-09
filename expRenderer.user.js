@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.6
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -295,6 +295,52 @@ function RenderObjectMarkAndName(element, cns) {
     if(!window.ENABLE_TEXT) return;
     if(element.pm.uid == undefined) return;
 
+    if(window.last_title_density == undefined) window.last_title_density = 0;
+
+    let capx = cns.x + cns.w / 2;
+    let capy = cns.y + cns.h / 2;
+
+    let gothit = (element.selected && element.hit(false));
+    ctx.font = "normal 10px Arial";
+    let fillText = element.pm.uid;
+    let dim = ctx.measureText(fillText);
+    dim.height = 10;
+    if (gothit)
+        dim.height = 12;
+    if (window.mouse_x > capx - 30)
+        if (window.mouse_x < capx + 30)
+            if (window.mouse_y > capy - 30)
+                if (window.mouse_y < capy + 30) {
+                    title_density++;
+                }
+
+    ctx.globalAlpha = 1;
+    if (window.last_title_density > 1 && !gothit) {
+        let di = Math.sqrt(Math.pow(window.mouse_x - capx, 2) + Math.pow(window.mouse_y - capy, 2));
+        if (di < 60) {
+            if (!es[i].selected) {
+                capx = capx - (window.mouse_x - capx) * Math.pow((60 - di) / 60, 2) * (4 + Math.min(6, window.last_title_density * 0.1));
+                capy = capy - (window.mouse_y - capy) * Math.pow((60 - di) / 60, 2) * (4 + Math.min(6, window.last_title_density * 0.1));
+                if (window.last_title_density > 1) {
+                    ctx.globalAlpha = Math.max(0.4, 1 - window.last_title_density * 0.1);
+                }
+            } else {
+                ctx.globalAlpha = Math.max(0.3, 1 / window.last_title_density);
+            }
+        }
+    }
+    let x3 = Math.round(capx - dim.width / 2);
+    let y3 = Math.round(capy - dim.height / 2);
+    if (!window.ENABLE_SHADOWS) {
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.fillRect(x3 - 2, y3 - 2, dim.width + 4, dim.height + 4);
+        ctx.fillRect(x3 - 4, y3 - 4, dim.width + 8, dim.height + 8);
+    }
+    ctx.fillStyle = "#FFF";
+    if (gothit) ctx.fillStyle = '#fffb91';
+    if (element.selected) ctx.fillStyle = '#FF0';
+    ctx.fillText(fillText, x3, y3 + 8 + (dim.height - 10) / 2);
+    window.last_title_density = window.title_density;
 }
 
 function RenderSingleObject(element) {
