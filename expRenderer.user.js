@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -28,7 +28,7 @@ let w2s_w;
 let s2w_h;
 let s2w_w;
 
-
+let cartoonishEdges = false;
 let themes = {
     0: { // THEME_BLUE
         backgroundColor: "#5880AB",
@@ -108,7 +108,8 @@ let regionImages = {
 function _DrawRectangle(color, opacity, x, y, w, h, edge) {
     ctx.globalAlpha = opacity;
     if(edge) {
-        ctx.strokeStyle = color;
+        if(cartoonishEdges) ctx.strokeColor = color;
+        else ctx.strokeStyle = color;
         draw_rect_edges(x, y, w, h)
     }else {
         ctx.fillStyle = color;
@@ -390,9 +391,7 @@ function Renderer() {
 }
 
 function draw_rect_edges(x, y, w, h) {
-    ctx.beginPath();
-    ctx.rect(x, y, w, h);
-    ctx.stroke();
+    ctx.strokeRect(x, y, w, h);
 }
 
 (function() {
