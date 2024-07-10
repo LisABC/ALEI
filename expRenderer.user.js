@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      2.2
+// @version      2.3
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -357,7 +357,7 @@ function RenderSingleObject(element) {
 }
 
 function RenderAllObjects() {
-    let rendered = 0;
+    //let rendered = 0;
 
     let lp = window.left_panel.getBoundingClientRect();
     let rp = window.right_panel.getBoundingClientRect();
@@ -388,14 +388,14 @@ function RenderAllObjects() {
         if(!element._isphysical) continue;
 
         RenderSingleObject(element);
-        rendered++;
+        //rendered++;
     }
 
-    try {
+    /*try {
         document.getElementById("gui_renderInfo").innerHTML = `Rendered ${rendered} objects.`
     }catch {
         document.getElementById("gui_objbox").outerHTML = `ialized element</div>${document.getElementById("gui_objbox").outerHTML}<div id="gui_renderInfo">Renderer: Init`;
-    }
+    }*/
 }
 
 function Renderer() {
