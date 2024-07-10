@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      3.1
+// @version      3.2
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -479,6 +479,7 @@ function RenderSelectionBox() {
 }
 
 function RenderFrame() {
+    if(!window.need_redraw) return;
     canvasWidth = window.lsu;
     canvasHeight = window.lsv;
     currentTheme = themes[window.THEME];
