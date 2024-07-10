@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      2.7
+// @version      2.8
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -30,7 +30,10 @@ let s2w_w;
 
 let decorRequestsOnProgress = [];
 
-let cartoonishEdges = false;
+let toggles = {
+    cartoonishEdges: false,
+    originalSelectOverlay: false
+}
 let themes = {
     0: { // THEME_BLUE
         backgroundColor: "#5880AB",
@@ -110,7 +113,7 @@ let regionImages = {
 function _DrawRectangle(color, opacity, x, y, w, h, edge) {
     ctx.globalAlpha = opacity;
     if(edge) {
-        if(cartoonishEdges) ctx.strokeColor = color;
+        if(toggles.cartoonishEdges) ctx.strokeColor = color;
         else ctx.strokeStyle = color;
         draw_rect_edges(x, y, w, h)
     }else {
@@ -166,7 +169,7 @@ function RenderSingleResizableObject(element) {
         opacityFactor = objectColor.coloredOpacityFactor;
     }
 
-    if(element.selected) {
+    if(element.selected && !toggles.originalSelectOverlay) {
         edgeColor = currentTheme.selectOutlineColor;
         edgeOpacityFactor = currentTheme.selectEdgeOpacityFactor;
     }
@@ -216,7 +219,7 @@ function RenderSingleNonResizableObject(element) {
 
     let color = "#000";
     let selectOpacityFactor = 0.1;
-    if(element.selected) {
+    if(element.selected && !toggles.originalSelectOverlay) {
         color = currentTheme.selectOutlineColor;
         selectOpacityFactor = currentTheme.selectEdgeOpacityFactor;
     }
@@ -308,7 +311,7 @@ function GetObjectCoordAndSize(element) {
 function RenderObjectMarkAndName(element, cns) {
     if(!window.ENABLE_TEXT) return;
     if(element.pm.uid == undefined) return;
-    if(!MatchLayer(element)) return;
+    if(!window.MatchLayer(element)) return;
 
     if(window.last_title_density == undefined) window.last_title_density = 0;
 
@@ -358,10 +361,24 @@ function RenderObjectMarkAndName(element, cns) {
     window.last_title_density = window.title_density;
 }
 
+function RenderSelectOverlay(element, cns) {
+    if(!element.selected) return;
+    if(!toggles.originalSelectOverlay) return;
+
+    ctx.globalAlpha = 0.2;
+    ctx.fillStyle = window.selgrd2;
+    draw_rect(cns.x, cns.y, cns.w, cns.h);
+
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#FFF";
+    window.MyDrawSelection(cns.x-2, cns.y-2, cns.w+4, cns.h+4)
+}
+
 function RenderSingleObject(element) {
     if(element._isresizable) RenderSingleResizableObject(element);
     else RenderSingleNonResizableObject(element);
     let cns = GetObjectCoordAndSize(element);
+    RenderSelectOverlay(element, cns);
     RenderObjectMarkAndName(element, cns);
 }
 
