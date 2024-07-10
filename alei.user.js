@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      16.5
+// @version      16.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -630,6 +630,7 @@ function updateDecors() {
         VAL_TABLE["decor_model"][decor_model] = decor_name; // Add to known decors.
         img_decors[decor_model] = new Image();
         img_decors[decor_model].src = decor_image;
+        img_decors[decor_model].native = true;
         CACHED_DECORS[decor_model] = img_decors[decor_model];
         CUSTOM_IMAGES_APPROVED[decor_model] = true; // Since it's obviously vanilla, and other vanilla decors are approved, it's only natural if we approve added decors too
     }
