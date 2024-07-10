@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      3.0
+// @version      3.1
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -11,14 +11,26 @@
 
 "use strict";
 
+// Variables that Renderer actively uses.
+let decorRequestsOnProgress = [];
+// Statistic purposes.
+let displayFPS = 0;
+let fpsAccumulator = 0;
+let totalRenderedObjects = 0;
+let lastTime = 0;
+
+// Drawing functions.
 let draw_rect;
+let draw_rect_edges;
 let draw_gridlines;
 
+// Context, grid, canvas
 let ctx;
 let canvasHeight;
 let canvasWidth;
 let gridOpacity;
 
+// World and Screen conversion functions
 let w2s_x;
 let w2s_y;
 let s2w_x;
@@ -28,8 +40,7 @@ let w2s_w;
 let s2w_h;
 let s2w_w;
 
-let decorRequestsOnProgress = [];
-
+// Settings, themes.
 let toggles = {
     cartoonishEdges: false,
     originalSelectOverlay: false
@@ -411,7 +422,7 @@ function RenderSingleObject(element) {
 }
 
 function RenderAllObjects() {
-    let rendered = 0;
+    totalRenderedObjects = 0;
 
     let lp = window.left_panel.getBoundingClientRect();
     let rp = window.right_panel.getBoundingClientRect();
@@ -440,18 +451,7 @@ function RenderAllObjects() {
         if(!element._isphysical) continue;
 
         RenderSingleObject(element);
-        rendered++;
-    }
-
-    try {
-        document.getElementById("gui_renderInfo").innerHTML = `Rendered ${rendered} objects.`
-    }catch {
-        let element = document.createElement("div");
-        element.id = "gui_renderInfo";
-        element.innerHTML = "Renderer: Waiting for render";
-
-        let objBox = document.getElementById("gui_params");
-        window.right_panel.childNodes[0].insertBefore(element, objBox);
+        totalRenderedObjects++;
     }
 }
 
@@ -478,7 +478,7 @@ function RenderSelectionBox() {
     _DrawRectangle(color, currentTheme.selectionEdgeOpacity, x, y, w, h, true);
 }
 
-function Renderer() {
+function RenderFrame() {
     canvasWidth = window.lsu;
     canvasHeight = window.lsv;
     currentTheme = themes[window.THEME];
@@ -490,14 +490,46 @@ function Renderer() {
     RenderSelectionBox();
 }
 
-function draw_rect_edges(x, y, w, h) {
-    ctx.strokeRect(x, y, w, h);
+function DisplayStatistics() {
+    let element = document.getElementById("gui_renderInfo");
+    if(element == undefined) {
+        element = document.createElement("div");
+        element.id = "gui_renderInfo";
+        element.innerHTML = "Waiting for data...";
+        window.right_panel.childNodes[0].insertBefore(element, document.getElementById("gui_params"));
+    }
+    let text = `
+    Renderer FPS: ${displayFPS}
+    Rendered Object: ${totalRenderedObjects} / ${window.es.length}
+    `
+    element.innerHTML = text.slice(1).replaceAll("\n", "<br>");
+}
+
+function getTimeMs() {return (new Date()).getTime()}
+
+function HandleSingleFrame() {
+    window.requestAnimationFrame(HandleSingleFrame);
+    RenderFrame();
+
+    fpsAccumulator++;
+    if((getTimeMs() - lastTime) >= 1000) {
+        lastTime = getTimeMs();
+        displayFPS = fpsAccumulator;
+        fpsAccumulator = 0;
+    }
+
+    DisplayStatistics();
 }
 
 (function() {
+    ctx = window.ctx;
+
+    // Draw functions.
+    draw_rect_edges = (x, y, w, h) => ctx.strokeRect(x, y, w, h);
     draw_rect = window.lmfr;
     draw_gridlines = window.lg;
-    // Those are just so tampermonkey does not give warning without us using window (exception being "es").
+
+    // Storing functions into our scope. (To avoid tampermonkey warning)
     w2s_x = window.w2s_x;
     w2s_y = window.w2s_y;
     s2w_x = window.s2w_x;
@@ -506,9 +538,13 @@ function draw_rect_edges(x, y, w, h) {
     w2s_w = window.w2s_w;
     s2w_h = window.s2w_h;
     s2w_w = window.s2w_w;
+    // Patching.
+    window.Render = () => {}; // Make Render function do nothing.
+    window.requestAnimationFrame(HandleSingleFrame);
 
+    // Setting default values.
+    lastTime = getTimeMs();
 
-    ctx = window.ctx;
-    window.Render = Renderer;
+    // Logging.
     console.log(`[ALEI Renderer]: Active.`);
 })();
