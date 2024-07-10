@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      2.5
+// @version      2.6
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -402,7 +402,12 @@ function RenderAllObjects() {
     try {
         document.getElementById("gui_renderInfo").innerHTML = `Rendered ${rendered} objects.`
     }catch {
-        document.getElementById("gui_objbox").outerHTML = `ialized element</div>${document.getElementById("gui_objbox").outerHTML}<div id="gui_renderInfo">Renderer: Init`;
+        let element = document.createElement("div");
+        element.id = "gui_renderInfo";
+        element.innerHTML = "Renderer: Waiting for render";
+
+        let objBox = document.getElementById("gui_params");
+        window.right_panel.childNodes[0].insertBefore(element, objBox);
     }
 }
 
