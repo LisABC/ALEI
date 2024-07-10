@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -357,25 +357,44 @@ function RenderSingleObject(element) {
 }
 
 function RenderAllObjects() {
-    let focusX = s2w_x(0);
-    let focusY = s2w_y(0);
-    let canvasW = s2w_w(canvasWidth);
-    let canvasH = s2w_h(canvasHeight);
+    let rendered = 0;
+
+    let lp = window.left_panel.getBoundingClientRect();
+    let rp = window.right_panel.getBoundingClientRect();
+    let tp = window.top_panel.getBoundingClientRect();
+
+    let cx = Math.round(s2w_x(lp.width + lp.x));
+    let cy = Math.round(s2w_y(tp.height + tp.y));
+    let cw = Math.round(s2w_w(rp.x - (lp.width + lp.x)));
+    let ch = Math.round(s2w_h(canvasHeight - (tp.height + tp.y)));
 
     for(let element of window.es) {
 
-        // TODO: Does ALE already do this? Doing it just incase.
-        let w = element.pm.w ? element.pm.w : 0;
-        let h = element.pm.h ? element.pm.h : 0;
-        if((element.pm.x + w) < focusX) continue;
-        if((element.pm.y + h) < focusY) continue;
-        if((focusX + canvasW) < element.pm.x) continue;
-        if((focusY + canvasH) < element.pm.y) continue;
+        // TODO: Does ALE already do culling? Doing it just incase.
+        let pm = element.pm;
+        let x = pm.x;
+        let y = pm.y;
+        let w = pm.w ? pm.w : 0;
+        let h = pm.h ? pm.h : 0;
+
+        // Actual culling
+        if( (x+w) < cx ) continue;
+        if( (y+h) < cy ) continue;
+        if( (cx+cw) < x ) continue;
+        if( (cy+ch) < y ) continue;
+
 
         if(!element.exists) continue;
         if(!element._isphysical) continue;
 
         RenderSingleObject(element);
+        rendered++;
+    }
+
+    try {
+        document.getElementById("gui_renderInfo").innerHTML = `Rendered ${rendered} objects.`
+    }catch {
+        document.getElementById("gui_objbox").outerHTML = `ialized element</div>${document.getElementById("gui_objbox").outerHTML}<div id="gui_renderInfo">Renderer: Init`;
     }
 }
 
