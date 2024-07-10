@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      2.6
+// @version      2.7
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -308,6 +308,7 @@ function GetObjectCoordAndSize(element) {
 function RenderObjectMarkAndName(element, cns) {
     if(!window.ENABLE_TEXT) return;
     if(element.pm.uid == undefined) return;
+    if(!MatchLayer(element)) return;
 
     if(window.last_title_density == undefined) window.last_title_density = 0;
 
