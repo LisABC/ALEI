@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      2.9
+// @version      3.0
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -465,10 +465,10 @@ function RenderSelectionBox() {
     let currentX = window.lmwa;
     let currentY = window.lmwb;
 
-    let x = w2s_x(Math.min(clickX, currentX)); // Start X for rectangle
-    let y = w2s_y(Math.min(clickY, currentY)); // Start Y for rectangle
-    let w = w2s_w(Math.abs(currentX - clickX));// W for rectangle
-    let h = w2s_h(Math.abs(currentY - clickY));// H for rectangle
+    let x = w2s_x(clickX); // Start X for rectangle
+    let y = w2s_y(clickY); // Start Y for rectangle
+    let w = w2s_w(currentX - clickX); // Width for rectangle.
+    let h = w2s_h(currentY - clickY); // Height for rectangle.
 
     let color = currentTheme.selectionColor;
     if(window.ctrl) color = currentTheme.selectionCtrlColor;
