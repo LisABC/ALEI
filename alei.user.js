@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      16.2
+// @version      16.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -645,11 +645,14 @@ function updateOffsets() {
             return "alei_" + esi.pm.model;
         } else if (tc == "decor" && offsets[esi.pm.model] != undefined) {
             return "alei_" + esi.pm.model;
+        } else if (tc == "gun" && (esi.pm.model == "gun_rl0")) {
+            return "alei_gun_rl0";
         } else return toosc(tc, esi);
     }
     let offsets = {
         veh_hh: {x: -15, y: -15, w: 30, h: 30},
-        hakase: {x: -18, y: -57, w: 40, h: 60}
+        hakase: {x: -18, y: -57, w: 40, h: 60},
+        gun_rl0: {x: -24, y: -6, w: 61, h: 13}
     }
     for (let key in offsets) {
         let off = offsets[key];
