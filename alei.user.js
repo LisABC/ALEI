@@ -454,7 +454,7 @@ function updateSkins() {
 
         [178, "Newgen Marine"],
         [179, "Elurra (by Lin)"],
-        [180, "B&W Proxy (by littlekk)"],
+        [180, "Dark Proxy"],
         [181, "Huntsman (Night)"],
         [182, "Huntsman (Swamp)"],
         [183, "Lt. Ferro (by Serpent)"],
@@ -468,7 +468,7 @@ function updateSkins() {
         [191, "Serkova Recon Unit"],
         [192, "Drohnen Drifter (by Ark633)"],
         [193, "Xenos Marine"],
-        [194, "B&W Android SLC-56 (by littlekk)"],
+        [194, "Dark Android SLC-56"],
         [195, "Wraith (by Ark633)"],
         [196, "Serkova Armored Unit"],
         [197, "Phantom"],
