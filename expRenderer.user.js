@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      2.0
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -34,32 +34,37 @@ let themes = {
         backgroundColor: "#5880AB",
         gridColor: "#FFFFFF",
         selectOutlineColor: "#A5A500",
-        selectEdgeOpacityFactor: 1
+        selectEdgeOpacityFactor: 1,
+        selectTextColor: "#FF0"
 
     },
     1: { // THEME_DARK
         backgroundColor: "#222222",
         gridColor: "#888888",
         selectOutlineColor: "#FFFF00",
-        selectEdgeOpacityFactor: 1
+        selectEdgeOpacityFactor: 1,
+        selectTextColor: "#FF0"
     },
     2: { // THEME_GREEN
         backgroundColor: "#222222",
         gridColor: "#FFFFFF",
         selectOutlineColor: "#FFFF00",
-        selectEdgeOpacityFactor: 1
+        selectEdgeOpacityFactor: 1,
+        selectTextColor: "#FF0"
     },
     3: { // THEME_PURPLE
         backgroundColor: "#222222",
         gridColor: "#FFFFFF",
         selectOutlineColor: "#FFFF00",
-        selectEdgeOpacityFactor: 1
+        selectEdgeOpacityFactor: 1,
+        selectTextColor: "#FF0"
     },
     4: { // ALEI Black Theme
         backgroundColor: "#222222",
         gridColor: "#FFFFFF",
         selectOutlineColor: "#FFFF00",
-        edgeOpacityFactor: 1
+        selectEdgeOpacityFactor: 1,
+        selectTextColor: "#FF0"
     }
 }
 let currentTheme;
@@ -338,7 +343,7 @@ function RenderObjectMarkAndName(element, cns) {
     }
     ctx.fillStyle = "#FFF";
     if (gothit) ctx.fillStyle = '#fffb91';
-    if (element.selected) ctx.fillStyle = '#FF0';
+    if (element.selected) ctx.fillStyle = currentTheme.selectTextColor;
     ctx.fillText(fillText, x3, y3 + 8 + (dim.height - 10) / 2);
     window.last_title_density = window.title_density;
 }
