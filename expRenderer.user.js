@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      2.8
+// @version      2.9
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -36,11 +36,19 @@ let toggles = {
 }
 let themes = {
     0: { // THEME_BLUE
+        // Grid colors.
         backgroundColor: "#5880AB",
         gridColor: "#FFFFFF",
+        // Object select colors.
         selectOutlineColor: "#A5A500",
         selectEdgeOpacityFactor: 1,
-        selectTextColor: "#FF0"
+        selectTextColor: "#FF0",
+        // Selection area colors.
+        selectionColor: "#FFF",
+        selectionCtrlColor: "#AFA",
+        selectionAltColor: "#FAA",
+        selectionOpacity: 0.1, // Note that this and below is NOT opacity FACTOR
+        selectionEdgeOpacity: 0.8
 
     },
     1: { // THEME_DARK
@@ -48,28 +56,48 @@ let themes = {
         gridColor: "#888888",
         selectOutlineColor: "#FFFF00",
         selectEdgeOpacityFactor: 1,
-        selectTextColor: "#FF0"
+        selectTextColor: "#FF0",
+        selectionColor: "#FFF",
+        selectionCtrlColor: "#AFA",
+        selectionAltColor: "#FAA",
+        selectionOpacity: 0.1,
+        selectionEdgeOpacity: 0.8
     },
     2: { // THEME_GREEN
         backgroundColor: "#222222",
         gridColor: "#FFFFFF",
         selectOutlineColor: "#FFFF00",
         selectEdgeOpacityFactor: 1,
-        selectTextColor: "#FF0"
+        selectTextColor: "#FF0",
+        selectionColor: "#FFF",
+        selectionCtrlColor: "#AFA",
+        selectionAltColor: "#FAA",
+        selectionOpacity: 0.1,
+        selectionEdgeOpacity: 0.8
     },
     3: { // THEME_PURPLE
         backgroundColor: "#222222",
         gridColor: "#FFFFFF",
         selectOutlineColor: "#FFFF00",
         selectEdgeOpacityFactor: 1,
-        selectTextColor: "#FF0"
+        selectTextColor: "#FF0",
+        selectionColor: "#FFF",
+        selectionCtrlColor: "#AFA",
+        selectionAltColor: "#FAA",
+        selectionOpacity: 0.1,
+        selectionEdgeOpacity: 0.8
     },
     4: { // ALEI Black Theme
         backgroundColor: "#222222",
         gridColor: "#FFFFFF",
         selectOutlineColor: "#FFFF00",
         selectEdgeOpacityFactor: 1,
-        selectTextColor: "#FF0"
+        selectTextColor: "#FF0",
+        selectionColor: "#FFF",
+        selectionCtrlColor: "#AFA",
+        selectionAltColor: "#FAA",
+        selectionOpacity: 0.1,
+        selectionEdgeOpacity: 0.8
     }
 }
 let currentTheme;
@@ -395,8 +423,6 @@ function RenderAllObjects() {
     let ch = Math.round(s2w_h(canvasHeight - (tp.height + tp.y)));
 
     for(let element of window.es) {
-
-        // TODO: Does ALE already do culling? Doing it just incase.
         let pm = element.pm;
         let x = pm.x;
         let y = pm.y;
@@ -429,6 +455,29 @@ function RenderAllObjects() {
     }
 }
 
+function RenderSelectionBox() {
+    if(!window.m_drag_selection) return; // If we are not dragging.
+    if(window.lmd) return; // If the selection just started
+
+    // Variable aliasing. Related to mouse coordinations.
+    let clickX = window.lmdrwa;
+    let clickY = window.lmdrwb;
+    let currentX = window.lmwa;
+    let currentY = window.lmwb;
+
+    let x = w2s_x(Math.min(clickX, currentX)); // Start X for rectangle
+    let y = w2s_y(Math.min(clickY, currentY)); // Start Y for rectangle
+    let w = w2s_w(Math.abs(currentX - clickX));// W for rectangle
+    let h = w2s_h(Math.abs(currentY - clickY));// H for rectangle
+
+    let color = currentTheme.selectionColor;
+    if(window.ctrl) color = currentTheme.selectionCtrlColor;
+    else if(window.alt) color = currentTheme.selectionAltColor;
+
+    _DrawRectangle(color, currentTheme.selectionOpacity, x, y, w, h);
+    _DrawRectangle(color, currentTheme.selectionEdgeOpacity, x, y, w, h, true);
+}
+
 function Renderer() {
     canvasWidth = window.lsu;
     canvasHeight = window.lsv;
@@ -438,6 +487,7 @@ function Renderer() {
     ctx.globalAlpha = 1;
     RenderGrid();
     RenderAllObjects();
+    RenderSelectionBox();
 }
 
 function draw_rect_edges(x, y, w, h) {
