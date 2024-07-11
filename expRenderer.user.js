@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      3.4
+// @version      3.5
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -23,6 +23,7 @@ let lastTime = 0;
 let draw_rect;
 let draw_rect_edges;
 let draw_gridlines;
+let draw_image;
 
 // Context, grid, canvas
 let ctx;
@@ -45,6 +46,10 @@ let w2s_h;
 let w2s_w;
 let s2w_h;
 let s2w_w;
+
+// For Preview mode.
+let gameScale = 1;
+let background = "1";
 
 // Settings, themes.
 let toggles = {
@@ -131,10 +136,6 @@ let themes = {
 let currentTheme;
 
 function RenderGrid() {
-    // Background.
-    ctx.fillStyle = currentTheme.backgroundColor;
-    draw_rect(0, 0, canvasWidth, canvasHeight);
-
     // Grid lines.
     if(gridOpacity <= 0) return;
     ctx.fillStyle = currentTheme.gridColor;
@@ -233,7 +234,7 @@ function RenderSingleResizableObject(element, cns) {
     else if ((elemClass == "region") && ([1, 9, 10].indexOf(parseInt(pm.use_on)) !== -1)) {
         ctx.globalAlpha = layerAlpha * objectColor.buttonOpacityFactor;
         let image = regionImages[pm.use_on];
-        window.MyDrawImage(
+        draw_image(
             image,
             w2s_x(pm.x + Math.round((pm.w - 41)/2)),
             w2s_y(pm.y + Math.round((pm.h - 51)/2)),
@@ -246,6 +247,39 @@ function RenderSingleResizableObject(element, cns) {
         opacityFactor = objectColor.coloredOpacityFactor;
     }
 
+    if(window.SHOW_TEXTURES) {
+        if(elemClass == "box") { // TODO: Render wall model instead?
+            color = "#000";
+            opacityFactor = 1;
+            edgeColor = "#333";
+        }
+        else if ((elemClass == "bg") && (window.CACHED_BGS[pm.m] !== undefined) && (window.CACHED_BGS[pm.m].loaded)) {
+            opacityFactor = 1;
+            let img = window.CACHED_BGS[pm.m];
+            /*ctx.save();
+
+                ctx.beginPath(cns.x, cns.y); // Top left
+                    ctx.beginPath(cns.x + cns.w, cns.y); // Top right
+                    ctx.beginPath(cns.x + cns.w, cns.y + cns.h); // Bottom right
+                    ctx.beginPath(cns.x, cns.y + cns.h); // Bottom left
+                ctx.closePath();
+
+                ctx.clip();
+                ctx.translate(w2s_x(0), w2s_y(0)); // Offset by where (0,0) is. (Origin)
+                ctx.scale(w2s_x(1) - w2s_x(0), w2s_y(1) - w2s_y(0)); // No clue.
+
+                ctx.translate(pm.u, pm.v); // Offset by given offsets.
+
+                if(!img.tiled_pattern) img.tiled_pattern = ctx.createPattern(img, "repeat"); // Make repeated image
+                ctx.fillStyle = img.tiled_pattern;
+
+                draw_rect(s2w_x(0) - pm.u, s2w_y(0) - pm.v, s2w_w(canvasWidth), s2w_h(canvasHeight)); // No clue
+            ctx.restore();
+*/
+
+        }
+    }
+
     if(ObjIsHighlighted(cns)) {
         edgeColor = currentTheme.highLightedObjEdgeColor;
         edgeOpacityFactor = currentTheme.highLightedObjEdgeOpacity / layerAlpha;
@@ -256,7 +290,7 @@ function RenderSingleResizableObject(element, cns) {
         edgeOpacityFactor = currentTheme.selectEdgeOpacityFactor;
     }
 
-    _DrawRectangle(color, layerAlpha * opacityFactor, x, y, w, h, false); // Object itself.
+    if(!(window.SHOW_TEXTURES && (elemClass == "bg")))_DrawRectangle(color, layerAlpha * opacityFactor, x, y, w, h, false); // Object itself.
     _DrawRectangle(edgeColor, layerAlpha * edgeOpacityFactor, x, y, w, h, true); // Edge.
 }
 
@@ -348,13 +382,13 @@ function RenderSingleNonResizableObject(element, cns) {
     }
 
     if(["player", "enemy"].indexOf(elemClass) !== -1) {
-        window.MyDrawImage(window.img_chars_full[pm.char], w2s_x(pm.x - 36), w2s_y(pm.y - 104), w2s_w(110), w2s_h(130));
+        draw_image(window.img_chars_full[pm.char], w2s_x(pm.x - 36), w2s_y(pm.y - 104), w2s_w(110), w2s_h(130));
     } else if ((elemClass == "decor") && (window.CACHED_DECORS[pm.model] !== undefined) && (!window.CACHED_DECORS[pm.model].native)) {
         if(decorRequestsOnProgress.indexOf(pm.model) !== -1) {
             decorRequestsOnProgress.splice(decorRequestsOnProgress.indexOf(pm.model), 1);
         }
         let image = window.CACHED_DECORS[pm.model];
-        window.MyDrawImage(
+        draw_image(
             image,
             w2s_x(pm.x + pm.u),
             w2s_y(pm.y + pm.v),
@@ -362,7 +396,7 @@ function RenderSingleNonResizableObject(element, cns) {
             w2s_h(image.height)
         );
     } else {
-        window.MyDrawImage(window.img_decide(element), objX, objY, objW, objH);
+        draw_image(window.img_decide(element), objX, objY, objW, objH);
     }
 
     if(factor == -1) ctx.restore();
@@ -522,6 +556,15 @@ function RenderSelectionBox() {
     _DrawRectangle(color, currentTheme.selectionEdgeOpacity, x, y, w, h, true);
 }
 
+function RenderBackground() {
+    if(!window.SHOW_TEXTURES) {
+        ctx.fillStyle = currentTheme.backgroundColor;
+        draw_rect(0, 0, canvasWidth, canvasHeight);
+    } else {
+        draw_image(window.CACHED_SKY[background], 0, 0, canvasWidth, canvasHeight);
+    }
+}
+
 function RenderFrame() {
     if(!window.need_redraw) return;
     canvasWidth = window.lsu;
@@ -535,6 +578,7 @@ function RenderFrame() {
     mCurrentY = window.lmwb;
 
     ctx.globalAlpha = 1;
+    RenderBackground();
     RenderGrid();
     RenderAllObjects();
     RenderSelectionBox();
@@ -616,6 +660,7 @@ function HandleSingleFrame() {
     draw_rect_edges = (x, y, w, h) => ctx.strokeRect(x, y, w, h);
     draw_rect = window.lmfr;
     draw_gridlines = window.lg;
+    draw_image = (img, x, y, w, h) => window.MyDrawImage(img, x, y, w, h);
 
     // Storing functions into our scope. (To avoid tampermonkey warning)
     w2s_x = window.w2s_x;
