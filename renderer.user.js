@@ -558,6 +558,7 @@ function HandleSingleFrame() {
 }
 
 function ALEI_Renderer_Start() {
+    console.log("Hallo!");
     ctx = window.ctx;
 
     regionImages = {
