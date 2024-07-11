@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      3.5
+// @version      3.6
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -13,6 +13,7 @@
 
 // Variables that Renderer actively uses.
 let decorRequestsOnProgress = [];
+let backgroundRequestsOnProgress = [];
 // Statistic purposes.
 let displayFPS = 0;
 let fpsAccumulator = 0;
@@ -218,6 +219,11 @@ function RenderSingleResizableObject(element, cns) {
     let opacityFactor = objectColor.opacityFactor ? objectColor.opacityFactor : 0.2;
     let edgeOpacityFactor = objectColor.edgeOpacityFactor ? objectColor.edgeOpacityFactor : 1;
 
+    if((elemClass == "bg") && (window.CACHED_BGS[pm.m] == undefined) && (backgroundRequestsOnProgress.indexOf(pm.m) == -1)) {
+        window.ServerRequest(`a=get_images&for_class=bg_model&update_const=${pm.m}`, 'request_consts');
+        backgroundRequestsOnProgress.push(pm.m);
+    }
+
     if(
         (elemClass == "door") && (
             (pm.vis === 0) ||
@@ -254,29 +260,47 @@ function RenderSingleResizableObject(element, cns) {
             edgeColor = "#333";
         }
         else if ((elemClass == "bg") && (window.CACHED_BGS[pm.m] !== undefined) && (window.CACHED_BGS[pm.m].loaded)) {
-            opacityFactor = 1;
+            if(backgroundRequestsOnProgress.indexOf(pm.m) !== -1) {
+                backgroundRequestsOnProgress.splice(backgroundRequestsOnProgress.indexOf(pm.m), 1);
+            }
+            ctx.globalAlpha = 1;
             let img = window.CACHED_BGS[pm.m];
-            /*ctx.save();
+            if(img.pattern == undefined) img.pattern = ctx.createPattern(img, "repeat"); // Create repeat pattern if not already done.
 
-                ctx.beginPath(cns.x, cns.y); // Top left
-                    ctx.beginPath(cns.x + cns.w, cns.y); // Top right
-                    ctx.beginPath(cns.x + cns.w, cns.y + cns.h); // Bottom right
-                    ctx.beginPath(cns.x, cns.y + cns.h); // Bottom left
-                ctx.closePath();
+            ctx.save();
+            // Getting a working rectangle for us in order to work.
+            ctx.beginPath();
+            ctx.moveTo(cns.x, cns.y);
+            ctx.lineTo(cns.x+cns.w, cns.y);
+            ctx.lineTo(cns.x+cns.w, cns.y+cns.h);
+            ctx.lineTo(cns.x, cns.y+cns.h);
+            ctx.closePath();
+            ctx.clip();
 
-                ctx.clip();
-                ctx.translate(w2s_x(0), w2s_y(0)); // Offset by where (0,0) is. (Origin)
-                ctx.scale(w2s_x(1) - w2s_x(0), w2s_y(1) - w2s_y(0)); // No clue.
+            // Ensuring that background is offsetted properly and takes all the rectangle.
+            ctx.translate(w2s_x(0), w2s_y(0));
+            ctx.scale(w2s_x(1) - w2s_x(0), w2s_y(1) - w2s_y(0));
+            ctx.translate(pm.u, pm.v);
 
-                ctx.translate(pm.u, pm.v); // Offset by given offsets.
+            // Actual background rendering.
+            ctx.beginPath();
+            ctx.fillStyle = img.pattern;
+            ctx.rect(s2w_x(0), s2w_y(0), s2w_w(canvasWidth), s2w_h(canvasHeight));
+            ctx.fill();
 
-                if(!img.tiled_pattern) img.tiled_pattern = ctx.createPattern(img, "repeat"); // Make repeated image
-                ctx.fillStyle = img.tiled_pattern;
-
-                draw_rect(s2w_x(0) - pm.u, s2w_y(0) - pm.v, s2w_w(canvasWidth), s2w_h(canvasHeight)); // No clue
             ctx.restore();
-*/
 
+            // Color multiplying.
+            if(pm.c.length == 7) {
+                let comp = ctx.globalCompositeOperation;
+
+                ctx.globalCompositeOperation = "multiply"; // We multiply the rectangle.
+                _DrawRectangle(pm.c, 1, x, y, w, h, false);
+                //ctx.globalCompositeOperation = "lighter";
+                //ctx.drawImage(ctx.canvas, x, y, w, h, x, y, w, h); // We then overlay the rectangle on backgroud itself.
+
+                ctx.globalCompositeOperation = comp;
+            }
         }
     }
 
@@ -290,7 +314,7 @@ function RenderSingleResizableObject(element, cns) {
         edgeOpacityFactor = currentTheme.selectEdgeOpacityFactor;
     }
 
-    if(!(window.SHOW_TEXTURES && (elemClass == "bg")))_DrawRectangle(color, layerAlpha * opacityFactor, x, y, w, h, false); // Object itself.
+    if(!( (elemClass == "bg") && window.SHOW_TEXTURES ))_DrawRectangle(color, layerAlpha * opacityFactor, x, y, w, h, false); // Object itself.
     _DrawRectangle(edgeColor, layerAlpha * edgeOpacityFactor, x, y, w, h, true); // Edge.
 }
 
