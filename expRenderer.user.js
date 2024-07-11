@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      3.6
+// @version      3.7
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -49,8 +49,7 @@ let s2w_h;
 let s2w_w;
 
 // For Preview mode.
-let gameScale = 1;
-let background = "1";
+let previewBackground = "1";
 
 // Settings, themes.
 let toggles = {
@@ -585,7 +584,7 @@ function RenderBackground() {
         ctx.fillStyle = currentTheme.backgroundColor;
         draw_rect(0, 0, canvasWidth, canvasHeight);
     } else {
-        draw_image(window.CACHED_SKY[background], 0, 0, canvasWidth, canvasHeight);
+        draw_image(window.CACHED_SKY[previewBackground], 0, 0, canvasWidth, canvasHeight);
     }
 }
 
@@ -677,6 +676,18 @@ function HandleSingleFrame() {
     DisplayStatistics();
 }
 
+function PreviewModeUpdateVariables(val) {
+    if(!val) return;
+    for(let element of window.es) {
+        if(!(element._class == "inf")) continue;
+        let pm = element.pm;
+        if(pm.mark == "sky") {
+            previewBackground = pm.forteam;
+            return;
+        }
+    }
+}
+
 (function() {
     ctx = window.ctx;
 
@@ -696,6 +707,8 @@ function HandleSingleFrame() {
     s2w_h = window.s2w_h;
     s2w_w = window.s2w_w;
     // Patching.
+    let osts = window.ShowTexturesSet;
+    window.ShowTexturesSet = (val) => {PreviewModeUpdateVariables(val); osts(val)}
     window.Render = () => {}; // Make Render function do nothing.
     window.ani = () => {}; // Make ani function do nothing.
     window.requestAnimationFrame(HandleSingleFrame);
