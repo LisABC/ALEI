@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      3.2
+// @version      3.3
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -508,9 +508,47 @@ function DisplayStatistics() {
 
 function getTimeMs() {return (new Date()).getTime()}
 
+function RequestRedrawIfGridMoved() {
+    let speedFactor = window.k_shift ? 5 : 1;
+
+    function triggerMove() {
+        window.zoom_validate();
+        window.need_redraw = true;
+        window.lmd = false;
+        window.lmwa = s2w_x(window.mouse_x);
+        window.lmwb = s2w_x(window.mouse_y);
+        //window.m_move();
+    }
+
+    let didMove = false;
+    // X.
+    if(window.speed_x !== 0) {
+        let toAdd = window.zoom * 10 * speedFactor * window.speed_x;
+        window.dis_from_x += toAdd;
+        window.dis_to_x += toAdd;
+        didMove = true;
+    }
+    // Y.
+    if(window.speed_y !== 0) {
+        let toAdd = window.zoom * 10 * speedFactor * window.speed_y;
+        window.dis_from_y += toAdd;
+        window.dis_to_y += toAdd;
+        didMove = true;
+    }
+
+    if(didMove) triggerMove();
+}
+
 function HandleSingleFrame() {
     window.requestAnimationFrame(HandleSingleFrame);
+
+    RequestRedrawIfGridMoved();
     RenderFrame();
+    if(window.need_GUIParams_update) {
+        window.need_GUIParams_update = false;
+        window.UpdateGUIParams();
+        window.UpdateGUIObjectsList();
+    }
 
     fpsAccumulator++;
     if((getTimeMs() - lastTime) >= 1000) {
@@ -541,6 +579,7 @@ function HandleSingleFrame() {
     s2w_w = window.s2w_w;
     // Patching.
     window.Render = () => {}; // Make Render function do nothing.
+    window.ani = () => {}; // Make ani function do nothing.
     window.requestAnimationFrame(HandleSingleFrame);
 
     // Setting default values.
