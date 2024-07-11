@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      3.7
+// @version      3.8
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -519,12 +519,61 @@ function RenderSelectOverlay(element, cns) {
     window.MyDrawSelection(cns.x-2, cns.y-2, cns.w+4, cns.h+4)
 }
 
+function ChangeCursorIfHitsBorder(element, cns) {
+    if(!element.selected) return;
+    if(!window.MatchLayer(element)) return;
+
+    let cx = cns.x;
+    let cy = cns.y;
+    let cw = cns.w;
+    let ch = cns.h;
+
+    let x = element.pm.x;
+    let y = element.pm.y;
+    let w = element.pm.w;
+    let h = element.pm.h;
+
+    let mx = mCurrentX;
+    let my = mCurrentY;
+
+    let borderwidth = window.borderwidth;
+
+    // Do elimination if checking is not necessary.
+    if(mx < (x - borderwidth)) return;
+    if((x + w + borderwidth) < mx) return;
+    if(my < (y - borderwidth)) return;
+    if((y+h+borderwidth) < my) return;
+
+    let DOQuad = (x, y, w, h) => {
+        if( (x < mx) && (mx < (x+w)) ) {
+            if( (y < my) && (my < (y+h)) ) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    let cursor = "default";
+    // TODO: Optimize this crap...
+    if (DOQuad(x - borderwidth, y - borderwidth, borderwidth * 2, borderwidth * 2)) cursor = 'se-resize';
+    if (DOQuad(x + w - borderwidth, y - borderwidth, borderwidth * 2, borderwidth * 2)) cursor = 'ne-resize';
+    if (DOQuad(x - borderwidth, y + h - borderwidth, borderwidth * 2, borderwidth * 2)) cursor = 'ne-resize';
+    if (DOQuad(x + w - borderwidth, y + h - borderwidth, borderwidth * 2, borderwidth * 2)) cursor = 'se-resize';
+    if (DOQuad(x + borderwidth, y - borderwidth, w - borderwidth * 2, borderwidth * 2)) cursor = 'n-resize';
+    if (DOQuad(x + borderwidth, y + h - borderwidth, w - borderwidth * 2, borderwidth * 2)) cursor = 'n-resize';
+    if (DOQuad(x - borderwidth, y + borderwidth, borderwidth * 2, h - borderwidth * 2)) cursor = 'e-resize';
+    if (DOQuad(x + w - borderwidth, y + borderwidth, borderwidth * 2, h - borderwidth * 2)) cursor = 'e-resize';
+    if(window.canv.style.cursor != cursor) window.canv.style.cursor = cursor;
+
+}
+
 function RenderSingleObject(element) {
     let cns = GetObjectCoordAndSize(element);
     if(element._isresizable) RenderSingleResizableObject(element, cns);
     else RenderSingleNonResizableObject(element, cns);
     RenderSelectOverlay(element, cns);
     RenderObjectMarkAndName(element, cns);
+    ChangeCursorIfHitsBorder(element, cns);
 }
 
 function RenderAllObjects() {
@@ -600,7 +649,9 @@ function RenderFrame() {
     mCurrentX = window.lmwa;
     mCurrentY = window.lmwb;
 
+    window.canv.style.cursor = "default";
     ctx.globalAlpha = 1;
+
     RenderBackground();
     RenderGrid();
     RenderAllObjects();
