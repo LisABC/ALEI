@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      3.3
+// @version      3.4
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -29,6 +29,12 @@ let ctx;
 let canvasHeight;
 let canvasWidth;
 let gridOpacity;
+
+// Mouse.
+let mClickX;
+let mClickY;
+let mCurrentX;
+let mCurrentY;
 
 // World and Screen conversion functions
 let w2s_x;
@@ -59,7 +65,10 @@ let themes = {
         selectionCtrlColor: "#AFA",
         selectionAltColor: "#FAA",
         selectionOpacity: 0.1, // Note that this and below is NOT opacity FACTOR
-        selectionEdgeOpacity: 0.8
+        selectionEdgeOpacity: 0.8,
+        // Highlighted object edge color. (When included in selection area)
+        highLightedObjEdgeColor: window.selgrd3, // NOTE: #FFFF00 seems nice. Bright but it is clearly noticeable.
+        highLightedObjEdgeOpacity: 1
 
     },
     1: { // THEME_DARK
@@ -72,7 +81,9 @@ let themes = {
         selectionCtrlColor: "#AFA",
         selectionAltColor: "#FAA",
         selectionOpacity: 0.1,
-        selectionEdgeOpacity: 0.8
+        selectionEdgeOpacity: 0.8,
+        highLightedObjEdgeColor: window.selgrd3,
+        highLightedObjEdgeOpacity: 1
     },
     2: { // THEME_GREEN
         backgroundColor: "#222222",
@@ -84,7 +95,9 @@ let themes = {
         selectionCtrlColor: "#AFA",
         selectionAltColor: "#FAA",
         selectionOpacity: 0.1,
-        selectionEdgeOpacity: 0.8
+        selectionEdgeOpacity: 0.8,
+        highLightedObjEdgeColor: window.selgrd3,
+        highLightedObjEdgeOpacity: 1
     },
     3: { // THEME_PURPLE
         backgroundColor: "#222222",
@@ -96,7 +109,9 @@ let themes = {
         selectionCtrlColor: "#AFA",
         selectionAltColor: "#FAA",
         selectionOpacity: 0.1,
-        selectionEdgeOpacity: 0.8
+        selectionEdgeOpacity: 0.8,
+        highLightedObjEdgeColor: window.selgrd3,
+        highLightedObjEdgeOpacity: 1
     },
     4: { // ALEI Black Theme
         backgroundColor: "#222222",
@@ -108,7 +123,9 @@ let themes = {
         selectionCtrlColor: "#AFA",
         selectionAltColor: "#FAA",
         selectionOpacity: 0.1,
-        selectionEdgeOpacity: 0.8
+        selectionEdgeOpacity: 0.8,
+        highLightedObjEdgeColor: window.selgrd3,
+        highLightedObjEdgeOpacity: 1
     }
 }
 let currentTheme;
@@ -128,7 +145,7 @@ function RenderGrid() {
     draw_gridlines(300, 0.64 * gridOpacity);
 
     ctx.globalAlpha = 0.7 * gridOpacity;
-    draw_rect(0, w2s_y(0), canvasWidth, 1);  // Center Grid - Horizontal
+    draw_rect(0, w2s_y(0), canvasWidth, 1); // Center Grid - Horizontal
     draw_rect(w2s_x(0), 0, 1, canvasHeight); // Center Grid - Vertical
 }
 
@@ -160,8 +177,29 @@ function _DrawRectangle(color, opacity, x, y, w, h, edge) {
         draw_rect(x, y, w, h);
     }
 }
+// Checks if given object is in selection area.
+function ObjIsHighlighted(cns) {
+    if(!window.m_drag_selection) return; // If we are not dragging.
+    if(window.lmd) return; // If the selection just started
+
+    let rx = w2s_x(Math.min(mClickX, mCurrentX));
+    let ry = w2s_y(Math.min(mClickY, mCurrentY));
+    let rw = w2s_w(Math.abs(mCurrentX - mClickX));
+    let rh = w2s_h(Math.abs(mCurrentY - mClickY));
+
+    let x = cns.x;
+    let y = cns.y;
+    let w = cns.w;
+    let h = cns.h;
+
+    if( ((x+w) < rx) || ((rx+rw) < x) ) return false;
+    if( ((y+h) < ry) || (ry+rh) < y ) return false;
+
+    return true;
+}
+
 // Function responsible for rendering resizable objects. (Region, door, box, pusher, water)
-function RenderSingleResizableObject(element) {
+function RenderSingleResizableObject(element, cns) {
     let elemClass = element._class;
     let objectColor = objectColors[elemClass];
     if(objectColor === undefined) return;
@@ -208,6 +246,11 @@ function RenderSingleResizableObject(element) {
         opacityFactor = objectColor.coloredOpacityFactor;
     }
 
+    if(ObjIsHighlighted(cns)) {
+        edgeColor = currentTheme.highLightedObjEdgeColor;
+        edgeOpacityFactor = currentTheme.highLightedObjEdgeOpacity / layerAlpha;
+    }
+
     if(element.selected && !toggles.originalSelectOverlay) {
         edgeColor = currentTheme.selectOutlineColor;
         edgeOpacityFactor = currentTheme.selectEdgeOpacityFactor;
@@ -249,7 +292,7 @@ function RenderNRObjectBox(element, color, opacity) {
 }
 
 // Function responsible for rendering non-resizable objects (Everything else aside from ones mentioned above.)
-function RenderSingleNonResizableObject(element) {
+function RenderSingleNonResizableObject(element, cns) {
     let elemClass = element._class;
     let layerAlpha = window.MatchLayer(element) ? 1: 0.3;
     let pm = element.pm;
@@ -257,13 +300,19 @@ function RenderSingleNonResizableObject(element) {
     let y = pm.y;
 
     let color = "#000";
-    let selectOpacityFactor = 0.1;
-    if(element.selected && !toggles.originalSelectOverlay) {
-        color = currentTheme.selectOutlineColor;
-        selectOpacityFactor = currentTheme.selectEdgeOpacityFactor;
+    let opacityFactor = 0.1;
+
+    if(ObjIsHighlighted(cns)) {
+        color = currentTheme.highLightedObjEdgeColor;
+        opacityFactor = currentTheme.highLightedObjEdgeOpacity / layerAlpha;
     }
 
-    RenderNRObjectBox(element, color, layerAlpha * selectOpacityFactor);
+    if(element.selected && !toggles.originalSelectOverlay) {
+        color = currentTheme.selectOutlineColor;
+        opacityFactor = currentTheme.selectEdgeOpacityFactor;
+    }
+
+    RenderNRObjectBox(element, color, layerAlpha * opacityFactor);
 
     ctx.globalAlpha = layerAlpha;
     let transformedDecor = false;
@@ -414,9 +463,9 @@ function RenderSelectOverlay(element, cns) {
 }
 
 function RenderSingleObject(element) {
-    if(element._isresizable) RenderSingleResizableObject(element);
-    else RenderSingleNonResizableObject(element);
     let cns = GetObjectCoordAndSize(element);
+    if(element._isresizable) RenderSingleResizableObject(element, cns);
+    else RenderSingleNonResizableObject(element, cns);
     RenderSelectOverlay(element, cns);
     RenderObjectMarkAndName(element, cns);
 }
@@ -459,16 +508,11 @@ function RenderSelectionBox() {
     if(!window.m_drag_selection) return; // If we are not dragging.
     if(window.lmd) return; // If the selection just started
 
-    // Variable aliasing. Related to mouse coordinations.
-    let clickX = window.lmdrwa;
-    let clickY = window.lmdrwb;
-    let currentX = window.lmwa;
-    let currentY = window.lmwb;
 
-    let x = w2s_x(clickX); // Start X for rectangle
-    let y = w2s_y(clickY); // Start Y for rectangle
-    let w = w2s_w(currentX - clickX); // Width for rectangle.
-    let h = w2s_h(currentY - clickY); // Height for rectangle.
+    let x = w2s_x(mClickX); // Start X for rectangle
+    let y = w2s_y(mClickY); // Start Y for rectangle
+    let w = w2s_w(mCurrentX - mClickX); // Width for rectangle.
+    let h = w2s_h(mCurrentY - mClickY); // Height for rectangle.
 
     let color = currentTheme.selectionColor;
     if(window.ctrl) color = currentTheme.selectionCtrlColor;
@@ -484,6 +528,11 @@ function RenderFrame() {
     canvasHeight = window.lsv;
     currentTheme = themes[window.THEME];
     gridOpacity = window.GRID_ALPHA;
+
+    mClickX = window.lmdrwa;
+    mClickY = window.lmdrwb;
+    mCurrentX = window.lmwa;
+    mCurrentY = window.lmwb;
 
     ctx.globalAlpha = 1;
     RenderGrid();
