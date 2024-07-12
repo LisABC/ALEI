@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      3.8
+// @version      3.9
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -14,6 +14,7 @@
 // Variables that Renderer actively uses.
 let decorRequestsOnProgress = [];
 let backgroundRequestsOnProgress = [];
+let boxModelImages = {};
 // Statistic purposes.
 let displayFPS = 0;
 let fpsAccumulator = 0;
@@ -54,7 +55,8 @@ let previewBackground = "1";
 // Settings, themes.
 let toggles = {
     cartoonishEdges: false,
-    originalSelectOverlay: false
+    originalSelectOverlay: false,
+    boxRendering: true
 }
 let themes = {
     0: { // THEME_BLUE
@@ -253,10 +255,48 @@ function RenderSingleResizableObject(element, cns) {
     }
 
     if(window.SHOW_TEXTURES) {
-        if(elemClass == "box") { // TODO: Render wall model instead?
+        if((elemClass == "box") && !(toggles.boxRendering)) {
             color = "#000";
             opacityFactor = 1;
             edgeColor = "#333";
+        }
+        else if((elemClass == "box") && (toggles.boxRendering)) {
+            let image = boxModelImages[pm.m];
+            if(image == undefined) {
+                image = new Image();
+                boxModelImages[pm.m] = image;
+
+                image.src = `pic.php?c=3&m=${pm.m}`;
+                image.width = 16;
+                image.height = 16;
+            }
+            if(image.pattern == undefined) image.pattern = ctx.createPattern(image, "repeat-x"); // Create repeat pattern if not already done.
+            ctx.globalAlpha = 1;
+
+
+            ctx.save();
+            // Getting a working rectangle for us in order to work.
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x+w, y);
+            ctx.lineTo(x+w, y+h);
+            ctx.lineTo(x, y+h);
+            ctx.closePath();
+            ctx.clip();
+
+            // Ensuring that background is offsetted properly and takes all the rectangle.
+            ctx.translate(w2s_x(0), w2s_y(0));
+            ctx.scale(w2s_x(1) - w2s_x(0), w2s_y(1) - w2s_y(0));
+
+            // Actual background rendering.
+            ctx.beginPath();
+            ctx.fillStyle = image.pattern;
+            ctx.rect(s2w_x(0), s2w_y(0), s2w_w(canvasWidth), s2w_h(canvasHeight));
+            ctx.fill();
+
+            ctx.restore();
+
+
         }
         else if ((elemClass == "bg") && (window.CACHED_BGS[pm.m] !== undefined) && (window.CACHED_BGS[pm.m].loaded)) {
             if(backgroundRequestsOnProgress.indexOf(pm.m) !== -1) {
@@ -269,10 +309,10 @@ function RenderSingleResizableObject(element, cns) {
             ctx.save();
             // Getting a working rectangle for us in order to work.
             ctx.beginPath();
-            ctx.moveTo(cns.x, cns.y);
-            ctx.lineTo(cns.x+cns.w, cns.y);
-            ctx.lineTo(cns.x+cns.w, cns.y+cns.h);
-            ctx.lineTo(cns.x, cns.y+cns.h);
+            ctx.moveTo(x, y);
+            ctx.lineTo(x+w, y);
+            ctx.lineTo(x+w, y+h);
+            ctx.lineTo(x, y+h);
             ctx.closePath();
             ctx.clip();
 
@@ -313,8 +353,8 @@ function RenderSingleResizableObject(element, cns) {
         edgeOpacityFactor = currentTheme.selectEdgeOpacityFactor;
     }
 
-    if(!( (elemClass == "bg") && window.SHOW_TEXTURES ))_DrawRectangle(color, layerAlpha * opacityFactor, x, y, w, h, false); // Object itself.
-    _DrawRectangle(edgeColor, layerAlpha * edgeOpacityFactor, x, y, w, h, true); // Edge.
+    if(!( (window.SHOW_TEXTURES) && ( (elemClass == "bg") || ((elemClass == "box") && toggles.boxRendering) ) )) _DrawRectangle(color, layerAlpha * opacityFactor, x, y, w, h, false); // Object itself.
+    if(!window.SHOW_TEXTURES) _DrawRectangle(edgeColor, layerAlpha * edgeOpacityFactor, x, y, w, h, true); // Edge.
 }
 
 // Function responsible for drawing edges of non-resizable objects. To be used below.
