@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      3.9
+// @version      4.0
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -181,9 +181,10 @@ function _DrawRectangle(color, opacity, x, y, w, h, edge) {
     }
 }
 // Checks if given object is in selection area.
-function ObjIsHighlighted(cns) {
+function ObjIsHighlighted(element, cns) {
     if(!window.m_drag_selection) return; // If we are not dragging.
     if(window.lmd) return; // If the selection just started
+    if(!window.MatchLayer(element)) return; // If layers dont match.
 
     let rx = w2s_x(Math.min(mClickX, mCurrentX));
     let ry = w2s_y(Math.min(mClickY, mCurrentY));
@@ -343,7 +344,7 @@ function RenderSingleResizableObject(element, cns) {
         }
     }
 
-    if(ObjIsHighlighted(cns)) {
+    if(ObjIsHighlighted(element, cns)) {
         edgeColor = currentTheme.highLightedObjEdgeColor;
         edgeOpacityFactor = currentTheme.highLightedObjEdgeOpacity / layerAlpha;
     }
@@ -399,7 +400,7 @@ function RenderSingleNonResizableObject(element, cns) {
     let color = "#000";
     let opacityFactor = 0.1;
 
-    if(ObjIsHighlighted(cns)) {
+    if(ObjIsHighlighted(element, cns)) {
         color = currentTheme.highLightedObjEdgeColor;
         opacityFactor = currentTheme.highLightedObjEdgeOpacity / layerAlpha;
     }
