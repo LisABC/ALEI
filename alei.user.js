@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      16.6
+// @version      16.7
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -19,7 +19,7 @@ let window = unsafeWindow;
 let isNative;
 try {
     GM_info
-    isNative = true
+    isNative = true;
     window["nativeALEIRunning"] = true;
 } catch (e) {isNative = false};
 
@@ -513,10 +513,7 @@ function _turnLinkIntoSkinSpan(src, charName) {
 }
 
 async function fetchSkinsFrom(startingID) {
-    if(!isNative) {
-        NewNote(`ALEI: Will not check for any undetected skins as the function requires tampermonkey-specific function.`, `#FFFF00`);
-        return;
-    }
+    if(!isNative) return;
     const requestsAtOnce = 5;
     let requestsRunning = true;
     let skinsAdded = [];
@@ -2458,10 +2455,10 @@ function changeTopRightText() {
     containerElem.style.width = "170px";
     elem.style.width = "160px";
 
-    let version = "UNKNOWN";
-    if(isNative) version = GM_info.script.version;
+    let version = "";
+    if(isNative) version = " v" + GM_info.script.version;
 
-    elem.innerHTML = elem.innerHTML.replaceAll("<br>", " ") + "<br>ALE Improvements v" + version;
+    elem.innerHTML = elem.innerHTML.replaceAll("<br>", " ") + "<br>ALE Improvements" + version;
 }
 
 function sortObjects() {
@@ -5591,6 +5588,7 @@ let ALE_start = (async function() {
     patchRender();
 
     NewNote("ALEI: Welcome!", "#7777FF");
+    NewNote(`Don't forget to join discord server! discord.gg/K5jcNEvZ85`, "#7777FF");
     aleiLog(INFO, `Welcome!`);
     if(isNative) {
         aleiLog(INFO, `TamperMonkey Version: ${GM_info.version} ALEI Version: ${GM_info.script.version}`);
