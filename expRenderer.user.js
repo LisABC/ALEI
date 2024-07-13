@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      4.1
+// @version      4.2
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -278,10 +278,7 @@ function RenderSingleResizableObject(element, cns) {
             ctx.save();
             // Getting a working rectangle for us in order to work.
             ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x+w, y);
-            ctx.lineTo(x+w, y+h);
-            ctx.lineTo(x, y+h);
+            ctx.rect(x, y, w, h);
             ctx.closePath();
             ctx.clip();
 
@@ -310,10 +307,7 @@ function RenderSingleResizableObject(element, cns) {
             ctx.save();
             // Getting a working rectangle for us in order to work.
             ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x+w, y);
-            ctx.lineTo(x+w, y+h);
-            ctx.lineTo(x, y+h);
+            ctx.rect(x, y, w, h);
             ctx.closePath();
             ctx.clip();
 
