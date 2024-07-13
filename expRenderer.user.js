@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      4.0
+// @version      4.1
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -577,33 +577,28 @@ function ChangeCursorIfHitsBorder(element, cns) {
     let mx = mCurrentX;
     let my = mCurrentY;
 
-    let borderwidth = window.borderwidth;
+    let borderWidth = window.borderwidth;
 
     // Do elimination if checking is not necessary.
-    if(mx < (x - borderwidth)) return;
-    if((x + w + borderwidth) < mx) return;
-    if(my < (y - borderwidth)) return;
-    if((y+h+borderwidth) < my) return;
+    if(mx < (x - borderWidth)) return;
+    if((x + w + borderWidth) < mx) return;
+    if(my < (y - borderWidth)) return;
+    if((y+h+borderWidth) < my) return;
 
-    let DOQuad = (x, y, w, h) => {
-        if( (x < mx) && (mx < (x+w)) ) {
-            if( (y < my) && (my < (y+h)) ) {
-                return true;
-            }
-        }
-        return false;
-    };
+    let isTop, isBottom, isLeft, isRight = false;
+    // X
+    if( ((x - borderWidth) <= mx) && (mx <= (x+borderWidth)) ) isLeft = true;
+    if( ((x+w-borderWidth) <= mx) && (mx <= (x+w+borderWidth)) ) isRight = true;
+    // Y
+    if( ((y-borderWidth) <= my) && (my <= (y+borderWidth))) isTop = true;
+    if( ((y+h-borderWidth) <= my) && (my <= (y+h+borderWidth))) isBottom = true;
 
     let cursor = "default";
-    // TODO: Optimize this crap...
-    if (DOQuad(x - borderwidth, y - borderwidth, borderwidth * 2, borderwidth * 2)) cursor = 'se-resize';
-    if (DOQuad(x + w - borderwidth, y - borderwidth, borderwidth * 2, borderwidth * 2)) cursor = 'ne-resize';
-    if (DOQuad(x - borderwidth, y + h - borderwidth, borderwidth * 2, borderwidth * 2)) cursor = 'ne-resize';
-    if (DOQuad(x + w - borderwidth, y + h - borderwidth, borderwidth * 2, borderwidth * 2)) cursor = 'se-resize';
-    if (DOQuad(x + borderwidth, y - borderwidth, w - borderwidth * 2, borderwidth * 2)) cursor = 'n-resize';
-    if (DOQuad(x + borderwidth, y + h - borderwidth, w - borderwidth * 2, borderwidth * 2)) cursor = 'n-resize';
-    if (DOQuad(x - borderwidth, y + borderwidth, borderwidth * 2, h - borderwidth * 2)) cursor = 'e-resize';
-    if (DOQuad(x + w - borderwidth, y + borderwidth, borderwidth * 2, h - borderwidth * 2)) cursor = 'e-resize';
+    if( (isTop && isLeft) || (isBottom && isRight) ) cursor = "nwse-resize";
+    else if( (isTop && isRight) || (isBottom && isLeft) ) cursor = "nesw-resize";
+    else if (isTop || isBottom) cursor = "ns-resize";
+    else if (isLeft || isRight) cursor = "ew-resize";
+
     if(window.canv.style.cursor != cursor) window.canv.style.cursor = cursor;
 
 }
