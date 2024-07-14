@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      4.3
+// @version      4.4
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -15,6 +15,8 @@
 let decorRequestsOnProgress = [];
 let backgroundRequestsOnProgress = [];
 let boxModelImages = {};
+let aleiRunning = false;
+let haveForcedRecalculation = false;
 // Statistic purposes.
 let displayFPS = 0;
 let fpsAccumulator = 0;
@@ -53,10 +55,17 @@ let s2w_w;
 let previewBackground = "1";
 
 // Settings, themes.
+function _readStorage(key_, defaultValue, func) {
+    let key = `ALEI_Renderer_${key_}`;
+    let val = localStorage[key];
+    if (val === undefined) return defaultValue;
+    return func(localStorage[key])
+}
+
 let toggles = {
-    cartoonishEdges: false,
-    originalSelectOverlay: false,
-    boxRendering: true
+    cartoonishEdges      : _readStorage("CartoonishEdges"      , false, (val) => val === "true"),
+    originalSelectOverlay: _readStorage("OriginalSelectOverlay", false, (val) => val === "true"),
+    boxRendering         : _readStorage("PreviewWalls"         , false, (val) => val === "true")
 }
 let themes = {
     0: { // THEME_BLUE
@@ -714,10 +723,9 @@ function DisplayStatistics() {
         element.innerHTML = "Waiting for data...";
         window.right_panel.childNodes[0].insertBefore(element, document.getElementById("gui_params"));
     }
-    let text = `
-    Renderer FPS: ${displayFPS}
-    Rendered Object: ${totalRenderedObjects} / ${window.es.length}
-    `
+    let text = " ";
+    text += `Renderer FPS: ${displayFPS} <br>`;
+    text += `Rendered Object: ${totalRenderedObjects} / ${window.es.length}`;
     element.innerHTML = text.slice(1).replaceAll("\n", "<br>");
 }
 
@@ -773,6 +781,14 @@ function HandleSingleFrame() {
     }
 
     DisplayStatistics();
+
+    if(aleiRunning && !haveForcedRecalculation) {
+        let elem = document.getElementById("rparams");
+        if(elem == undefined) return;
+        window.ShowHideObjectBox();
+        window.ShowHideObjectBox();
+        haveForcedRecalculation = true;
+    }
 }
 
 function PreviewModeUpdateVariables(val) {
@@ -785,6 +801,25 @@ function PreviewModeUpdateVariables(val) {
             return;
         }
     }
+}
+
+function RegisterSettingsToALEI() {
+    if(!window.ALEI_Active) return;
+    aleiRunning = true;
+
+    let ALEIAPI = window.ALEIAPI;
+    let settings = ALEIAPI.settings;
+
+    settings.addText("[R] Cartoonish Edges:", false);
+    settings.createButtons("ALEI_Renderer_CartoonishEdges", toggles, "cartoonishEdges", [["Yes", true], ["No", false]]);
+
+    settings.addText("[R] Original Select:", false);
+    settings.createButtons("ALEI_Renderer_OriginalSelectOverlay", toggles, "originalSelectOverlay", [["Yes", true], ["No", false]]);
+
+    settings.addText("[R] Preview walls:", false);
+    settings.createButtons("ALEI_Renderer_PreviewWalls", toggles, "boxRendering", [["Yes", true], ["No", false]]);
+
+    window.ALEI_settingUpdateButtons();
 }
 
 (function() {
@@ -815,6 +850,10 @@ function PreviewModeUpdateVariables(val) {
     // Setting default values.
     lastTime = getTimeMs();
 
+    RegisterSettingsToALEI();
+
     // Logging.
     console.log(`[ALEI Renderer]: Active.`);
+
+
 })();
