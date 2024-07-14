@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      4.2
+// @version      4.3
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -556,6 +556,7 @@ function RenderSelectOverlay(element, cns) {
 
 function ChangeCursorIfHitsBorder(element, cns) {
     if(!element.selected) return;
+    if(!element._isresizable) return;
     if(!window.MatchLayer(element)) return;
 
     let cx = cns.x;
@@ -667,6 +668,22 @@ function RenderBackground() {
     }
 }
 
+function SnapToGrid(value) {
+    return Math.round(value / window.GRID_SNAPPING) * window.GRID_SNAPPING;
+}
+
+function RenderCrossCursor() {
+    if(window.active_tool == "edit") return;
+    ctx.globalAlpha = 1;
+    draw_image(
+        window.img_put,
+        w2s_x(SnapToGrid(mCurrentX)) - 15,
+        w2s_y(SnapToGrid(mCurrentY)) - 15,
+        31,
+        31
+    );
+}
+
 function RenderFrame() {
     if(!window.need_redraw) return;
     canvasWidth = window.lsu;
@@ -686,6 +703,7 @@ function RenderFrame() {
     RenderGrid();
     RenderAllObjects();
     RenderSelectionBox();
+    RenderCrossCursor();
 }
 
 function DisplayStatistics() {
