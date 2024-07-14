@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      16.8
+// @version      16.9
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -21,12 +21,14 @@ try {
     GM_info
     isNative = true;
     window["nativeALEIRunning"] = true;
-} catch (e) {isNative = false};
+} catch (e) {
+    isNative = false
+};
 
 if(!isNative && (window["nativeALEIRunning"] == true)) {
-    // An ALEI instance is already running, probably ran under tampermonkey so let that run.
     Hello_IgnoreThisError_ItIsIntentional // hope this is not defined
 }
+window["ALEI_Active"] = true;
 
 // Shorthand things
 function $id(id) {
