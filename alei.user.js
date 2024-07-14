@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      16.7
+// @version      16.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -46,6 +46,7 @@ let OCM_LOADED = true; // Assume empty map.
 const INFO = 0;
 const DEBUG = 1;
 const DEBUG2 = 2;
+const VERBOSE = DEBUG2; // Alias.
 const WARN = -1;
 const SWARN = -2;
 const __OCM_CHECKED_KEYS = ["target", "attach", "use_target", "incar", "ondeath", "callback"]; // OCM = Object Connection Mapping
@@ -100,7 +101,7 @@ function writeStorage(key, value) {
 let levelToNameMap = {
     0: `${ANSI_CYAN}INFO${ANSI_RESET}`,
     1: `${ANSI_GREEN}DEBUG${ANSI_RESET}`,
-    2: `${ANSI_GREEN}DEBUG2${ANSI_RESET}`
+    2: `${ANSI_GREEN}VERBOSE${ANSI_RESET}`
 }
 
 function aleiLog(level, text) {
@@ -3834,7 +3835,7 @@ function createALEISettingsMenu() {
         color: #c1c9d3;
         border-radius: 5px;
         border: 1px solid #26354a;
-        width: 70px;
+        width: 80px;
         height: 20px;
         font-size: 14px;
         text-align: center;
@@ -3853,6 +3854,7 @@ function createALEISettingsMenu() {
     document.head.appendChild(aleiStyles);
 
     // Convenience functions.
+
     function addText(text, requiresRestart = false) {
         let div = document.createElement("div");
         div.innerHTML = text;
@@ -3864,7 +3866,10 @@ function createALEISettingsMenu() {
         box.innerHTML += div.outerHTML;
     }
     function registerButton(general, values, key) {
-        aleiSettingButtonsMap[general] = [values, key];
+        aleiSettingButtonsMap[general] = [values, aleiSettings, key];
+    }
+    function newRegisterButton(general, values, dict, key) {
+        aleiSettingButtonsMap[general] = [values, dict, key];
     }
     function addButton(display, identifier, callback, style = "") {
         aleiButtonClicks["setting_" + identifier] = callback;
@@ -3906,36 +3911,85 @@ function createALEISettingsMenu() {
     }, "width: 100px");
     box.innerHTML += "<br>";
 
-    registerButton("log", [0, 1, 2], "logLevel");
-    addText("Log Level:");
-    addButton("INFO", "log_0", () => logApply(0));
-    addButton("DEBUG", "log_1", () => logApply(1));
-    addButton("DEBUG2", "log_2", () => logApply(2));
+    let identifier = 0;
 
-    // Action IDs.
-    registerButton("actionid", [true, false], "showTriggerIDs");
-    addText("Action IDs:", true)
-    addBinaryOption("Show", "Hide", "ALEI_ShowTriggerIDs", "showTriggerIDs", "actionid")
+    function MakeSettingButtons(storage, dict, dictKey, valueMap) {
+        identifier++;
+        newRegisterButton(
+            identifier,
+            valueMap.map(o => o[1]),
+            dict,
+            dictKey
+        );
+        function _apply(value) {
+            writeStorage(storage, value);
+            dict[dictKey] = value;
+        }
+        for(let map of valueMap) {
+            addButton(map[0], `${identifier}_${map[1]}`, () => _apply(map[1]));
+        }
+    }
 
-    // Tooltips.
-    registerButton("tooltip", [true, false], "enableTooltips");
-    addText("Tooltips:")
-    addBinaryOption("Show", "Hide", "ALEI_ShowTooltips", "enableTooltips", "tooltip")
+    window.ALEIAPI.settings = {};
+    window.ALEIAPI.settings.addText = addText;
+    window.ALEIAPI.settings.createButtons = MakeSettingButtons;
+
+    function aleiMakeSettingButtons(text, requireRefresh, storage, dictKey, valueMap) {
+        addText(text, requireRefresh);
+        MakeSettingButtons(storage, aleiSettings, dictKey, valueMap);
+    }
+
+    let PR_ShowHide = [["Show", true], ["Hide", false]];
+
+    aleiMakeSettingButtons(
+        "Log Level:",
+        false,
+        "ALEI_LogLevel", // Storage key.
+        "logLevel", // Dictionary key.
+        [
+            ["INFO", 0], // Value maps.
+            ["DEBUG", 1],
+            ["VERBOSE", 2]
+        ]
+    )
+
+    aleiMakeSettingButtons(
+        "Action IDs:",
+        true,
+        "ALEI_ShowTriggerIDs",
+        "showTriggerIDs",
+        PR_ShowHide
+    );
+
+    aleiMakeSettingButtons(
+        "Tooltips:",
+        false,
+        "ALEI_ShowTooltips",
+        "enableTooltips",
+        PR_ShowHide
+    )
 
     // Object ID.
     /*registerButton("showids", [true, false], "showIDs");
     addText("Object IDs:")
     addBinaryOption("Show", "Hide", "ALEI_ShowIDs", "showIDs", "showids")
 */
-    // Z-Index.
-    registerButton("showzindex", [true, false], "showZIndex");
-    addText("Object z-index:");
-    addBinaryOption("Show", "Hide", "ALEI_ShowZIndex", "showZIndex", "showzindex")
 
-    // Show same parameters.
-    registerButton("sameparams", [true, false], "showSameParameters");
-    addText("Same Parameters:");
-    addBinaryOption("Show", "Hide", "ALEI_ShowSameParameters", "showSameParameters", "sameparams");
+    aleiMakeSettingButtons(
+        "Z-Index:",
+        false,
+        "ALEI_ShowZIndex",
+        "showZIndex",
+        PR_ShowHide
+    );
+
+    aleiMakeSettingButtons(
+        "Same Parameters:",
+        false,
+        "ALEI_ShowSameParameters",
+        "showSameParameters",
+        PR_ShowHide
+    );
 
     // Black theme.
     registerButton("blackTheme", [true, false], "blackTheme");
@@ -3945,10 +3999,13 @@ function createALEISettingsMenu() {
         else UndoBlackTheme();
     });
 
-    // Change grid based on snapping
-    registerButton("changeGridBasedOnSnapping", [true, false], "gridBasedOnSnapping");
-    addText("Grid by Snap:");
-    addBinaryOption("Yes", "No", "ALEI_gridBasedOnSnapping", "gridBasedOnSnapping", "changeGridBasedOnSnapping");
+    aleiMakeSettingButtons(
+        "Grid by snap:",
+        false,
+        "ALEI_gridBasedOnSnapping",
+        "gridBasedOnSnapping",
+        [["Yes", true], ["No", false]]
+    );
 
     // Render object names
     registerButton("showObjectNames", [true, false], "renderObjectNames");
@@ -3960,12 +4017,13 @@ function createALEISettingsMenu() {
     addText("Remap UID: ");
     addBinaryOption("Enabled", "Disabled", "ALEI_RemapUID", "rematchUID", "remapUID", (status) => ALEI_UpdateRematchUIDSetting(status));
 
-    // Extended triggers.
-    // Normally we shouldn't be locking this behind a setting, but the bugs got so annoying to the point I'd rather let people pick what they want.
-    registerButton("but_extendedTriggers", [true, false], "extendedTriggers");
-    addText("Extended triggers: ", true);
-    addBinaryOption("Enabled", "Disabled", "ALEI_ExtendedTriggersEnabled", "extendedTriggers", "but_extendedTriggers");
-    // TODO: Shorten those...
+    aleiMakeSettingButtons(
+        "Extended triggers:",
+        false,
+        "ALEI_ExtendedTriggersEnabled",
+        "extendedTriggers",
+        [["Enabled", true], ["Disabled", false]]
+    );
 
     window.ALEI_settingsMenu = mainWindow;
     document.body.appendChild(mainWindow);
@@ -3982,9 +4040,10 @@ window.ALEI_settingUpdateButtons = () => {
     for (let entry of Object.entries(aleiSettingButtonsMap)) {
         let identity = entry[0];
         let values = entry[1][0];
-        let key = entry[1][1];
+        let dict = entry[1][1];
+        let key = entry[1][2];
 
-        let currentVal = aleiSettings[key];
+        let currentVal = dict[key];
         for (let value of values) {
             $query(`#ALEI_${identity}_${value}`).setAttribute("class", defaultClass);
         }
@@ -5499,6 +5558,8 @@ function patchRender() {
 
 let ALE_start = (async function() {
     'use strict';
+
+    window.ALEIAPI = {};
 
     VAL_TABLE = special_values_table;
     ROOT_ELEMENT = document.documentElement;
