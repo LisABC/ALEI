@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      17.0
+// @version      17.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -87,7 +87,8 @@ let aleiSettings = {
     showZIndex:         readStorage("ALEI_ShowZIndex",              false, (val) => val === "true"),
     renderObjectNames:  readStorage("ALEI_RenderObjectNames",       true,  (val) => val === "true"),
     ocmEnabled:         readStorage("ALEI_OCMEnabled",              false, (val) => val === "true"),
-    extendedTriggers:   readStorage("ALEI_ExtendedTriggersEnabled", true,  (val) => val === "true")
+    extendedTriggers:   readStorage("ALEI_ExtendedTriggersEnabled", true,  (val) => val === "true"),
+    customRenderer:     readStorage("ALEI_Renderer_Enabled",        true,  (val) => val === "true")
 }
 window.aleiSettings = aleiSettings;
 
@@ -3856,6 +3857,8 @@ function createALEISettingsMenu() {
     document.head.appendChild(aleiStyles);
 
     // Convenience functions.
+    let usableHeight = 240;
+    let currentHeight = 300;
 
     function addText(text, requiresRestart = false) {
         let div = document.createElement("div");
@@ -3866,6 +3869,13 @@ function createALEISettingsMenu() {
         div.setAttribute("class", "ALEI_settingMenuText");
         box.innerHTML += "<br>";
         box.innerHTML += div.outerHTML;
+
+        usableHeight -= 20;
+        if(usableHeight <= 0) {
+            currentHeight += 20;
+            usableHeight += 20;
+            box.style.height = `${currentHeight}px`;
+        }
     }
     function registerButton(general, values, key) {
         aleiSettingButtonsMap[general] = [values, aleiSettings, key];
@@ -4024,6 +4034,14 @@ function createALEISettingsMenu() {
         false,
         "ALEI_ExtendedTriggersEnabled",
         "extendedTriggers",
+        [["Enabled", true], ["Disabled", false]]
+    );
+
+    aleiMakeSettingButtons(
+        "Custom Renderer:",
+        true,
+        "ALEI_Renderer_Enabled",
+        "customRenderer",
         [["Enabled", true], ["Disabled", false]]
     );
 
