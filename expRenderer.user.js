@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      4.4
+// @version      4.5
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -604,14 +604,48 @@ function ChangeCursorIfHitsBorder(element, cns) {
     else if (isLeft || isRight) cursor = "ew-resize";
 
     if(window.canv.style.cursor != cursor) window.canv.style.cursor = cursor;
-
 }
+
+function RenderQuickPick(element, cns) {
+    if(!(window.quick_pick && window.lqpc.indexOf(element._class) != -1)) return;
+    if(!window.MatchLayer(element)) return;
+
+    let x = cns.x;
+    let y = cns.y;
+    let w = cns.w;
+    let h = cns.h;
+
+    let midX = x + w/2;
+    let midY = y + h/2;
+
+    let sinus = Math.sin((new Date()).getTime() / 100);
+
+    ctx.globalAlpha = 0.75 - sinus / 4;
+    let size = 27 + sinus * 5;
+
+    let isOver = false;
+
+    let dist = window.Dist2D(midX, midY, window.mouse_x, window.mouse_y);
+    if(dist < (20 * window.quick_pick_hit_scale)) {
+        isOver = true;
+    }
+
+    draw_image(
+        isOver ? window.img_quickpick2 : window.img_quickpick,
+        midX - size,
+        midY - size,
+        size * 2,
+        size * 2
+    );
+}
+
 
 function RenderSingleObject(element) {
     let cns = GetObjectCoordAndSize(element);
     if(element._isresizable) RenderSingleResizableObject(element, cns);
     else RenderSingleNonResizableObject(element, cns);
     RenderSelectOverlay(element, cns);
+    RenderQuickPick(element, cns);
     RenderObjectMarkAndName(element, cns);
     ChangeCursorIfHitsBorder(element, cns);
 }
