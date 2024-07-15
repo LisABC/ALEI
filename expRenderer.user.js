@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      4.5
+// @version      4.6
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -84,7 +84,12 @@ let themes = {
         selectionEdgeOpacity: 0.8,
         // Highlighted object edge color. (When included in selection area)
         highLightedObjEdgeColor: window.selgrd3, // NOTE: #FFFF00 seems nice. Bright but it is clearly noticeable.
-        highLightedObjEdgeOpacity: 1
+        highLightedObjEdgeOpacity: 1,
+        // Object connection line.
+        objectConnectionDash: [4, 4],
+        objectConnectionToColor: "#66ff66",
+        objectConnectionFromColor: "#ffffff",
+        objectConnectionOpacityFactor: 1 // TODO: Should this just be "opacity" and not "opacity factor"?
 
     },
     1: { // THEME_DARK
@@ -99,7 +104,11 @@ let themes = {
         selectionOpacity: 0.1,
         selectionEdgeOpacity: 0.8,
         highLightedObjEdgeColor: window.selgrd3,
-        highLightedObjEdgeOpacity: 1
+        highLightedObjEdgeOpacity: 1,
+        objectConnectionDash: [4, 4],
+        objectConnectionToColor: "#66ff66",
+        objectConnectionFromColor: "#ffffff",
+        objectConnectionOpacityFactor: 1
     },
     2: { // THEME_GREEN
         backgroundColor: "#222222",
@@ -113,7 +122,11 @@ let themes = {
         selectionOpacity: 0.1,
         selectionEdgeOpacity: 0.8,
         highLightedObjEdgeColor: window.selgrd3,
-        highLightedObjEdgeOpacity: 1
+        highLightedObjEdgeOpacity: 1,
+        objectConnectionDash: [4, 4],
+        objectConnectionToColor: "#66ff66",
+        objectConnectionFromColor: "#ffffff",
+        objectConnectionOpacityFactor: 1
     },
     3: { // THEME_PURPLE
         backgroundColor: "#222222",
@@ -127,7 +140,11 @@ let themes = {
         selectionOpacity: 0.1,
         selectionEdgeOpacity: 0.8,
         highLightedObjEdgeColor: window.selgrd3,
-        highLightedObjEdgeOpacity: 1
+        highLightedObjEdgeOpacity: 1,
+        objectConnectionDash: [4, 4],
+        objectConnectionToColor: "#66ff66",
+        objectConnectionFromColor: "#ffffff",
+        objectConnectionOpacityFactor: 1
     },
     4: { // ALEI Black Theme
         backgroundColor: "#222222",
@@ -141,7 +158,11 @@ let themes = {
         selectionOpacity: 0.1,
         selectionEdgeOpacity: 0.8,
         highLightedObjEdgeColor: window.selgrd3,
-        highLightedObjEdgeOpacity: 1
+        highLightedObjEdgeOpacity: 1,
+        objectConnectionDash: [4, 4],
+        objectConnectionToColor: "#66ff66",
+        objectConnectionFromColor: "#ffffff",
+        objectConnectionOpacityFactor: 1
     }
 }
 let currentTheme;
@@ -639,14 +660,72 @@ function RenderQuickPick(element, cns) {
     );
 }
 
+function RenderConnectionLines(element, cns) {
+    if(!window.SHOW_CONNECTIONS) return;
+    if(!element.selected) return;
+    if(!aleiRunning) return;
 
-function RenderSingleObject(element) {
-    let cns = GetObjectCoordAndSize(element);
+    let layerAlpha = window.MatchLayer(element) ? 1: 0.3;
+
+    let ocm = window.ObjectConnectionMapping;
+    let utem = window.uidToElementMap;
+    let uid = element.pm.uid;
+
+    if(uid == undefined) return;
+    if(ocm.length == 0) return;
+    if(ocm[uid] == undefined) return;
+    if((ocm[uid].by.length == 0) && (ocm[uid].to.length == 0)) return;
+
+    let referredBy = ocm[uid].by;
+    let referringTo = ocm[uid].to;
+
+    let fromX, toX;
+    let fromY, toY;
+
+    fromX = cns.x + cns.w/2;
+    fromY = cns.y + cns.h/2;
+
+    ctx.globalAlpha = layerAlpha * currentTheme.objectConnectionOpacityFactor;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = currentTheme.objectConnectionToColor;
+    ctx.setLineDash(currentTheme.objectConnectionDash);
+
+    // TODO: How can we batch line draws?
+    // All of them will have same color. (By all, I mean every line that a loop handles.)
+    // So it's best if we just batch them, but how do we do that?
+
+    for(let to of referringTo) {
+        toX = w2s_x(utem[to].pm.x);
+        toY = w2s_y(utem[to].pm.y);
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.stroke();
+    }
+
+    ctx.strokeStyle = currentTheme.objectConnectionFromColor;
+    toX = fromX;
+    toY = fromY;
+
+    for(let by of referredBy) {
+        fromX = w2s_x(utem[by].pm.x);
+        fromY = w2s_y(utem[by].pm.y);
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.stroke();
+    }
+
+    ctx.setLineDash([]);
+}
+
+function RenderSingleObject(element, cns) {
     if(element._isresizable) RenderSingleResizableObject(element, cns);
     else RenderSingleNonResizableObject(element, cns);
     RenderSelectOverlay(element, cns);
     RenderQuickPick(element, cns);
     RenderObjectMarkAndName(element, cns);
+    RenderConnectionLines(element, cns);
     ChangeCursorIfHitsBorder(element, cns);
 }
 
@@ -669,17 +748,22 @@ function RenderAllObjects() {
         let w = pm.w ? pm.w : 0;
         let h = pm.h ? pm.h : 0;
 
+        if(!element.exists) continue;
+        if(!element._isphysical) continue;
+
+        let cns;
+        if(element.selected) {
+            cns = GetObjectCoordAndSize(element);
+            RenderConnectionLines(element, cns);
+        }
         // Actual culling
         if( (x+w) < cx ) continue;
         if( (y+h) < cy ) continue;
         if( (cx+cw) < x ) continue;
         if( (cy+ch) < y ) continue;
 
-
-        if(!element.exists) continue;
-        if(!element._isphysical) continue;
-
-        RenderSingleObject(element);
+        if(cns == undefined) cns = GetObjectCoordAndSize(element);
+        RenderSingleObject(element, cns);
         totalRenderedObjects++;
     }
 }
@@ -885,6 +969,7 @@ function RegisterSettingsToALEI() {
     lastTime = getTimeMs();
 
     RegisterSettingsToALEI();
+    if(!aleiRunning) window.NewNote(`ALEI Renderer: You are not running with ALEI. Don't expect feature completeness as renderer depends on ALEI giving some informations.`, "#FFFF00");
 
     // Logging.
     console.log(`[ALEI Renderer]: Active.`);
