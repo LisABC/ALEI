@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      17.5
+// @version      17.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -3287,8 +3287,13 @@ function addObjBoxResize() {
 function patch_m_down() {
     let og_mdown = window.m_down;
     window.m_down = function(e) {
-        let previousEsLength = es.length;
+        let previousEsLength = parseInt(JSON.stringify(es.length));
         og_mdown(e);
+
+        let ocm = ObjectConnectionMapping;
+        let utem = uidToElementMap;
+        let addedObjects = [];
+
         if (es.length > previousEsLength) { // New element is made.
             assignObjectIDs();
             assignZIndex();
@@ -3307,10 +3312,19 @@ function patch_m_down() {
                 pm.w = round(pm.w);
                 pm.h = round(pm.h);
             }
+            // OCM mapping.
+            if(aleiSettings.ocmEnabled) {
+                for(let i = previousEsLength; i < es.length; i++) {
+                    ocm[es[i].pm.uid] = {"by": [], "to": []};
+                    utem[es[i].pm.uid] = es[i];
+                    addedObjects.push(es[i]);
+                }
+            }
             // Now we just update.
             window.need_GUIParams_update = true;
             UpdateGUIObjectsList();
         }
+        for(let obj of addedObjects) __OCM_HandleObject(obj); // I know I don't have to do this but I am careless right now.
     }
 }
 
@@ -3367,7 +3381,7 @@ function patchEntityClass() {
                 }
                 // Update indexes.
                 for(let i = result.selectIndex+1; i < SelectedObjects.length; i++) {
-                     SelectedObjects[i].selectIndex -= 1;
+                    SelectedObjects[i].selectIndex -= 1;
                 }
                 SelectedObjects.splice(result.selectIndex, 1);
                 result.selected = false;
@@ -3495,9 +3509,11 @@ function PasteFromClipBoard(ClipName) {
                 }
             }
 
-            ocm[es[i2].pm.uid] = {"by": [], "to": []};
-            utem[es[i2].pm.uid] = es[i2];
-            addedObjects.push(es[i2]);
+            if(aleiSettings.ocmEnabled) {
+                ocm[es[i2].pm.uid] = {"by": [], "to": []};
+                utem[es[i2].pm.uid] = es[i2];
+                addedObjects.push(es[i2]);
+            }
         }
         if (typeof(es[i2].pm.x) !== 'undefined')
             if (typeof(es[i2].pm.y) !== 'undefined') {
