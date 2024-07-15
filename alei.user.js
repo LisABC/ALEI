@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      17.4
+// @version      17.5
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -3472,21 +3472,32 @@ function PasteFromClipBoard(ClipName) {
     var lo_x = Math.round((x1 - (min_x + max_x) / 2) / GRID_SNAPPING) * GRID_SNAPPING;
     var lo_y = Math.round((y1 - (min_y + max_y) / 2) / GRID_SNAPPING) * GRID_SNAPPING;
 
+    let ocm = ObjectConnectionMapping;
+    let utem = uidToElementMap;
+
+    let addedObjects = [];
+
     for (var i2 = from_obj; i2 < es.length; i2++) {
         if (typeof(es[i2].pm.uid) !== 'undefined') {
             var old_uid = es[i2].pm.uid;
-            es[i2].exists = false;
-            es[i2].pm.uid = RandomizeName(es[i2].pm.uid);
             es[i2].exists = true;
+            es[i2].pm.uid = RandomizeName(es[i2].pm.uid);
+
+            delete es[i2].pm.__id;
+            let entries = Object.entries(es[i2].pm);
+            entries.splice(0, 0, ["__id", 0]);
+            es[i2].pm = Object.fromEntries(entries);
+
+
             for (var i3 = from_obj; i3 < es.length; i3++) {
                 for (let param in es[i3].pm) {
-                    if (typeof(es[i3].pm[param]) == 'string') {
-                        if (es[i3].pm[param] == old_uid) {
-                            es[i3].pm[param] = es[i2].pm.uid;
-                        }
-                    }
+                    es[i3].pm[param] = UUIDR_Replace(es[i3].pm[param], old_uid, es[i2].pm.uid);
                 }
             }
+
+            ocm[es[i2].pm.uid] = {"by": [], "to": []};
+            utem[es[i2].pm.uid] = es[i2];
+            addedObjects.push(es[i2]);
         }
         if (typeof(es[i2].pm.x) !== 'undefined')
             if (typeof(es[i2].pm.y) !== 'undefined') {
@@ -3511,6 +3522,9 @@ function PasteFromClipBoard(ClipName) {
     m_down_x += x1;
     m_down_y += y1;
     lfz(false);
+    assignObjectIDs();
+    assignZIndex();
+    for(let obj of addedObjects) __OCM_HandleObject(obj);
     return true;
 }
 
@@ -5478,7 +5492,9 @@ function __OCM_HandleObject(element) {
 
 
     if(element.pm.uid === undefined) return;
-    if(element.pm.uid === "#water") return;
+    if(element.pm.uid === "#water") {
+        element.pm.uid = RandomizeName(element.pm.uid); // I don't see why not
+    };
 
     function Trigger_HandleParameter(trigger, parameter) {
         if(typeof(parameter) !== "string") return;
