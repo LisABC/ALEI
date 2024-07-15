@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      17.3
+// @version      17.4
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -3380,6 +3380,11 @@ function patchEntityClass() {
             return true;
         }
 
+        result.Remove = () => { // Better be safe...
+            NewNote(`ALEI: This absolutely should not happen, please report to ALEI developers, error: E.Remove got called when it shouldn't be`, `#FF0000`);
+            debugger;
+        };
+
         let proxy = new Proxy(result, {
             set: ProxySet
         })
@@ -5524,6 +5529,36 @@ function __OCM_HandleObject(element) {
     }
 }
 
+/*
+ * OCM_onObjectDelete
+ * Function that gets called in DeleteSelection.
+ * This just keeps Object Connection Map with latest data.
+
+ * @param {E} element   PB2 element that got deleted.
+*/
+function OCM_onObjectDelete(element) {
+    if(!(aleiSettings.rematchUID && aleiSettings.ocmEnabled)) return;
+    if(element.pm.uid == undefined) return;
+
+    let uid = element.pm.uid;
+    let ocm = window.ObjectConnectionMapping;
+    let utem = window.uidToElementMap;
+
+    let referredBy = ocm[uid].by;
+    let referringTo = ocm[uid].to;
+
+    for(let referrer of referredBy) __OCM_RemoveReference(referrer, uid);
+    for(let referring of referringTo) __OCM_RemoveReference(uid, referring);
+
+    if((ocm[uid].by.length != 0) || (ocm[uid].to.length != 0)) {
+        NewNote(`ALEI: Something is wrong with Object Connection Map. Please regenerate map by loading the map again.`, `#FF0000`);
+    }
+
+    delete utem[uid];
+    delete ocm[uid];
+
+}
+
 function CreateConnectionMapping() {
     OCM_LOADED = false;
     window.ObjectConnectionMapping = {};
@@ -5579,8 +5614,14 @@ function patchRender() {
     fn = fn.replace("if ( THEME !== THEME_DARK )", `if (THEME === 4) ctx.fillStyle = '${GridLineColor}';\n else if (THEME !== THEME_DARK)`);
 
     window.Render = eval(`(${fn})`);
+}
 
-
+function patchDeleteSelection() {
+    let og = window.DeleteSelection;
+    window.DeleteSelection = () => {
+        for(let selected of SelectedObjects) OCM_onObjectDelete(selected);
+        og();
+    };
 }
 
 let ALE_start = (async function() {
@@ -5649,6 +5690,7 @@ let ALE_start = (async function() {
     patchDrawGrid();
     addFunctionToWindow();
     createALEISettingsMenu();
+    patchDeleteSelection();
 
     if(isNative) {
         checkForUpdates();
