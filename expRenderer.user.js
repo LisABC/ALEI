@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      4.6
+// @version      4.7
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -646,9 +646,13 @@ function RenderQuickPick(element, cns) {
 
     let isOver = false;
 
-    let dist = window.Dist2D(midX, midY, window.mouse_x, window.mouse_y);
-    if(dist < (20 * window.quick_pick_hit_scale)) {
-        isOver = true;
+    if(window.es[window.quick_pick_fake_over] == element) {
+        isOver = true
+    } else {
+        let dist = window.Dist2D(midX, midY, window.mouse_x, window.mouse_y);
+        if(dist < (20 * window.quick_pick_hit_scale)) {
+            isOver = true;
+        }
     }
 
     draw_image(
