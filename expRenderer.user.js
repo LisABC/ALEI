@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      4.7
+// @version      4.8
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
@@ -699,8 +699,10 @@ function RenderConnectionLines(element, cns) {
     // So it's best if we just batch them, but how do we do that?
 
     for(let to of referringTo) {
-        toX = w2s_x(utem[to].pm.x);
-        toY = w2s_y(utem[to].pm.y);
+        let ocns = GetObjectCoordAndSize(utem[to]);
+        toX = ocns.x + ocns.w/2;
+        toY = ocns.y + ocns.h/2;
+
         ctx.beginPath();
         ctx.moveTo(fromX, fromY);
         ctx.lineTo(toX, toY);
@@ -712,8 +714,10 @@ function RenderConnectionLines(element, cns) {
     toY = fromY;
 
     for(let by of referredBy) {
-        fromX = w2s_x(utem[by].pm.x);
-        fromY = w2s_y(utem[by].pm.y);
+        let ocns = GetObjectCoordAndSize(utem[by]);
+        fromX = ocns.x + ocns.w/2;
+        fromY = ocns.y + ocns.h/2;
+
         ctx.beginPath();
         ctx.moveTo(fromX, fromY);
         ctx.lineTo(toX, toY);
