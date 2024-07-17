@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      18.2
+// @version      18.3
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -1621,41 +1621,15 @@ function rotateObjects() {
     }
 }
 
-function RandomizeName(oldname) {
-    var newname = oldname;
-    var phrase = "*";
-    var unoriginal;
-    for (var i = 0; i < es.length; i++)
-        if (es[i].exists)
-            if (es[i].pm.uid != undefined) {
-                if (es[i].pm.uid == newname) {
-                    unoriginal = true;
-                    oldname = newname;
-                }
-            }
-    if (unoriginal) {
-        var takes = 0;
-        do {
-            unoriginal = false;
-            var indof = oldname.lastIndexOf(phrase);
-            var copysuffix = Math.floor(oldname.substring(indof + 1));
-            if (indof == -1 || isNaN(copysuffix)) {
-                newname = oldname + phrase + '1';
-            } else {
-                newname = oldname.substring(0, indof) + phrase + (copysuffix + 1);
-            }
-            takes += 1;
-            for (var i = 0; i < es.length; i++)
-                if (es[i].exists)
-                    if (es[i].pm.uid != undefined) {
-                        if (es[i].pm.uid == newname) {
-                            unoriginal = true;
-                            oldname = newname;
-                        }
-                    }
-        } while (unoriginal);
-    }
-    return newname;
+function RandomizeName(oldName) {
+    let takenUids = es.filter(e => e.exists).map(o => o.pm.uid);
+    let actualName = oldName;
+    if(oldName.indexOf("*") !== -1) actualName = oldName.slice(0, oldName.indexOf("*"));
+
+    let current = 1;
+    while(takenUids.indexOf(`${actualName}*${current}`) !== -1) current++;
+
+    return `${actualName}*${current}`;
 }
 
 function patchRandomizeName() {
