@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      18.1
+// @version      18.2
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -3330,10 +3330,6 @@ window.SelectedObjects = [];
 function patchEntityClass() {
     function cleanUpSO() {
         setTimeout(cleanUpSO, 5 * 1000);
-        // Update indexes. (Just incase.)
-        for(let i = 0; i < SelectedObjects.length; i++) {
-            SelectedObjects[i].selectIndex = i;
-        }
         // Manually trigger select change if required.
         for(let i = 0; i < SelectedObjects.length; i++) {
             let e = SelectedObjects[i];
@@ -3360,19 +3356,10 @@ function patchEntityClass() {
         result.fixPos = function() {}; // For proper snapping.
         result.selectChange = function(isSelected, force = false) {
             if((isSelected && (!result.selected || force))) {
-                result.selectIndex = SelectedObjects.length;
                 SelectedObjects.push(result);
                 result.selected = true;
             } else if(!isSelected && (result.selected || force)) {
-                // Fix indexes.
-                for(let i = 0; i < SelectedObjects.length; i++) {
-                    SelectedObjects[i].selectIndex = i;
-                }
-                // Update indexes.
-                for(let i = result.selectIndex+1; i < SelectedObjects.length; i++) {
-                    SelectedObjects[i].selectIndex -= 1;
-                }
-                SelectedObjects.splice(result.selectIndex, 1);
+                SelectedObjects.splice(SelectedObjects.indexOf(result), 1);
                 result.selected = false;
             }
         }
