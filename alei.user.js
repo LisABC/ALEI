@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      18.0
+// @version      18.1
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -2799,7 +2799,9 @@ document.addEventListener("mousedown", e => {
 document.addEventListener("keydown", e => {
     if(e.ctrlKey && e.code == "KeyA") {
         window.es.map(e => {
-            if((e.exists) && (e._isphysical)) e.selected = true;
+            if((e.exists) && (e._isphysical) && (MatchLayer(e))) {
+                e.selected = true;
+            }
             window.need_redraw = true;
             window.need_GUIParams_update = true;
         });
