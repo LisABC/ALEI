@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      17.9
+// @version      18.0
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -73,9 +73,9 @@ if (localStorage['RIGHT_PANEL_WIDTH'] != undefined) {
 }
 
 let aleiSettings = {
-    rightPanelSize:     readStorage("ALEI_RightPanelWidth",         "30vw",  (val) => val            ),
-    triggerEditTextSize:readStorage("ALEI_EditTextSize",            "12px",  (val) => val + "px"     ),
-    starsImage:         readStorage("ALEI_StarImage",               "stars2.jpg", (val) => val            ),
+    rightPanelSize:     readStorage("ALEI_RightPanelWidth",         "30vw",  (val) => val         ),
+    triggerEditTextSize:readStorage("ALEI_EditTextSize",            "12px",  (val) => val + "px"  ),
+    starsImage:         readStorage("ALEI_StarImage",               "stars2.jpg", (val) => val    ),
     logLevel:           readStorage("ALEI_LogLevel",                0,     parseInt               ),
     showTriggerIDs:     readStorage("ALEI_ShowTriggerIDs",          false, (val) => val === "true"),
     enableTooltips:     readStorage("ALEI_ShowTooltips",            false, (val) => val === "true"),
@@ -84,7 +84,7 @@ let aleiSettings = {
     //showIDs:            readStorage("ALEI_ShowIDs",               false, (val) => val === "true"),
     blackTheme:         readStorage("ALEI_BlackTheme",              false, (val) => val === "true"),
     gridBasedOnSnapping:readStorage("ALEI_gridBasedOnSnapping",     true,  (val) => val === "true"),
-    showZIndex:         readStorage("ALEI_ShowZIndex",              false, (val) => val === "true"),
+    //showZIndex:         readStorage("ALEI_ShowZIndex",              false, (val) => val === "true"),
     renderObjectNames:  readStorage("ALEI_RenderObjectNames",       true,  (val) => val === "true"),
     //ocmEnabled:         readStorage("ALEI_OCMEnabled",              false, (val) => val === "true"),
     ocmEnabled:         true,
@@ -136,8 +136,8 @@ function updateParameters() {
     add("tarx", "value", "Target X", "door");
     add("tary", "value", "Target Y", "door");
     // Adding our own parameter.
-    add("__id", "value", "ID", "*");
-    add("__zIndex", "value", "Z-Index", "*");
+    add("__id", "value", "Object ID", "*");
+    add("__priority", "value", "Object priority", "*");
     add("execute", "bool", "Executes directly?", "trigger");
     add("uses_timer", "bool", "Calls timer?", "region");
     add("text", "string", "Placeholder text", "decor");
@@ -1424,8 +1424,15 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
                 window.es = SelectedObjects;
             }
 
+            if(paramname == "__id") {
+                NewNote(`ALEI: Changing Object ID does not do anything, don't expect that to apply.`, "#FFFFFF");
+            }
             // Saves the value to the class.
             es[elems].pm[paramname] = chvalue;
+
+            if(paramname == "__priority") {
+                ApplyObjectProperties(es[elems]);
+            }
         }
         // Handling extended trigger's >10 trigger action.
         else{
@@ -1477,8 +1484,6 @@ function UpdatePhysicalParam(paramname, chvalue, toShowNote = true) {
     }
     lfz(false);
     window.es = ogES;
-
-    sortObjects();
 }
 
 let imageContextMap = {};
@@ -2466,10 +2471,6 @@ function changeTopRightText() {
     elem.innerHTML = elem.innerHTML.replaceAll("<br>", " ") + "<br>ALE Improvements" + version;
 }
 
-function sortObjects() {
-    es.sort((a, b) => a.pm.__zIndex - b.pm.__zIndex);
-}
-
 // Adds additional button
 function addAdditionalButtons() {
     const rparams = document.getElementById("rparams");
@@ -2796,6 +2797,13 @@ document.addEventListener("mousedown", e => {
 });
 
 document.addEventListener("keydown", e => {
+    if(e.ctrlKey && e.code == "KeyA") {
+        window.es.map(e => {
+            if((e.exists) && (e._isphysical)) e.selected = true;
+            window.need_redraw = true;
+            window.need_GUIParams_update = true;
+        });
+    }
     if (e.ctrlKey && e.code == "KeyS") {
         e.preventDefault();
         document.getElementsByClassName("field_btn")[0].click();
@@ -3212,34 +3220,12 @@ function setSameParameters() {
     }
 }
 
-function assignObjectIDs() {
-    // TODO: Refactor
-    let idmap = {};
-    for (let element of es) {
-        if (!element.exists) continue;
-        if (idmap[element._class] === undefined) idmap[element._class] = -1;
-
-        idmap[element._class] += 1;
-        element.aleiID = idmap[element._class];
-    }
-}
-
-function assignZIndex() {
-    for (let i = 0; i < es.length; i++) {
-        if (es[i].pm.__zIndex === undefined) {
-            es[i].pm.__zIndex = 1;
-        }
-    }
-}
-
 function patchANI() {
     let oldAni = ani;
     window.ani = function() {
         let ngpu = need_GUIParams_update;
         oldAni();
         if (ngpu) {
-            assignObjectIDs();
-            assignZIndex();
             if (aleiSettings.showSameParameters) setSameParameters();
         }
     }
@@ -3296,9 +3282,6 @@ function patch_m_down() {
         let addedObjects = [];
 
         if (es.length > previousEsLength) { // New element is made.
-            assignObjectIDs();
-            assignZIndex();
-            sortObjects();
             let element = es[es.length - 1];
             if (!("x" in element.pm)) return;
             // We now have to do job of fixPos, we cannot set fixPos to have it argument-based directly because of scoping
@@ -3329,6 +3312,17 @@ function patch_m_down() {
     }
 }
 
+function ReorderTriggerProperty(result) {
+    let execute = result.pm.execute;
+    execute = execute ? execute : false;
+
+    delete result.pm.execute;
+
+    let entries = Object.entries(result.pm);
+    entries.splice(5, 0, ["execute", execute]);
+    result.pm = Object.fromEntries(entries);
+}
+
 window.SelectedObjects = [];
 
 function patchEntityClass() {
@@ -3357,17 +3351,9 @@ function patchEntityClass() {
         if(_class == "water") result.pm.attach = -1;
         else if(_class == "decor") result.pm.text = "Hello World!";
         else if(_class == "trigger") {
-            let entries = Object.entries(result.pm);
-
-            entries.splice(5, 0, ["execute", false]);
-
-            result.pm = Object.fromEntries(entries);
+            ReorderTriggerProperty(result);
         }
         else if(_class == "region") result.pm.uses_timer = false;
-
-        let entries = Object.entries(result.pm);
-        entries.splice(0, 0, ["__id", 0]);
-        result.pm = Object.fromEntries(entries);
 
         result.fixPos = function() {}; // For proper snapping.
         result.selectChange = function(isSelected, force = false) {
@@ -3498,11 +3484,6 @@ function PasteFromClipBoard(ClipName) {
             es[i2].exists = true;
             es[i2].pm.uid = RandomizeName(es[i2].pm.uid);
 
-            delete es[i2].pm.__id;
-            let entries = Object.entries(es[i2].pm);
-            entries.splice(0, 0, ["__id", 0]);
-            es[i2].pm = Object.fromEntries(entries);
-
 
             for (var i3 = from_obj; i3 < es.length; i3++) {
                 for (let param in es[i3].pm) {
@@ -3539,9 +3520,11 @@ function PasteFromClipBoard(ClipName) {
     m_down_x += x1;
     m_down_y += y1;
     lfz(false);
-    assignObjectIDs();
-    assignZIndex();
     for(let obj of addedObjects) __OCM_HandleObject(obj);
+    assignObjectIDs();
+    assignObjectPriority();
+    window.need_redraw = true;
+    window.need_GUIParams_update = true;
     return true;
 }
 
@@ -3576,8 +3559,6 @@ function ServerRequest_handleMapData(mapCode) {
             let rights = expression.split(";")[0].split(".innerHTML=")[1].slice(1, -1);
             maprights.value = rights;
             NewNote(`Map '${mapid}' has been successfully loaded.`, note_good);
-            assignZIndex();
-            sortObjects();
             continue
         }
         // Actual mapdata.
@@ -3618,9 +3599,6 @@ function ServerRequest_handleMapData(mapCode) {
         currentElement.pm[key] = value;
 
     }
-
-    assignObjectIDs();
-    assignZIndex();
     if(aleiSettings.extendedTriggers) parseExtendedTriggers();
 }
 
@@ -3752,12 +3730,72 @@ window.eval = function(code) { // Temporarily overriding eval so we can patch Se
     }
 };
 
+function assignObjectIDs() {
+    // TODO: Refactor
+    let idmap = {};
+    for (let element of es) {
+        if (!element.exists) continue;
+        if (idmap[element._class] === undefined) idmap[element._class] = -1;
+
+        idmap[element._class] += 1;
+        element.aleiID = idmap[element._class];
+    }
+}
+function assignObjectPriority() {
+    // TODO: Refactor
+    for (let element of es) {
+        if (!element.exists) continue;
+        if(element.aleiPriority == undefined) element.aleiPriority = 1;
+    }
+}
+
+let propertyAppliedObjects = [];
+function AssignObjectProperties(e) {
+    if(e.aleiID == undefined) assignObjectIDs();
+    if(e.aleiPriority == undefined) assignObjectPriority();
+
+    if(propertyAppliedObjects.indexOf(e) == -1) propertyAppliedObjects.push(e);
+
+    let entries = Object.entries(e.pm);
+    entries.splice(0, 0, ["__id", e.aleiID]);
+
+    if(["bg", "decor"].indexOf(e._class) !== -1) {
+        entries.splice(1, 0, ["__priority", e.aleiPriority]);
+    };
+
+    e.pm = Object.fromEntries(entries);
+}
+
+let sortRequired = false;
+function SortObjectsByPriority() {
+    function getPriority(a, b) {
+        return b.aleiPriority - a.aleiPriority;
+    }
+    window.es = es.sort(getPriority);
+}
+
+
+function ApplyObjectProperties(e) {
+    if(["bg", "decor"].indexOf(e._class) == -1) return;
+    if(e.aleiPriority !== e.pm.__priority) {
+        e.aleiPriority = e.pm.__priority;
+        sortRequired = true;
+
+        // TODO: How can I force update GUI object list?
+        // UpdateGUIObjectsList does not do it.
+    }
+}
+
+function RemoveObjectProperties(e) {
+    delete e.pm.__id;
+    delete e.pm.__priority;
+}
+
 function patchUpdateGUIParams() {
     let origUGP = window.UpdateGUIParams;
     let origGPV = window.GenParamVal;
 
     window.UpdateGUIParams = function() {
-        let zIndexSave = [];
 
         window.GenParamVal = function(base, value) {
             let resp = origGPV(base, value);
@@ -3771,28 +3809,18 @@ function patchUpdateGUIParams() {
 
         // Represents all the selected entity class.
         let selected = SelectedObjects;
-        // if(selected.length != 0) console.log(selected[0].pm);
+        selected.filter(e => e._class == "trigger").map(e => ReorderTriggerProperty(e));
 
-        let shouldDisplayZIndex = (selected.length >= 1) && aleiSettings.showZIndex;
+        //selected.map(o => ApplyObjectProperties(o));
 
-        // If there is at least 1 trigger in a multi item selection, dont show z index option.
-        for (let i = 0; i < selected.length; i++) {
-            if (selected[i]._class == "trigger") {
-                shouldDisplayZIndex = 0;
-                break;
-            }
+        for(let element of propertyAppliedObjects) {
+            if(selected.indexOf(element) !== -1) continue;
+            RemoveObjectProperties(element);
+            propertyAppliedObjects.splice(propertyAppliedObjects.indexOf(element), 1);
         }
+        selected.map(o => AssignObjectProperties(o));
 
-        if(selected.length > 0) selected.map(o => (o.pm.__id = o.aleiID));
-
-        if (!shouldDisplayZIndex) {
-            for (let i = 0; i < selected.length; i++) {
-                zIndexSave.push(selected[i].pm.__zIndex);
-
-                delete selected[i].pm.__zIndex;
-            }
-        }
-
+        // This code handles transition between timer and trigger values depending on region's "executes" parameter
         if((selected.length == 1) && (selected[0]._class == "region")) {
             if([true, "true"].indexOf(selected[0].pm.uses_timer) != -1) {
                 param_type[REGION_EXECUTE_PARAM_ID][1] = "timer+none";
@@ -3803,7 +3831,7 @@ function patchUpdateGUIParams() {
 
         let toCall = origUGP;
         if(!aleiSettings.extendedTriggers) {
-            let sep = Trigger_getSeparatorStart(selected);
+            let sep = Trigger_getSeparatorStart(selected.length);
             let fn = origUGP.toString();
             fn = fn.replace("i >= 4 && (i-4)", `i >= ${sep} && (i-${sep})`);
             toCall = eval(`(${fn})`);
@@ -3811,15 +3839,8 @@ function patchUpdateGUIParams() {
         toCall();
         addAdditionalButtons();
 
-        //if (shouldDisplayID) delete selected[0].pm.__id;
-
-        if (!shouldDisplayZIndex) {
-            for (let i = 0; i < selected.length; i++) {
-                selected[i].pm.__zIndex = zIndexSave.shift();
-            }
-        }
-
         window.GenParamVal = origGPV;
+        if(sortRequired) SortObjectsByPriority();
     }
     aleiLog(DEBUG, "Patched UpdateGUIParams");
 }
@@ -4025,13 +4046,13 @@ function createALEISettingsMenu() {
     addBinaryOption("Show", "Hide", "ALEI_ShowIDs", "showIDs", "showids")
 */
 
-    aleiMakeSettingButtons(
+    /*aleiMakeSettingButtons(
         "Z-Index:",
         false,
         "ALEI_ShowZIndex",
         "showZIndex",
         PR_ShowHide
-    );
+    );*/
 
     aleiMakeSettingButtons(
         "Same Parameters:",
