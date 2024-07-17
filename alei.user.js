@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      18.4
+// @version      18.5
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -2771,7 +2771,7 @@ document.addEventListener("mousedown", e => {
 });
 
 document.addEventListener("keydown", e => {
-    if(e.ctrlKey && e.code == "KeyA") {
+    if(e.ctrlKey && e.code == "KeyA" && canvas_focus) {
         window.es.map(e => {
             if((e.exists) && (e._isphysical) && (MatchLayer(e))) {
                 e.selected = true;
@@ -2780,12 +2780,12 @@ document.addEventListener("keydown", e => {
             window.need_GUIParams_update = true;
         });
     }
-    if (e.ctrlKey && e.code == "KeyS") {
+    if (e.ctrlKey && e.code == "KeyS" && canvas_focus) {
         e.preventDefault();
         document.getElementsByClassName("field_btn")[0].click();
     }
 
-    if (e.ctrlKey && e.code == "KeyF") {
+    if (e.ctrlKey && e.code == "KeyF" && canvas_focus) {
         e.preventDefault();
 
         let name = prompt("Find objects:", "");
@@ -2805,7 +2805,7 @@ document.addEventListener("keydown", e => {
         }
     }
 
-    if (e.ctrlKey && e.code == "KeyR") {
+    if (e.ctrlKey && e.code == "KeyR" && canvas_focus) {
         if (isOnlyTriggerSelected() && !isNothingSelected()) {
             e.preventDefault();
 
