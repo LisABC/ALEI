@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      18.5
+// @version      18.6
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -89,7 +89,8 @@ let aleiSettings = {
     //ocmEnabled:         readStorage("ALEI_OCMEnabled",              false, (val) => val === "true"),
     ocmEnabled:         true,
     extendedTriggers:   readStorage("ALEI_ExtendedTriggersEnabled", true,  (val) => val === "true"),
-    customRenderer:     readStorage("ALEI_Renderer_Enabled",        true,  (val) => val === "true")
+    customRenderer:     readStorage("ALEI_Renderer_Enabled",        true,  (val) => val === "true"),
+    orderedNaming:      readStorage("ALEI_orderedNaming",           true,  (val) => val === "true")
 }
 window.aleiSettings = aleiSettings;
 
@@ -4060,6 +4061,14 @@ function createALEISettingsMenu() {
     );
 
     aleiMakeSettingButtons(
+        "Ordered Naming:",
+        true,
+        "ALEI_orderedNaming",
+        "orderedNaming",
+        [["Yes (Slow)", true], ["No (Fast)", false]]
+    );
+
+    aleiMakeSettingButtons(
         "Custom Renderer:",
         true,
         "ALEI_Renderer_Enabled",
@@ -5695,7 +5704,7 @@ let ALE_start = (async function() {
     if (aleiSettings.extendedTriggers) extendTriggerList();
     patchUpdateGUIParams();
     patchTeamList();
-    patchRandomizeName();
+    if(aleiSettings.orderedNaming) patchRandomizeName();
     patchAllowedCharacters();
     if (aleiSettings.blackTheme) {
         blackTheme();
