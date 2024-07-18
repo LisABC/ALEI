@@ -5716,8 +5716,12 @@ let ALE_start = (async function() {
     patchCompileTrigger();
     createClipboardDiv();
     addPasteFromPermanentClipboard();
-    // registerClipboardItemAction();
-    // patchClipboardFunctions();
+	
+    if (!aleiSettings.extendedTriggers) {
+		registerClipboardItemAction();
+		patchClipboardFunctions();
+	}
+	
     patchDrawGrid();
     addFunctionToWindow();
     createALEISettingsMenu();
