@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      18.8
+// @version      18.9
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -5567,6 +5567,7 @@ function __OCM_HandleObject(element) {
 function OCM_onObjectDelete(element) {
     if(!(aleiSettings.rematchUID && aleiSettings.ocmEnabled)) return;
     if(element.pm.uid == undefined) return;
+    if(!OCM_LOADED) return;
 
     let uid = element.pm.uid;
     let ocm = window.ObjectConnectionMapping;
