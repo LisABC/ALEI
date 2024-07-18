@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         ALE Improvements
-// @version      18.7
+// @version      18.8
 // @description  Changes to make ALE better.
 // @author       mici1234, wanted2001, gcp5o
 // @match        *://www.plazmaburst2.com/level_editor/map_edit.php*
@@ -5602,6 +5602,7 @@ function CreateConnectionMapping() {
     let utem = uidToElementMap;
 
     for(let element of es) {
+        if(!element.exists) continue;
         if(element.pm.uid === undefined) continue;
         if(element.pm.uid === "#water") continue;
 
@@ -5716,12 +5717,12 @@ let ALE_start = (async function() {
     patchCompileTrigger();
     createClipboardDiv();
     addPasteFromPermanentClipboard();
-	
+
     if (!aleiSettings.extendedTriggers) {
 		registerClipboardItemAction();
 		patchClipboardFunctions();
 	}
-	
+
     patchDrawGrid();
     addFunctionToWindow();
     createALEISettingsMenu();
