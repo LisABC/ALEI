@@ -415,6 +415,7 @@ function updateSkins() {
     // Adds skins that exist in game but not in ALE.
     let charlists = [
         [10, "Head Gib"],
+        [18, "Star Defender (play map ID 'eric gurt-star_defenders' to unlock it)"],
         [20, "Arm Gib"],
         [30, "Leg Gib"],
         [50, "Heavy Hero (Only Head and Arms)"],
@@ -477,7 +478,7 @@ function updateSkins() {
         [194, "Dark Android SLC-56 (by littlekk)"],
         [195, "Wraith (by Ark633)"],
         [196, "Serkova Armored Unit"],
-        [197, "Phantom"],
+        [197, "Phantom (play map ID 'therealon3-phantom' to unlock it)"],
         [198, "Blue Civil Security Heavy"],
         [199, "Red Civil Security Heavy"],
         [200, "Xenos Welder"],
@@ -495,8 +496,8 @@ function updateSkins() {
         [212, "Teneguilae"],
         [213, "Walker (by Serpent)"],
         [214, "Space Grub (by Broforce1)"],
-        [215, "Phantom (Blue)"],
-        [216, "Phantom (Red)"]
+        [215, "Blue Phantom (play map ID 'therealon3-phantom' to unlock it)"],
+        [216, "Red Phantom (play map ID 'therealon3-phantom' to unlock it)"]
     ]
     for(let li = 0; li < charlists.length; li++) {
         let charID = charlists[li][0];
