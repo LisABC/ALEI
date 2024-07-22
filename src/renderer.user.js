@@ -991,7 +991,21 @@ export function ALEI_Renderer_OnDocumentLoad() {
     console.log(`[ALEI Renderer]: Active.`);
 }
 
+let isNative;
+
+try {
+    GM_info; // If this is running under tampermonkey.
+    
+    // If ALEI is not running us.
+    if(["ALE Improvements", "ALE Improvements Local"].indexOf(GM_info.script.name) == -1) {
+       isNative = true;
+    } else {
+       isNative = false; // Or ALEI is running us.
+    };
+}
+catch(e) {isNative = true;}
+
 // This is to ensure renderer can still run as separate userscript. (Manual work has to be done by removing 'export' from above manually.)
-if(["ALE Improvements", "ALE Improvements Local"].indexOf(GM_info.script.name) == -1) {
+if(isNative) {
     document.addEventListener("DOMContentLoaded", () => ALEI_Renderer_OnDocumentLoad());
 }
