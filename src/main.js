@@ -32,6 +32,7 @@ let VAL_TABLE = {}; // Will be filled later.
 let displayOperationCompleteNotes = true;
 let REGION_EXECUTE_PARAM_ID; // Will be set later.
 let OCM_LOADED = true; // Assume empty map.
+let ExtendedTriggersLoaded = false;
 
 const INFO = 0;
 const DEBUG = 1;
@@ -1952,13 +1953,13 @@ function updateClipboardDiv() {
     mrdimlights.style.display = "block";
 
     let html = `
-		<div id="mrtitle">
-			<span>Object clipboard</span>
-			<closebox onclick="document.getElementById('clipboardDiv').style.display = 'none'; document.getElementById('mrdimlights').style.display = 'none';">x</closebox>
-		</div>
+        <div id="mrtitle">
+            <span>Object clipboard</span>
+            <closebox onclick="document.getElementById('clipboardDiv').style.display = 'none'; document.getElementById('mrdimlights').style.display = 'none';">x</closebox>
+        </div>
 
-		<div id="mrbox" class="objbox" style="height: calc(100% - 32px); box-sizing: border-box;">
-	`;
+        <div id="mrbox" class="objbox" style="height: calc(100% - 32px); box-sizing: border-box;">
+    `;
 
     let originalES = window.es;
     let cs = {} // CS: Current Settings, because we will change settings for rendering images
@@ -1979,11 +1980,11 @@ function updateClipboardDiv() {
     for (let i = 0; i < items.length; i++) {
         __pasteObjectClipboard(items[i]);
         html += `
-			<div class="img_option" style="width: auto;" oncontextmenu="clipboardItemAction(` + i + `)" onclick="pasteFromPermanentClipboard(` + i + `);">
-				<img src="` + getSelectionImage() + `" style="max-width: 100px; max-height: 100px;">
-				<div>` + items[i].name + `</div>
-			</div>
-		`;
+            <div class="img_option" style="width: auto;" oncontextmenu="clipboardItemAction(` + i + `)" onclick="pasteFromPermanentClipboard(` + i + `);">
+                <img src="` + getSelectionImage() + `" style="max-width: 100px; max-height: 100px;">
+                <div>` + items[i].name + `</div>
+            </div>
+        `;
     }
 
     clipboardDiv.innerHTML = html + "</div>";
@@ -2085,7 +2086,7 @@ function addAdditionalButtons() {
         rparams.innerHTML += centerDecorationY_button;
     }
 
-    if(!edit_triggers_as_text && selection[0]._class == "trigger" && aleiSettings.extendedTriggers){
+    if(!edit_triggers_as_text && selection[0]._class == "trigger" && ExtendedTriggersLoaded){
         const extendTriggerAction_button = `
             <div class="two-element-grid">
                 <a onclick="addTriggerActionCount(1)" class="tool_btn tool_wid" style="display: block; width: 95%; margin-top: 4px;">(+) Extend trigger action list.</a>
@@ -3375,6 +3376,12 @@ function patchUpdateGUIParams() {
 
     let origGPV = window.GenParamVal;
 
+    window.shouldAddSeparatorInGUIParams = (count) => {
+        let sep = Trigger_getSeparatorStart(SelectedObjects.length);
+        if((count >= sep) && (count - sep) % 3 == 0) return true;
+        return false;
+    };
+
     window.GenParamValEscapeDoubleQuotes = false;
 
     // replaces GenParamVal behaviour of when base == "nochange". only difference is that it escapes double quotes.
@@ -3386,28 +3393,6 @@ function patchUpdateGUIParams() {
             return `<pvalue real="${valueWithQuotesEscaped}">- not used -</pvalue>`;
         }
         return origGPV(base, value);
-    }
-
-    function getStartSeparatorFrom() {
-        let selected = getSelection();
-        let shouldDisplayID = (selected.length == 1) && aleiSettings.showIDs;
-        let startSeparatorFrom = 5;
-        if (shouldDisplayID) {
-            startSeparatorFrom = 6;
-        }
-        return startSeparatorFrom;
-    }
-
-    window.shouldAddSeparatorInGUIParams = function(i) {
-        let startSeparatorFrom;
-        if (aleiSettings.extendedTriggers) {
-            startSeparatorFrom = 4;
-        }
-        else {
-            //startSeparatorFrom = getStartSeparatorFrom();
-            startSeparatorFrom = Trigger_getSeparatorStart(SelectedObjects.length);
-        }
-        return i >= startSeparatorFrom && (i - startSeparatorFrom) % 3 == 0
     }
 
     window.UpdateGUIParams = function() {
@@ -3653,7 +3638,7 @@ function createALEISettingsMenu() {
 
     aleiMakeSettingButtons(
         "Extended triggers:",
-        false,
+        true,
         "ALEI_ExtendedTriggersEnabled",
         "extendedTriggers",
         [["Enabled", true], ["Disabled", false]]
@@ -5305,7 +5290,10 @@ let ALE_start = (async function() {
         doTooltip();
     }
     patchServerRequest();
-    if (aleiSettings.extendedTriggers) extendTriggerList();
+    if (aleiSettings.extendedTriggers) {
+        extendTriggerList();
+        ExtendedTriggersLoaded = true;
+    }
     patchUpdateGUIParams();
     patchTeamList();
     if(aleiSettings.orderedNaming) patchRandomizeName();
@@ -5322,9 +5310,9 @@ let ALE_start = (async function() {
     addPasteFromPermanentClipboard();
 
     if (!aleiSettings.extendedTriggers) {
-		registerClipboardItemAction();
-		patchClipboardFunctions();
-	}
+        registerClipboardItemAction();
+        patchClipboardFunctions();
+    }
 
     patchDrawGrid();
     addFunctionToWindow();
