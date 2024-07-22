@@ -29,7 +29,7 @@ export function patchThemeSet() {
         const newTheme = themes[value];
         document.body.classList.remove(oldTheme);
         document.body.classList.add(newTheme);
-        console.log("changed theme: " + oldTheme + " -> " + newTheme);
+        //console.log("changed theme: " + oldTheme + " -> " + newTheme);
 
         origThemeSet(value);
     }
