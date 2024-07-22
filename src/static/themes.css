@@ -1,0 +1,14 @@
+/* css variables go in these. */
+
+:root, .blueTheme {
+    --warning-go-away-pls: 0;
+}
+
+.darkTheme, .purpleTheme, .greenTheme {
+    --warning-go-away-pls: 0;
+}
+
+/*this is unused cuz theme changing needs to be reworked first*/
+.aleidarkTheme {
+    --warning-go-away-pls: 0;
+}

@@ -1,15 +1,17 @@
 // ==UserScript==
 // @name         ALEI Renderer
 // @namespace    http://tampermonkey.net/
-// @version      4.8
+// @version      4.9
 // @description  try to take over the world!
 // @author       Lisandra
 // @match        *://*.plazmaburst2.com/level_editor/map_edit.php*
 // @icon         https://github.com/LisABC/ALEI/blob/main/icon.png?raw=true
-// @grant        none
+// @run-at       document-start
 // ==/UserScript==
 
 "use strict";
+
+let window = unsafeWindow;
 
 // Variables that Renderer actively uses.
 let decorRequestsOnProgress = [];
@@ -934,6 +936,12 @@ function RegisterSettingsToALEI() {
     aleiRunning = true;
 
     let ALEIAPI = window.ALEIAPI;
+
+    if(ALEIAPI == undefined) {
+        setTimeout(RegisterSettingsToALEI, 1000);
+        return;
+    }
+
     let settings = ALEIAPI.settings;
 
     settings.addText("[R] Cartoonish Edges:", false);
@@ -948,7 +956,7 @@ function RegisterSettingsToALEI() {
     window.ALEI_settingUpdateButtons();
 }
 
-(function() {
+export function ALEI_Renderer_OnDocumentLoad() {
     ctx = window.ctx;
 
     // Draw functions.
@@ -981,6 +989,23 @@ function RegisterSettingsToALEI() {
 
     // Logging.
     console.log(`[ALEI Renderer]: Active.`);
+}
 
+let isNative;
 
-})();
+try {
+    GM_info; // If this is running under tampermonkey.
+    
+    // If ALEI is not running us.
+    if(["ALE Improvements", "ALE Improvements Local"].indexOf(GM_info.script.name) == -1) {
+       isNative = true;
+    } else {
+       isNative = false; // Or ALEI is running us.
+    };
+}
+catch(e) {isNative = true;}
+
+// This is to ensure renderer can still run as separate userscript. (Manual work has to be done by removing 'export' from above manually.)
+if(isNative) {
+    document.addEventListener("DOMContentLoaded", () => ALEI_Renderer_OnDocumentLoad());
+}
