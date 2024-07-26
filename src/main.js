@@ -1315,7 +1315,7 @@ function __OCM_EnsureValidReferences(obj) {
             Trigger_HandleParameter(pm.uid, pm[`actions_${i}_targetB`]);
         }
         // Extended triggers.
-        if(pm.extended) {
+        if(pm.extended && aleiSettings.extendedTriggers) {
             let actions = pm.additionalActions;
             let paramA = pm.additionalParamA;
             let paramB = pm.additionalParamB;
@@ -4388,7 +4388,7 @@ function extendTriggerList() {
                 code_lines += ' );\n';
             }
 
-            for(let i = 0; first_selected_object.pm.extended && i + 11 <= first_selected_object.pm["totalNumOfActions"]; ++i){
+            for(let i = 0; aleiSettings.extendedTriggers && first_selected_object.pm.extended && i + 11 <= first_selected_object.pm["totalNumOfActions"]; ++i){
                 if (first_selected_object.pm["additionalActions"][i] == -1) {
                     continue;
                 }
@@ -5130,6 +5130,7 @@ function __OCM_HandleObject(element) {
     }
     // Extended triggers.
     if(pm.extended === undefined) return;
+    if(!aleiSettings.extendedTriggers) return;
 
     let actions = pm.additionalActions;
     let paramA = pm.additionalParamA;
