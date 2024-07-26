@@ -195,11 +195,7 @@ let objectColors = {
     region: {col: "#FFD52B", edgeCol: "#FFB03C", edgeOpacityFactor: 0.5, buttonOpacityFactor: 0.5},
     bg: {col: "#000", edgeCol: "#910000", edgeOpacityFactor: 0.3, coloredOpacityFactor: 0.22}
 }
-let regionImages = {
-    1: window.img_region,
-    9: window.img_region_red,
-    10: window.img_region_blue
-}
+let regionImages = {} // Will be filled later.
 
 function _DrawRectangle(color, opacity, x, y, w, h, edge) {
     ctx.globalAlpha = opacity;
@@ -964,6 +960,13 @@ export function ALEI_Renderer_OnDocumentLoad() {
     draw_rect = window.lmfr;
     draw_gridlines = window.lg;
     draw_image = (img, x, y, w, h) => window.MyDrawImage(img, x, y, w, h);
+
+    // Objects.
+    regionImages = {
+        1: window.img_region,
+        9: window.img_region_red,
+        10: window.img_region_blue
+    }
 
     // Storing functions into our scope. (To avoid tampermonkey warning)
     w2s_x = window.w2s_x;
