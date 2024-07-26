@@ -32,5 +32,5 @@ module.exports = {
             headers: headers,
         }),
     ],
-    //devtool: "source-map",
+    devtool: "inline-source-map",
 };
