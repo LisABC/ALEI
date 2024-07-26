@@ -3284,6 +3284,9 @@ function patchServerRequest() {
     // Which opens up to expected vulnerabilities.
     // Hopefully in future, ALEI will completely get rid of eval.
     window.ServerRequest = ALEI_ServerRequest;
+    // We are pretty much done, we have patched ServerRequest, so just roll with old eval.
+    // Oh and a note for myself incase i confuse myself: vanilla ServerRequest is synchrono
+    window.eval = JS_eval;
     aleiLog(DEBUG, "Patched ServerRequest");
 }
 
@@ -3291,9 +3294,6 @@ window.eval = function(code) { // Temporarily overriding eval so we can patch Se
     if (window.ServerRequest !== undefined) { // ServerRequest is defined.
         handleServerRequestResponse(null, null, code);
         patchServerRequest();
-        // We are pretty much done, we have patched ServerRequest, so just roll with old eval.
-        // Oh and a note for myself incase i confuse myself: vanilla ServerRequest is synchronous
-        window.eval = JS_eval;
     } else {
         // Is not defined.
         // Is this even possible in normal circumstances?
@@ -5266,6 +5266,8 @@ let ALE_start = (async function() {
     addPropertyPanelResize();
     addObjBoxResize();
 
+    patchServerRequest();
+
     loadcss.fixWebpackStyleSheets();
     loadcss.patchThemeSet();
 
@@ -5295,7 +5297,6 @@ let ALE_start = (async function() {
     if(aleiSettings.enableTooltips) {
         doTooltip();
     }
-    patchServerRequest();
     if (aleiSettings.extendedTriggers) {
         extendTriggerList();
         ExtendedTriggersLoaded = true;
@@ -5361,6 +5362,7 @@ let ALE_start = (async function() {
         NewNote(`ALEI: ${message}`, "#FFFF00");
         NewNote(`ALEI: Check https://github.com/LisABC/ALEI for more details.`, "#FFFF00");
         aleiLog(INFO, message);
+        NewNote(`ALEI: Reminder that ALEI under tampermonkey is bound to break less than without.`, "#FFFFFF");
     }
 });
 
