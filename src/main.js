@@ -4682,6 +4682,7 @@ function extendTriggerList() {
      */
     function SaveThisMap(temp_to_real_compile_data='', callback=null) {
         const gapBetweenTrigger = 40;
+        const executeTriggerAction = 99; // Required for main -> child if we want main trigger's maxcalls be in effect.
         const switchExecutionAction = 363;
 
         // Keep a reference to all the newly generated triggers, so we can delete them in the end.
@@ -4722,7 +4723,7 @@ function extendTriggerList() {
 
                 // If it's the first trigger, let the main extended trigger point to this.
                 if(i == 0){
-                    entity.pm[`actions_10_type`] = switchExecutionAction;
+                    entity.pm[`actions_10_type`] = executeTriggerAction;
                     entity.pm[`actions_10_targetA`] = name;
                 }
 
@@ -4964,6 +4965,7 @@ function extendTriggerList() {
  */
 function parseExtendedTriggers(){
     const maxIteration = 1000;
+    const executeTriggerAction = 99;
     const switchExecutionAction = 363;
 
     // Find all extended triggers.
@@ -4984,8 +4986,13 @@ function parseExtendedTriggers(){
         let currentTrigger = entity;
 
         // Iterate through the linked list, pointed by the 10th trigger action.
-        let nextTriggerIndex = es.findIndex(e => e.pm["uid"] === currentTrigger.pm["actions_10_targetA"] && currentTrigger.pm["actions_10_type"] === switchExecutionAction);
-
+        let nextTriggerIndex = es.findIndex(e => 
+            (e.pm["uid"] === currentTrigger.pm["actions_10_targetA"]) && 
+            (
+                (currentTrigger.pm["actions_10_type"] == switchExecutionAction) || // Backwards compatibility
+                (currentTrigger.pm["actions_10_type"] == executeTriggerAction)     // Current system now
+            )
+        )
         while(nextTriggerIndex !== -1){
             let nextTrigger = es[nextTriggerIndex];
 
