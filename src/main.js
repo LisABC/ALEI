@@ -5247,7 +5247,10 @@ function patchDeleteSelection() {
     };
 }
 
+let alreadyStarted = false;
 let ALE_start = (async function() {
+    if(alreadyStarted) return;
+    alreadyStarted = true;
     'use strict';
 
     window.ALEIAPI = {};
@@ -5366,4 +5369,7 @@ let ALE_start = (async function() {
     }
 });
 
-document.addEventListener("DOMContentLoaded", () => ALE_start());
+if(isNative) document.addEventListener("DOMContentLoaded", () => ALE_start());
+else ALE_start();
+
+console.log("ALEI!");
