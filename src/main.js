@@ -4687,6 +4687,7 @@ function extendTriggerList() {
      */
     function SaveThisMap(temp_to_real_compile_data='', callback=null) {
         const gapBetweenTrigger = 40;
+        const executeTriggerAction = 99; // Required for main -> child if we want main trigger's maxcalls be in effect.
         const switchExecutionAction = 363;
 
         // Keep a reference to all the newly generated triggers, so we can delete them in the end.
@@ -4710,11 +4711,6 @@ function extendTriggerList() {
             entity.pm["additionalParamA"].unshift(entity.pm["actions_10_targetA"]);
             entity.pm["additionalParamB"].unshift(entity.pm["actions_10_targetB"]);
 
-            if(entity.pm["maxcalls"] != -1) {
-                NewNote(`ALEI: Trigger ${entity.pm.uid} is extended and yet it is not infinite call, this is not supported by ALEI's design of extended triggers, make this work with infinite calls in order to save. Halting save.`);
-                return;
-            }
-
             // Calculate and create the number of triggers we need.
             const triggersToCreate = Math.floor((entity.pm["totalNumOfActions"] - 1) / 9);
             let   startX = entity.pm["x"] + gapBetweenTrigger;
@@ -4732,9 +4728,11 @@ function extendTriggerList() {
 
                 // If it's the first trigger, let the main extended trigger point to this.
                 if(i == 0){
-                    entity.pm[`actions_10_type`] = switchExecutionAction;
+                    entity.pm[`actions_10_type`] = executeTriggerAction;
                     entity.pm[`actions_10_targetA`] = name;
                 }
+
+                console.log(i);
 
                 // If not the last trigger, point to the next trigger.
                 if(i < triggersToCreate - 1){
@@ -4998,8 +4996,8 @@ function parseExtendedTriggers(){
         let nextTriggerIndex = es.findIndex(e => 
             (e.pm["uid"] === currentTrigger.pm["actions_10_targetA"]) && 
             (
-                (currentTrigger.pm["actions_10_type"] == switchExecutionAction) || // Current system
-                (currentTrigger.pm["actions_10_type"] == executeTriggerAction)     // Backwards compatibility
+                (currentTrigger.pm["actions_10_type"] == switchExecutionAction) || // Backwards compatibility
+                (currentTrigger.pm["actions_10_type"] == executeTriggerAction)     // Current system
             )
         )
         while(nextTriggerIndex !== -1){
