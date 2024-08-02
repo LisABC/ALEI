@@ -4725,14 +4725,14 @@ function extendTriggerList() {
                 newTrigger.pm["x"] = startX;
                 newTrigger.pm["y"] = startY;
                 newTrigger.pm["uid"] = name;
+                //newTrigger.pm["maxcalls"] = -1;
 
                 // If it's the first trigger, let the main extended trigger point to this.
                 if(i == 0){
                     entity.pm[`actions_10_type`] = executeTriggerAction;
                     entity.pm[`actions_10_targetA`] = name;
+                    newTrigger.pm["maxcalls"] = -1;
                 }
-
-                console.log(i);
 
                 // If not the last trigger, point to the next trigger.
                 if(i < triggersToCreate - 1){
